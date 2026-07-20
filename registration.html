@@ -95,8 +95,10 @@ body{
 .event-sub{font-size:.84rem;color:var(--muted)}
 .event-cta{display:flex;align-items:center;padding-right:1.1rem}
 @media (max-width:640px){
-  .event-row{flex-wrap:wrap}
-  .event-cta{width:100%;padding:0 1.2rem 1.1rem}
+  .event-row{display:grid;grid-template-columns:84px 1fr;align-items:stretch}
+  .event-date{grid-row:1 / span 2;min-width:0}
+  .event-body{grid-column:2;padding:1rem 1rem .5rem}
+  .event-cta{grid-column:2;padding:0 1rem 1rem;width:auto;display:block}
   .event-cta .btn{width:100%}
 }
 
