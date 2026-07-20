@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CBU App — Starter Template</title>
+<!--
+  ============================================================
+  CBU APP DESIGN STANDARD — STARTER TEMPLATE
+  ============================================================
+  Start every new page of the app from a copy of this file.
+  It contains the complete brand system (tokens, components,
+  mobile rules) plus one live sample of each component below.
+
+  Rules of the brand:
+  - Boxes are for actions, typography is for facts.
+  - Buttons are solid red or outlined; white cards carry content.
+  - Red #b91e2d is the primary action color; powder #6daed4 is
+    the Youth accent (set via the --accent variable).
+  - Oswald condensed uppercase for display; Inter for body.
+  - Never use prompt()/confirm() — all confirmations inline.
+  ============================================================
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============ TOKENS ============ */
+:root{
+  --navy-bg:#0c1327;        /* page background start */
+  --navy-bg-2:#141d3a;      /* page background end   */
+  --navy-deep:#0e1730;      /* nav, table/section headers */
+  --card:#ffffff;           /* content cards */
+  --row-alt:#f5f6fa;        /* alternate rows, subtle panels */
+  --red:#b91e2d;            /* CBU red — primary actions */
+  --red-dark:#8f1622;
+  --powder:#6daed4;         /* Youth accent */
+  --powder-dark:#4d8fb6;
+  --ink:#16203c;            /* dark text on white */
+  --muted:#6b7590;
+  --line:#e3e6ee;           /* borders on white */
+  --green:#1e7a44;          /* published / success */
+  --green-bg:#e2f2e8;
+  --accent:var(--red);      /* swap to --powder for Youth flows */
+  --accent-dark:var(--red-dark);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;overflow-x:hidden}
+body{
+  font-family:'Inter',-apple-system,'Segoe UI',Arial,sans-serif;
+  background:
+    radial-gradient(1200px 600px at 70% -10%, rgba(185,30,45,.12), transparent 60%),
+    linear-gradient(160deg,var(--navy-bg) 0%,var(--navy-bg-2) 100%);
+  background-attachment:fixed;
+  color:#eef1f8;min-height:100vh;overflow-x:hidden;max-width:100vw;
+}
+.display{font-family:'Oswald','Arial Narrow',Arial,sans-serif;text-transform:uppercase;letter-spacing:.02em}
+.eyebrow{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.28em;font-size:.72rem;font-weight:600;color:var(--powder)}
+
+/* ============ TOP NAV ============ */
+.topnav{
+  position:sticky;top:0;z-index:50;background:var(--navy-deep);
+  border-bottom:1px solid rgba(255,255,255,.07);
+  display:flex;align-items:center;justify-content:space-between;padding:.85rem 2rem;
+}
+.brand{display:flex;align-items:center;gap:.9rem}
+.brand-logo{font-family:'Oswald',Arial,sans-serif;font-weight:700;font-size:1.55rem;color:#fff;line-height:1}
+.brand-logo b{color:var(--red)}
+.brand-divider{width:1px;height:26px;background:rgba(255,255,255,.18)}
+.brand-label{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.2em;font-size:.78rem;color:#c6cde0;font-weight:600}
+
+/* ============ LAYOUT ============ */
+.page{max-width:1120px;margin:0 auto;padding:2.4rem 2rem 5rem}
+.page-title{font-size:2.5rem;font-weight:700;color:#fff;line-height:1.05}
+.page-title-sub{color:#aab3cc;font-size:.92rem;margin-top:.5rem;max-width:560px}
+.title-rule{width:64px;height:4px;background:var(--red);margin-top:.85rem;border-radius:2px}
+
+/* ============ BUTTONS ============ */
+.btn{
+  display:inline-flex;align-items:center;gap:.5rem;justify-content:center;
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.09em;
+  font-weight:600;font-size:.85rem;border-radius:8px;cursor:pointer;
+  padding:.72rem 1.35rem;border:2px solid transparent;transition:all .15s ease;
+  text-decoration:none;user-select:none;
+}
+.btn:focus-visible{outline:3px solid var(--powder);outline-offset:2px}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent-dark)}
+.btn-outline{background:transparent;color:#fff;border-color:rgba(255,255,255,.35)}
+.btn-outline:hover{border-color:#fff}
+.btn-outline-dark{background:transparent;color:var(--ink);border-color:#c6ccdb}
+.btn-outline-dark:hover{border-color:var(--ink)}
+.btn-ghost-red{background:transparent;color:var(--accent);border-color:var(--accent)}
+.btn-ghost-red:hover{background:var(--accent);color:#fff}
+.btn-sm{padding:.45rem .9rem;font-size:.74rem}
+.btn[disabled]{opacity:.4;cursor:not-allowed;pointer-events:none}
+.link-red{color:var(--red);font-weight:600;font-size:.8rem;text-decoration:none;cursor:pointer;background:none;border:none;font-family:inherit}
+.link-red:hover{text-decoration:underline}
+
+/* ============ CARDS & TABLES ============ */
+.card{background:var(--card);border-radius:12px;color:var(--ink);box-shadow:0 18px 40px rgba(3,7,20,.45);overflow:hidden}
+.card-pad{padding:1.8rem 2rem}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+thead th{
+  background:var(--navy-deep);color:#fff;text-align:left;
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.12em;
+  font-size:.7rem;font-weight:600;padding:.85rem 1.1rem;white-space:nowrap;
+}
+tbody td{padding:.9rem 1.1rem;border-bottom:1px solid var(--line);vertical-align:middle}
+tbody tr:nth-child(even){background:var(--row-alt)}
+tbody tr:last-child td{border-bottom:none}
+.cell-strong{font-weight:600;color:var(--ink)}
+.cell-sub{font-size:.76rem;color:var(--muted);margin-top:.15rem}
+
+/* ============ PILLS (badges; add as <button class="pill"> for actions) ============ */
+.pill{
+  display:inline-block;font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;
+  letter-spacing:.1em;font-size:.66rem;font-weight:600;
+  padding:.28rem .65rem;border-radius:999px;white-space:nowrap;
+}
+.pill-green{background:var(--green-bg);color:var(--green)}
+.pill-red{background:#f8e3e6;color:var(--red)}
+.pill-blue{background:#e2eef7;color:#2d6f96}
+.pill-navy{background:#e8ebf4;color:var(--navy-deep)}
+button.pill{border:none;cursor:pointer;font-family:'Oswald',Arial,sans-serif}
+button.pill:hover{filter:brightness(.9);box-shadow:0 0 0 2px rgba(22,32,60,.12)}
+
+/* ============ CHEVRON STEP BANNER ============ */
+.steps{display:flex;gap:6px;margin:2rem 0 1.6rem;flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px}
+.step-chev{
+  flex:1;min-width:88px;position:relative;
+  clip-path:polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%, 14px 50%);
+  background:#1b2444;color:#91a1c4;padding:.7rem 1.4rem .7rem 1.5rem;
+}
+.step-chev:first-child{clip-path:polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%)}
+.step-num{font-family:'Oswald',Arial,sans-serif;font-size:.62rem;letter-spacing:.22em;font-weight:600;opacity:.75}
+.step-name{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;font-weight:600;font-size:.82rem;letter-spacing:.06em;margin-top:.1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.step-chev.done{background:#232f57;color:#c3cdea;cursor:pointer}
+.step-chev.done:hover{background:#2c3a6b;color:#fff}
+.step-chev.active{background:var(--accent);color:#fff;box-shadow:0 8px 22px rgba(0,0,0,.35)}
+.step-chev.done .step-num::after{content:" ✓"}
+
+/* ============ CHIPS (quick-adds & filters) ============ */
+.chip-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.8rem}
+.chip{
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.08em;font-size:.72rem;font-weight:600;
+  border:1.5px solid #c9cfdd;background:#fff;color:var(--ink);border-radius:999px;padding:.4rem .85rem;cursor:pointer;
+}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.chip[disabled]{opacity:.35;pointer-events:none}
+.filter-chip.active{background:var(--red);color:#fff;border-color:var(--red)}
+
+/* ============ FORMS ============ */
+.field-label{display:block;font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.14em;font-size:.68rem;font-weight:600;color:var(--muted);margin-bottom:.4rem}
+input[type=text],input[type=date],input[type=email],input[type=tel],select{
+  width:100%;max-width:420px;padding:.65rem .8rem;border:1.5px solid #c9cfdd;border-radius:8px;
+  font-family:'Inter',Arial,sans-serif;font-size:.9rem;color:var(--ink);background:#fff;
+}
+textarea{
+  width:100%;max-width:100%;min-height:110px;resize:vertical;padding:.65rem .8rem;
+  border:1.5px solid #c9cfdd;border-radius:8px;font-family:'Inter',Arial,sans-serif;font-size:.9rem;color:var(--ink);background:#fff;
+}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--powder);border-color:var(--powder)}
+input[disabled]{background:var(--row-alt);color:var(--muted)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem 1.4rem}
+.form-grid .full{grid-column:1 / -1}
+
+/* ============ TOGGLE SWITCH ============ */
+.toggle{position:relative;width:44px;height:24px;border-radius:999px;background:#c9cfdd;border:none;cursor:pointer;transition:background .15s}
+.toggle::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .15s}
+.toggle.on{background:var(--green)}
+.toggle.on::after{left:23px}
+
+/* ============ STAT TILES & BREAKDOWNS (dashboards) ============ */
+.stat-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.2rem}
+.stat-tile{background:var(--card);border-radius:12px;padding:1.2rem 1.4rem;color:var(--ink);box-shadow:0 12px 28px rgba(3,7,20,.35)}
+.stat-tile .st-num{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-weight:700;font-size:2.2rem;line-height:1;color:var(--navy-deep)}
+.stat-tile .st-label{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.16em;font-size:.66rem;font-weight:600;color:var(--muted);margin-top:.4rem}
+.stat-tile.accent-red .st-num{color:var(--red)}
+.stat-tile.accent-blue .st-num{color:var(--powder-dark)}
+
+/* ============ SECTION HEADERS (navy bar on white; .red for emphasis) ============ */
+.section-head{
+  background:var(--navy-deep);color:#fff;padding:.6rem 1rem;border-radius:8px 8px 0 0;
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.12em;font-size:.74rem;font-weight:600;margin-top:1.5rem;
+}
+.section-head.red{background:var(--red)}
+.section-body{border:1.5px solid var(--line);border-top:none;border-radius:0 0 8px 8px;padding:1.1rem}
+
+/* ============ TOAST ============ */
+.toast{
+  position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--navy-deep);color:#fff;padding:.8rem 1.4rem;border-radius:10px;font-size:.88rem;
+  opacity:0;pointer-events:none;transition:all .25s ease;z-index:99;border:1px solid rgba(255,255,255,.15);max-width:90vw;text-align:center;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ============ MOBILE ============ */
+@media (max-width:760px){
+  .page{padding:1.6rem 1rem 4rem}
+  .page-title{font-size:1.9rem}
+  .form-grid{grid-template-columns:1fr}
+  .stat-tiles{grid-template-columns:1fr 1fr}
+  .topnav{padding:.7rem .9rem}
+  .brand{gap:.55rem}
+  .brand-logo{font-size:1.25rem}
+  .brand-label{font-size:.58rem;letter-spacing:.12em}
+  /* Step banner wraps to rows instead of scrolling */
+  .steps{flex-wrap:wrap;overflow-x:visible;gap:5px;padding-bottom:0}
+  .step-chev{flex:0 0 calc(33.333% - 4px);min-width:0;padding:.5rem .95rem .5rem 1.05rem}
+  .step-num{font-size:.52rem}
+  .step-name{font-size:.66rem;letter-spacing:.03em}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+}
+</style>
+</head>
+<body>
+
+<!-- Sample nav — change the label per page -->
+<nav class="topnav">
+  <div class="brand">
+    <div class="brand-logo">CB<b>U</b></div>
+    <div class="brand-divider"></div>
+    <div class="brand-label">Page Name Here</div>
+  </div>
+  <span class="pill pill-green">Status Pill</span>
+</nav>
+
+<div class="page">
+  <!-- Page header -->
+  <div class="eyebrow">Section Eyebrow</div>
+  <h1 class="page-title display">Page Title</h1>
+  <div class="title-rule"></div>
+  <p class="page-title-sub">Sub text describing this page in one or two sentences.</p>
+
+  <!-- Chevron step banner sample -->
+  <div class="steps">
+    <div class="step-chev done"><div class="step-num">Step 1</div><div class="step-name">Done</div></div>
+    <div class="step-chev active"><div class="step-num">Step 2</div><div class="step-name">Active</div></div>
+    <div class="step-chev"><div class="step-num">Step 3</div><div class="step-name">Upcoming</div></div>
+  </div>
+
+  <!-- Buttons & pills sample -->
+  <div style="display:flex;gap:.8rem;flex-wrap:wrap;align-items:center;margin:1rem 0 1.6rem">
+    <button class="btn btn-primary">Primary</button>
+    <button class="btn btn-outline">Outline (dark bg)</button>
+    <button class="btn btn-ghost-red" style="color:#fff">Ghost</button>
+    <span class="pill pill-green">Published</span>
+    <span class="pill pill-red">High School</span>
+    <span class="pill pill-blue">Youth</span>
+    <span class="pill pill-navy">Neutral</span>
+  </div>
+
+  <!-- Chips sample -->
+  <div class="chip-row" style="margin-bottom:1.6rem">
+    <button class="chip filter-chip active">Active Filter</button>
+    <button class="chip">Chip</button>
+    <button class="chip">+ Quick Add</button>
+  </div>
+
+  <!-- Stat tiles sample -->
+  <div class="stat-tiles">
+    <div class="stat-tile"><div class="st-num">42</div><div class="st-label">Neutral Stat</div></div>
+    <div class="stat-tile accent-red"><div class="st-num">12</div><div class="st-label">Red Stat</div></div>
+    <div class="stat-tile accent-blue"><div class="st-num">7</div><div class="st-label">Blue Stat</div></div>
+  </div>
+
+  <!-- Card with table sample -->
+  <div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Column</th><th>Column</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td class="cell-strong">Row one<div class="cell-sub">Sub text</div></td><td>Value</td><td><span class="pill pill-green">Good</span></td></tr>
+          <tr><td class="cell-strong">Row two</td><td>Value</td><td><span class="pill pill-navy">Neutral</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Form section sample (white card context) -->
+  <div class="card card-pad" style="margin-top:1.6rem">
+    <div class="section-head" style="margin-top:0">Section Header</div>
+    <div class="section-body">
+      <div class="form-grid">
+        <div><label class="field-label">Field Label</label><input type="text" placeholder="Placeholder"></div>
+        <div><label class="field-label">Select</label><select><option>Option</option></select></div>
+        <div class="full"><label class="field-label">Notes</label><textarea placeholder="Textarea"></textarea></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:.8rem;margin-top:1rem">
+        <button class="toggle on" onclick="this.classList.toggle('on')"></button>
+        <span style="font-size:.88rem;font-weight:600;color:var(--ink)">Toggle switch</span>
+        <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="toast('Toast message — confirmations look like this')">Show Toast</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._h);
+  t._h = setTimeout(function(){ t.classList.remove('show'); }, 2400);
+}
+</script>
+</body>
+</html>
