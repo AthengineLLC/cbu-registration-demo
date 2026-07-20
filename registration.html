@@ -24,7 +24,7 @@
   --green-bg:#e2f2e8;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
+html{scroll-behavior:smooth;overflow-x:hidden}
 body{
   font-family:'Inter',-apple-system,'Segoe UI',Arial,sans-serif;
   background:
@@ -33,6 +33,8 @@ body{
   background-attachment:fixed;
   color:#eef1f8;
   min-height:100vh;
+  overflow-x:hidden;
+  max-width:100vw;
 }
 .display{font-family:'Oswald','Arial Narrow',Arial,sans-serif;text-transform:uppercase;letter-spacing:.02em}
 .eyebrow{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.28em;font-size:.72rem;font-weight:600;color:var(--powder)}
@@ -211,7 +213,7 @@ input.invalid,select.invalid{border-color:var(--red);outline-color:var(--red)}
 /* ---------- Review & confirm ---------- */
 .review-grid{display:grid;grid-template-columns:170px 1fr;gap:.35rem 1.3rem;margin-top:1.3rem;font-size:.9rem}
 .review-grid dt{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.12em;font-size:.66rem;font-weight:600;color:var(--muted);padding-top:.35rem}
-.review-grid dd{color:var(--ink);padding:.25rem 0;border-bottom:1px solid var(--line)}
+.review-grid dd{color:var(--ink);padding:.25rem 0;border-bottom:1px solid var(--line);word-break:break-word}
 .total-row{
   display:flex;justify-content:space-between;align-items:center;margin-top:1.3rem;
   background:var(--row-alt);border:1.5px solid var(--line);border-radius:10px;padding:1rem 1.2rem;
@@ -259,6 +261,21 @@ input.invalid,select.invalid{border-color:var(--red);outline-color:var(--red)}
   .pos-grid{grid-template-columns:repeat(3,1fr)}
   .review-grid{grid-template-columns:1fr}
   .review-grid dt{padding-top:.7rem}
+  /* Contained, wrapping step banner — two rows of three, no sideways scroll */
+  .steps{flex-wrap:wrap;overflow-x:visible;gap:5px;padding-bottom:0}
+  .step-chev{flex:0 0 calc(33.333% - 4px);min-width:0;padding:.5rem .95rem .5rem 1.05rem}
+  .step-num{font-size:.52rem;letter-spacing:.14em}
+  .step-name{font-size:.66rem;letter-spacing:.03em}
+  /* Tighter nav so the status pill never pushes past the viewport */
+  .topnav{padding:.7rem .8rem}
+  .brand{gap:.55rem}
+  .brand-logo{font-size:1.25rem}
+  .brand-divider{height:20px}
+  .brand-label{font-size:.58rem;letter-spacing:.12em}
+  .nav-status .pill{font-size:.56rem;padding:.24rem .5rem;letter-spacing:.06em}
+  /* Long values wrap inside confirmation rows instead of widening the page */
+  .confirm-box .cb-row{flex-wrap:wrap}
+  .choice-grid[style*="repeat(3"]{grid-template-columns:1fr !important}
 }
 @media (prefers-reduced-motion:reduce){
   *{transition:none!important;animation:none!important}
