@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CBU Baseball — Tryout Registration</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy-bg:#0c1327;
+  --navy-bg-2:#141d3a;
+  --navy-deep:#0e1730;
+  --card:#ffffff;
+  --row-alt:#f5f6fa;
+  --red:#b91e2d;
+  --red-dark:#8f1622;
+  --powder:#6daed4;
+  --powder-dark:#4d8fb6;
+  --ink:#16203c;
+  --muted:#6b7590;
+  --line:#e3e6ee;
+  --green:#1e7a44;
+  --green-bg:#e2f2e8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Inter',-apple-system,'Segoe UI',Arial,sans-serif;
+  background:
+    radial-gradient(1200px 600px at 70% -10%, rgba(185,30,45,.12), transparent 60%),
+    linear-gradient(160deg,var(--navy-bg) 0%,var(--navy-bg-2) 100%);
+  background-attachment:fixed;
+  color:#eef1f8;
+  min-height:100vh;
+}
+.display{font-family:'Oswald','Arial Narrow',Arial,sans-serif;text-transform:uppercase;letter-spacing:.02em}
+.eyebrow{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.28em;font-size:.72rem;font-weight:600;color:var(--powder)}
+
+/* ---------- Top nav ---------- */
+.topnav{
+  position:sticky;top:0;z-index:50;
+  background:var(--navy-deep);
+  border-bottom:1px solid rgba(255,255,255,.07);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.85rem 1.4rem;
+}
+.brand{display:flex;align-items:center;gap:.9rem}
+.brand-logo{font-family:'Oswald',Arial,sans-serif;font-weight:700;font-size:1.55rem;letter-spacing:.02em;color:#fff;line-height:1}
+.brand-logo b{color:var(--red)}
+.brand-divider{width:1px;height:26px;background:rgba(255,255,255,.18)}
+.brand-label{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.2em;font-size:.72rem;color:#c6cde0;font-weight:600}
+.nav-status{display:flex;align-items:center;gap:.6rem}
+
+/* ---------- Layout ---------- */
+.page{max-width:860px;margin:0 auto;padding:2.2rem 1.2rem 5rem}
+.page-title{font-size:2.4rem;font-weight:700;color:#fff;line-height:1.05}
+.title-rule{width:64px;height:4px;background:var(--red);margin-top:.85rem;border-radius:2px}
+.page-sub{color:#aab3cc;font-size:.94rem;margin-top:.7rem;max-width:600px}
+
+/* ---------- Buttons ---------- */
+.btn{
+  display:inline-flex;align-items:center;gap:.5rem;justify-content:center;
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.09em;
+  font-weight:600;font-size:.88rem;border-radius:8px;cursor:pointer;
+  padding:.8rem 1.5rem;border:2px solid transparent;transition:all .15s ease;
+  text-decoration:none;user-select:none;
+}
+.btn:focus-visible{outline:3px solid var(--powder);outline-offset:2px}
+.btn-primary{background:var(--red);color:#fff}
+.btn-primary:hover{background:var(--red-dark)}
+.btn-outline{background:transparent;color:#fff;border-color:rgba(255,255,255,.35)}
+.btn-outline:hover{border-color:#fff}
+.btn-outline-dark{background:transparent;color:var(--ink);border-color:#c6ccdb}
+.btn-outline-dark:hover{border-color:var(--ink)}
+.btn-lg{font-size:1rem;padding:1rem 2.2rem}
+.link-red{color:var(--red);font-weight:600;font-size:.8rem;text-decoration:none;cursor:pointer;background:none;border:none;font-family:inherit}
+.link-red:hover{text-decoration:underline}
+.btn-sm{padding:.5rem 1rem;font-size:.76rem}
+/* ---------- Tryouts hub ---------- */
+.event-row{
+  display:flex;align-items:stretch;background:var(--card);border-radius:12px;overflow:hidden;
+  margin-top:1rem;box-shadow:0 18px 40px rgba(3,7,20,.45);color:var(--ink);
+}
+.event-date{
+  background:var(--navy-deep);color:#fff;min-width:88px;display:flex;flex-direction:column;
+  justify-content:center;align-items:center;padding:1rem .7rem;flex-shrink:0;
+}
+.ed-month{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.22em;font-size:.66rem;font-weight:600;color:#c6cde0}
+.ed-day{font-family:'Oswald',Arial,sans-serif;font-weight:700;font-size:1.9rem;line-height:1.1}
+.event-body{flex:1;padding:1rem 1.2rem;display:flex;flex-direction:column;justify-content:center;gap:.35rem}
+.event-title{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;font-weight:700;font-size:1.08rem;letter-spacing:.03em;color:var(--ink);display:flex;align-items:center;gap:.55rem;flex-wrap:wrap}
+.event-sub{font-size:.84rem;color:var(--muted)}
+.event-cta{display:flex;align-items:center;padding-right:1.1rem}
+@media (max-width:640px){
+  .event-row{flex-wrap:wrap}
+  .event-cta{width:100%;padding:0 1.2rem 1.1rem}
+  .event-cta .btn{width:100%}
+}
+
+/* ---------- Cards ---------- */
+.card{background:var(--card);border-radius:12px;color:var(--ink);box-shadow:0 18px 40px rgba(3,7,20,.45);overflow:hidden}
+.card-pad{padding:1.8rem 1.8rem}
+.pill{
+  display:inline-block;font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;
+  letter-spacing:.1em;font-size:.66rem;font-weight:600;
+  padding:.28rem .65rem;border-radius:999px;white-space:nowrap;
+}
+.pill-green{background:var(--green-bg);color:var(--green)}
+.pill-red{background:#f8e3e6;color:var(--red)}
+.pill-blue{background:#e2eef7;color:#2d6f96}
+.pill-navy{background:#e8ebf4;color:var(--navy-deep)}
+
+/* ---------- Landing hero ---------- */
+.hero{text-align:center;padding:2.6rem 1rem 1.4rem}
+.hero .page-title{font-size:2.9rem}
+.hero .title-rule{margin:1rem auto 0}
+.hero-detail{
+  display:flex;gap:.8rem;justify-content:center;flex-wrap:wrap;margin-top:1.4rem;
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.12em;font-size:.76rem;color:#c6cde0;font-weight:600;
+}
+.hero-detail span{display:flex;align-items:center;gap:.4rem}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--red);display:inline-block}
+.price-strip{display:flex;gap:.7rem;justify-content:center;flex-wrap:wrap;margin-top:1.6rem}
+.price-chip{
+  background:var(--card);border-radius:10px;padding:.8rem 1.25rem;text-align:center;min-width:150px;
+  box-shadow:0 14px 32px rgba(3,7,20,.45);color:var(--ink);
+}
+.pc-name{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.14em;font-size:.66rem;font-weight:600;color:var(--muted)}
+.pc-amt{font-family:'Oswald',Arial,sans-serif;font-weight:700;font-size:1.45rem;color:var(--navy-deep);margin-top:.2rem}
+@media (max-width:640px){
+  .price-chip{min-width:0;flex:1;padding:.7rem .8rem}
+}
+
+/* ---------- Chevron step banner ---------- */
+.steps{display:flex;gap:6px;margin:1.8rem 0 1.4rem;flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px}
+.step-chev{
+  flex:1;min-width:88px;position:relative;
+  clip-path:polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%, 14px 50%);
+  background:#1b2444;color:#91a1c4;
+  padding:.6rem 1.3rem .6rem 1.4rem;
+}
+.step-chev:first-child{clip-path:polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%)}
+.step-num{font-family:'Oswald',Arial,sans-serif;font-size:.58rem;letter-spacing:.2em;font-weight:600;opacity:.75}
+.step-name{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;font-weight:600;font-size:.78rem;letter-spacing:.06em;margin-top:.1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.step-chev.done{background:#232f57;color:#c3cdea;cursor:pointer}
+.step-chev.done:hover{background:#2c3a6b;color:#fff}
+.step-chev.done:focus-visible{outline:3px solid var(--powder);outline-offset:2px}
+.step-chev.active{background:var(--red);color:#fff;box-shadow:0 8px 22px rgba(0,0,0,.35)}
+.step-chev.done .step-num::after{content:" ✓"}
+
+/* ---------- Form panels ---------- */
+.step-panel{padding:1.8rem 1.8rem 1.6rem}
+.step-q{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;font-weight:600;font-size:1.3rem;color:var(--ink);letter-spacing:.02em}
+.step-help{color:var(--muted);font-size:.9rem;margin-top:.4rem}
+.wizard-nav{display:flex;justify-content:space-between;align-items:center;padding:1.1rem 1.8rem;background:var(--row-alt);border-top:1px solid var(--line);gap:1rem;flex-wrap:wrap}
+.nav-price{font-family:'Oswald',Arial,sans-serif;font-weight:700;font-size:1.1rem;color:var(--navy-deep)}
+.nav-price small{font-family:'Inter',Arial,sans-serif;font-weight:500;font-size:.72rem;color:var(--muted);display:block;letter-spacing:.08em;text-transform:uppercase}
+
+.choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:.9rem;margin-top:1.4rem}
+.choice-card{
+  border:2px solid var(--line);border-radius:12px;padding:1.1rem 1.1rem;cursor:pointer;
+  transition:all .15s ease;background:#fff;text-align:left;font-family:inherit;width:100%;
+}
+.choice-card:hover{border-color:#b7c0d6;transform:translateY(-2px)}
+.choice-card.selected{border-color:var(--red);box-shadow:0 0 0 3px rgba(185,30,45,.16)}
+.choice-card .c-title{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;font-weight:700;font-size:1.02rem;color:var(--ink);letter-spacing:.03em}
+.choice-card .c-desc{color:var(--muted);font-size:.82rem;margin-top:.3rem}
+.choice-card .c-price{font-family:'Oswald',Arial,sans-serif;font-weight:700;font-size:1.1rem;color:var(--red);margin-top:.4rem}
+
+.section-head{
+  background:var(--navy-deep);color:#fff;padding:.6rem 1rem;border-radius:8px 8px 0 0;
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.12em;font-size:.74rem;font-weight:600;margin-top:1.5rem;
+}
+.section-head.red{background:var(--red)}
+.section-body{border:1.5px solid var(--line);border-top:none;border-radius:0 0 8px 8px;padding:1.1rem 1.1rem 1.2rem}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:.9rem 1.1rem}
+.form-grid .full{grid-column:1 / -1}
+.field-label{display:block;font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.14em;font-size:.66rem;font-weight:600;color:var(--muted);margin-bottom:.35rem}
+.field-label .req{color:var(--red)}
+.field-tip{font-size:.76rem;color:var(--muted);font-style:italic;margin:-.1rem 0 .4rem}
+input[type=text],input[type=date],input[type=email],input[type=tel],select{
+  width:100%;padding:.68rem .8rem;border:1.5px solid #c9cfdd;border-radius:8px;
+  font-family:'Inter',Arial,sans-serif;font-size:.92rem;color:var(--ink);background:#fff;
+}
+input:focus,select:focus{outline:2px solid var(--powder);border-color:var(--powder)}
+input[disabled]{background:var(--row-alt);color:var(--muted)}
+input.invalid,select.invalid{border-color:var(--red);outline-color:var(--red)}
+
+.pos-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;margin-top:.3rem}
+.pos-check{
+  display:flex;align-items:center;gap:.45rem;border:1.5px solid #c9cfdd;border-radius:8px;
+  padding:.5rem .6rem;cursor:pointer;font-size:.85rem;font-weight:600;color:var(--ink);background:#fff;user-select:none;
+}
+.pos-check:hover{border-color:#b7c0d6}
+.pos-check.checked{border-color:var(--red);background:#fdf0f1;color:var(--red)}
+.pos-check input{display:none}
+
+.reveal-parent{
+  border:2px dashed #c9cfdd;border-radius:10px;padding:1rem;text-align:center;margin-top:1.1rem;
+}
+.checkline{
+  display:flex;align-items:flex-start;gap:.6rem;background:#fdf0f1;border:1.5px solid #f0d3d7;
+  border-radius:8px;padding:.8rem .9rem;cursor:pointer;user-select:none;margin-bottom:1rem;
+}
+.checkline input{width:18px;height:18px;margin-top:.1rem;accent-color:var(--red);cursor:pointer}
+.checkline span{font-size:.88rem;font-weight:600;color:var(--ink)}
+.waiver-doc{border:1.5px solid var(--line);border-radius:10px;overflow:hidden;margin-top:1.1rem}
+.waiver-doc-body{max-height:180px;overflow-y:auto;padding:1rem 1.1rem;font-size:.86rem;line-height:1.65;color:var(--ink);background:var(--row-alt)}
+
+/* ---------- Review & confirm ---------- */
+.review-grid{display:grid;grid-template-columns:170px 1fr;gap:.35rem 1.3rem;margin-top:1.3rem;font-size:.9rem}
+.review-grid dt{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.12em;font-size:.66rem;font-weight:600;color:var(--muted);padding-top:.35rem}
+.review-grid dd{color:var(--ink);padding:.25rem 0;border-bottom:1px solid var(--line)}
+.total-row{
+  display:flex;justify-content:space-between;align-items:center;margin-top:1.3rem;
+  background:var(--row-alt);border:1.5px solid var(--line);border-radius:10px;padding:1rem 1.2rem;
+}
+.total-row .t-label{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.14em;font-size:.72rem;font-weight:600;color:var(--muted)}
+.total-row .t-amt{font-family:'Oswald',Arial,sans-serif;font-weight:700;font-size:1.6rem;color:var(--navy-deep)}
+.confirm-hero{text-align:center;padding:2.8rem 1.6rem 2.4rem}
+.confirm-check{
+  width:64px;height:64px;border-radius:50%;background:var(--green-bg);color:var(--green);
+  display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin:0 auto 1.2rem;font-weight:700;
+}
+.confirm-box{
+  background:var(--row-alt);border:1.5px solid var(--line);border-radius:10px;
+  padding:1.1rem 1.3rem;margin:1.4rem auto 0;max-width:520px;text-align:left;font-size:.9rem;
+}
+.confirm-box .cb-row{display:flex;justify-content:space-between;gap:1rem;padding:.3rem 0}
+.confirm-box .cb-row b{color:var(--ink)}
+.confirm-code{font-family:monospace;font-size:.78rem;color:var(--muted);margin-top:.9rem;word-break:break-all}
+.org-message{
+  background:#fdf0f1;border:1.5px solid #f0d3d7;border-left:5px solid var(--red);border-radius:10px;
+  padding:1rem 1.2rem;margin:1.2rem auto 0;max-width:520px;text-align:left;
+}
+.org-message .om-label{
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.16em;
+  font-size:.64rem;font-weight:600;color:var(--red);margin-bottom:.45rem;
+}
+.org-message .om-text{font-size:.9rem;line-height:1.65;color:var(--ink)}
+
+/* ---------- Misc ---------- */
+.view{display:none}
+.view.active{display:block}
+.mt-1{margin-top:.6rem}.mt-2{margin-top:1.2rem}.mt-3{margin-top:2rem}
+.toast{
+  position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--navy-deep);color:#fff;padding:.8rem 1.4rem;border-radius:10px;font-size:.88rem;
+  opacity:0;pointer-events:none;transition:all .25s ease;z-index:99;border:1px solid rgba(255,255,255,.15);max-width:90vw;text-align:center;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (max-width:640px){
+  .hero .page-title{font-size:2.1rem}
+  .page{padding:1.4rem .9rem 4rem}
+  .step-panel{padding:1.3rem 1rem}
+  .wizard-nav{padding:1rem}
+  .choice-grid,.form-grid{grid-template-columns:1fr}
+  .pos-grid{grid-template-columns:repeat(3,1fr)}
+  .review-grid{grid-template-columns:1fr}
+  .review-grid dt{padding-top:.7rem}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="brand">
+    <div class="brand-logo">CB<b>U</b></div>
+    <div class="brand-divider"></div>
+    <div class="brand-label">Tryout Registration</div>
+  </div>
+  <div class="nav-status"><span class="pill pill-green">Open for Signups</span></div>
+</nav>
+
+<!-- ============ VIEW: TRYOUTS HUB ============ -->
+<div class="view active" id="view-tryouts">
+  <div class="page" style="max-width:920px">
+    <div class="hero" style="padding-bottom:.6rem">
+      <div class="eyebrow">CBU Baseball · #RedHatNation</div>
+      <h1 class="page-title display">Upcoming Tryouts</h1>
+      <div class="title-rule"></div>
+      <p class="page-sub" style="margin:1.2rem auto 0">Pick your tryout below to view details and register.</p>
+    </div>
+    <div id="tryout-list"></div>
+  </div>
+</div>
+
+<!-- ============ VIEW: LANDING (individual tryout) ============ -->
+<div class="view" id="view-landing">
+  <div class="page">
+    <button class="link-red" onclick="showView('view-tryouts')" style="color:#e58a95">&larr; All tryouts</button>
+    <div class="hero" style="padding-top:1.6rem">
+      <div class="eyebrow">CBU Baseball · #RedHatNation</div>
+      <h1 class="page-title display" id="lt-title"></h1>
+      <div class="title-rule"></div>
+      <div class="hero-detail">
+        <span><span class="dot"></span> <span id="lt-type"></span> Tryout</span>
+        <span><span class="dot"></span> <span id="lt-close"></span></span>
+      </div>
+      <p class="page-sub" style="margin:1.3rem auto 0">
+        Register below to reserve your tryout spot. Pick what you're trying out for,
+        complete the player and parent information, and pay to lock it in.
+      </p>
+      <div class="price-strip" id="lt-prices"></div>
+      <div class="mt-3">
+        <button class="btn btn-primary btn-lg" onclick="startFlow()">Register Now &rarr;</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ VIEW: FLOW ============ -->
+<div class="view" id="view-flow">
+  <div class="page">
+    <button class="link-red" onclick="showView('view-landing')" style="color:#e58a95">&larr; Back to tryout details</button>
+    <div style="margin-top:.7rem">
+      <div class="eyebrow" id="fl-eyebrow"></div>
+      <h1 class="page-title display" style="font-size:1.9rem">Player Registration</h1>
+    </div>
+
+    <div class="steps" id="step-banner"></div>
+
+    <div class="card">
+      <div class="step-panel" id="step-panel"></div>
+      <div class="wizard-nav">
+        <button class="btn btn-outline-dark" id="btn-back" onclick="flowBack()">&larr; Back</button>
+        <div style="display:flex;align-items:center;gap:1.2rem">
+          <div class="nav-price" id="nav-price" style="display:none"></div>
+          <button class="btn btn-primary" id="btn-next" onclick="flowNext()">Continue &rarr;</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ VIEW: CONFIRMATION ============ -->
+<div class="view" id="view-confirm">
+  <div class="page" style="max-width:720px">
+    <div class="card">
+      <div class="confirm-hero">
+        <span class="pill pill-green">Confirmed</span>
+        <h1 class="step-q display" style="font-size:1.7rem;margin-top:.8rem">Your Registration Is Confirmed</h1>
+        <p class="step-help" style="margin:.7rem auto 0" id="confirm-msg"></p>
+        <div class="confirm-box" id="confirm-box"></div>
+        <div id="confirm-org-message"></div>
+        <p class="step-help" style="margin-top:1.2rem">Payment received by CBU. Save or print this page as your confirmation.</p>
+        <div class="confirm-code" id="confirm-code"></div>
+        <div class="mt-3">
+          <button class="btn btn-outline-dark" onclick="window.print()">Print Confirmation</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =====================================================
+   REGISTRATION DATA (mock — wired to the org's setup)
+===================================================== */
+const POSITION_CHOICES = ['RHP','LHP','1B','2B','3B','SS','C','CF','RF','LF','UTL','Switch Pitcher'];
+
+/* Tryouts published by the org — the hub lists these; each links to its own page. */
+const TRYOUTS = [
+  { id:'tampa', name:'Tampa Fall Tryout', type:'High School', typePill:'pill-red',
+    month:'SEP', day:'26', closesLine:'Registration closes Sep 26, 2026',
+    message:'Thanks for registering with CBU! Please arrive 30 minutes early to check in. Bring your own bat, glove, and helmet — catchers bring full gear. Questions? Email tryouts@cbubaseball.com.',
+    tickets:[ {name:'2027 Team'}, {name:'2028 Team'}, {name:'2029 Team'}, {name:'2030 Team'} ],
+    subsections:[
+      { name:'Position Player',           desc:'Field and hit — full position evaluation.',        price:50 },
+      { name:'Pitcher Only',              desc:'Bullpen and mound work only.',                     price:40 },
+      { name:'Position Player & Pitcher', desc:'Full position evaluation plus a bullpen session.', price:60 }
+    ] },
+  { id:'jax', name:'Jacksonville Fall Tryout', type:'Youth', typePill:'pill-blue',
+    month:'SEP', day:'28', closesLine:'Registration closes Sep 28, 2026',
+    message:'',
+    tickets:[
+      {name:'8U', price:25}, {name:'9U', price:25}, {name:'10U', price:25},
+      {name:'11U', price:30}, {name:'12U', price:30},
+      {name:'13U', price:35}, {name:'14U', price:35}
+    ],
+    subsections:null }
+];
+let currentTryout = TRYOUTS[0];
+
+const STEPS = ['Ticket','Player','Parent','Contact','Waivers','Review'];
+
+/* Waivers included on this registration — must be agreed to before payment. */
+const WAIVERS = [
+  { title:'Liability Release & Medical Authorization',
+    body:'I, the undersigned parent/guardian, release CBU Baseball, its coaches, staff, and facility partners from liability for injuries sustained during tryout activities. I acknowledge that baseball involves inherent risks, including the risk of serious injury. I authorize CBU staff to obtain emergency medical treatment for my player if a parent/guardian cannot be reached, and I accept financial responsibility for any such treatment.' },
+  { title:'Photo & Video Release',
+    body:'I grant CBU Baseball permission to use photos and video of my player taken at tryouts and events for team and organizational media, including the CBU website and social channels. No compensation will be provided for such use. I understand I may revoke this permission in writing at any time.' }
+];
+
+let reg = null;
+
+/* =====================================================
+   VIEWS & HELPERS
+===================================================== */
+function showView(id){
+  document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('active'); });
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._h);
+  t._h = setTimeout(function(){ t.classList.remove('show'); }, 2600);
+}
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escAttr(s){ return esc(s).replace(/"/g,'&quot;'); }
+function val(id){ const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+function money(n){ return '$'+Number(n).toFixed(2); }
+
+/* =====================================================
+   TRYOUTS HUB & LANDING
+===================================================== */
+function renderTryoutList(){
+  const el = document.getElementById('tryout-list');
+  el.innerHTML = TRYOUTS.map(function(t){
+    return '<div class="event-row">' +
+      '<div class="event-date"><div class="ed-month">'+esc(t.month)+'</div><div class="ed-day">'+esc(t.day)+'</div></div>' +
+      '<div class="event-body">' +
+        '<div class="event-title">'+esc(t.name)+' <span class="pill '+t.typePill+'">'+esc(t.type)+'</span> <span class="pill pill-green">Open</span></div>' +
+        '<div class="event-sub">'+esc(t.closesLine)+'</div>' +
+      '</div>' +
+      '<div class="event-cta"><button class="btn btn-primary btn-sm" onclick="openTryout(\''+t.id+'\')">View &amp; Register &rarr;</button></div>' +
+    '</div>';
+  }).join('');
+}
+function openTryout(id){
+  currentTryout = TRYOUTS.find(function(t){ return t.id === id; }) || TRYOUTS[0];
+  renderLanding();
+  showView('view-landing');
+}
+function renderLanding(){
+  const t = currentTryout;
+  document.getElementById('lt-title').textContent = t.name;
+  document.getElementById('lt-type').textContent = t.type;
+  document.getElementById('lt-close').textContent = t.closesLine;
+  let chips;
+  if(t.subsections){
+    chips = t.subsections.map(function(s){
+      return '<div class="price-chip"><div class="pc-name">'+esc(s.name)+'</div><div class="pc-amt">'+money(s.price)+'</div></div>';
+    }).join('');
+  } else {
+    /* Group age-group tickets by price */
+    const groups = {}, order = [];
+    t.tickets.forEach(function(tk){
+      if(!groups[tk.price]){ groups[tk.price] = []; order.push(tk.price); }
+      groups[tk.price].push(tk.name);
+    });
+    chips = order.map(function(p){
+      return '<div class="price-chip"><div class="pc-name">'+esc(groups[p].join(' · '))+'</div><div class="pc-amt">'+money(p)+'</div></div>';
+    }).join('');
+  }
+  document.getElementById('lt-prices').innerHTML = chips;
+}
+
+/* =====================================================
+   FLOW
+===================================================== */
+function startFlow(){
+  reg = {
+    step:0,
+    ticket:null, sub:null,
+    player:{ first:'', last:'', birthdate:'', pos1:'', pos2:[] },
+    parent1:{ first:'', last:'', phone:'', email:'' },
+    parent2Shown:false,
+    parent2:{ first:'', last:'', phone:'', email:'' },
+    useP1:false, useP2:false,
+    contacts:[],
+    contact:{ first:'', last:'', email:'', phone:'' },
+    waiversAgreed:{}
+  };
+  document.getElementById('fl-eyebrow').textContent = currentTryout.name;
+  renderFlow();
+  showView('view-flow');
+}
+function currentPrice(){
+  if(currentTryout.subsections){
+    if(!reg.sub) return null;
+    const s = currentTryout.subsections.find(function(x){ return x.name === reg.sub; });
+    return s ? s.price : null;
+  }
+  if(!reg.ticket) return null;
+  const tk = currentTryout.tickets.find(function(x){ return x.name === reg.ticket; });
+  return tk && typeof tk.price === 'number' ? tk.price : null;
+}
+function renderFlow(){
+  renderStepBanner();
+  renderStepPanel();
+  const back = document.getElementById('btn-back');
+  const next = document.getElementById('btn-next');
+  back.style.visibility = reg.step === 0 ? 'hidden' : 'visible';
+  const price = currentPrice();
+  const priceEl = document.getElementById('nav-price');
+  if(price !== null){
+    priceEl.style.display = 'block';
+    priceEl.innerHTML = '<small>Your Fee</small>'+money(price);
+  } else {
+    priceEl.style.display = 'none';
+  }
+  next.textContent = reg.step === STEPS.length-1
+    ? 'Pay '+(price !== null ? money(price) : '')+' & Complete'
+    : 'Continue →';
+}
+function renderStepBanner(){
+  const el = document.getElementById('step-banner');
+  el.innerHTML = STEPS.map(function(s,i){
+    let cls = 'step-chev';
+    if(i < reg.step) cls += ' done';
+    if(i === reg.step) cls += ' active';
+    const click = i < reg.step ? ' onclick="goToStep('+i+')" role="button" tabindex="0" title="Go back to '+s+'" onkeydown="if(event.key===\'Enter\')goToStep('+i+')"' : '';
+    return '<div class="'+cls+'"'+click+'><div class="step-num">Step '+(i+1)+'</div><div class="step-name">'+s+'</div></div>';
+  }).join('');
+}
+function goToStep(i){
+  if(i >= reg.step) return;
+  captureStep();
+  reg.step = i;
+  renderFlow();
+}
+function flowBack(){
+  if(reg.step > 0){ captureStep(); reg.step--; renderFlow(); }
+}
+function flowNext(){
+  captureStep();
+  if(!validateStep()) return;
+  if(reg.step === STEPS.length-1){ completeRegistration(); return; }
+  reg.step++;
+  renderFlow();
+}
+
+/* Pull current inputs into state before leaving a step */
+function captureStep(){
+  switch(reg.step){
+    case 1:
+      reg.player.first = val('p-first');
+      reg.player.last = val('p-last');
+      reg.player.birthdate = val('p-bday');
+      reg.player.pos1 = val('p-pos1');
+      break;
+    case 2:
+      reg.parent1 = { first:val('g1-first'), last:val('g1-last'), phone:val('g1-phone'), email:val('g1-email') };
+      if(reg.parent2Shown){
+        reg.parent2 = { first:val('g2-first'), last:val('g2-last'), phone:val('g2-phone'), email:val('g2-email') };
+      }
+      break;
+    case 3:
+      if(!reg.useP1 && !reg.useP2){
+        reg.contact = { first:val('c-first'), last:val('c-last'), email:val('c-email'), phone:val('c-phone') };
+      }
+      break;
+  }
+}
+function markInvalid(id){
+  const el = document.getElementById(id);
+  if(el){ el.classList.add('invalid'); el.focus(); }
+}
+function validateStep(){
+  switch(reg.step){
+    case 0:
+      if(!reg.ticket){ toast(currentTryout.subsections ? 'Choose which team you\'re trying out for' : 'Choose your age group'); return false; }
+      if(currentTryout.subsections && !reg.sub){ toast('Choose your tryout type to see your fee'); return false; }
+      return true;
+    case 1:
+      if(!reg.player.first){ toast('Enter the player\'s first name'); markInvalid('p-first'); return false; }
+      if(!reg.player.last){ toast('Enter the player\'s last name'); markInvalid('p-last'); return false; }
+      if(!reg.player.birthdate){ toast('Enter the player\'s birthdate'); markInvalid('p-bday'); return false; }
+      if(!reg.player.pos1){ toast('Choose a primary position'); markInvalid('p-pos1'); return false; }
+      return true;
+    case 2:
+      if(!reg.parent1.first){ toast('Enter Parent/Guardian 1\'s first name'); markInvalid('g1-first'); return false; }
+      if(!reg.parent1.last){ toast('Enter Parent/Guardian 1\'s last name'); markInvalid('g1-last'); return false; }
+      if(!reg.parent1.phone){ toast('Enter Parent/Guardian 1\'s phone'); markInvalid('g1-phone'); return false; }
+      if(!reg.parent1.email){ toast('Enter Parent/Guardian 1\'s email'); markInvalid('g1-email'); return false; }
+      return true;
+    case 3:
+      reg.contacts = [];
+      if(reg.useP1) reg.contacts.push({ first:reg.parent1.first, last:reg.parent1.last, email:reg.parent1.email, phone:reg.parent1.phone, label:'Parent 1' });
+      if(reg.useP2) reg.contacts.push({ first:reg.parent2.first, last:reg.parent2.last, email:reg.parent2.email, phone:reg.parent2.phone, label:'Parent 2' });
+      if(reg.contacts.length) return true;
+      if(!reg.contact.first){ toast('Enter a first name for the post-tryout contact'); markInvalid('c-first'); return false; }
+      if(!reg.contact.last){ toast('Enter a last name for the post-tryout contact'); markInvalid('c-last'); return false; }
+      if(!reg.contact.email){ toast('Enter a post-tryout email'); markInvalid('c-email'); return false; }
+      if(!reg.contact.phone){ toast('Enter a post-tryout phone'); markInvalid('c-phone'); return false; }
+      reg.contacts = [{ first:reg.contact.first, last:reg.contact.last, email:reg.contact.email, phone:reg.contact.phone, label:'' }];
+      return true;
+    case 4:
+      for(let i=0;i<WAIVERS.length;i++){
+        if(!reg.waiversAgreed[WAIVERS[i].title]){
+          toast('Please read and agree to the '+WAIVERS[i].title+' to continue');
+          return false;
+        }
+      }
+      return true;
+  }
+  return true;
+}
+
+function renderStepPanel(){
+  const p = document.getElementById('step-panel');
+  switch(reg.step){
+    case 0: p.innerHTML = stepTicket(); break;
+    case 1: p.innerHTML = stepPlayer(); break;
+    case 2: p.innerHTML = stepParent(); break;
+    case 3: p.innerHTML = stepContact(); break;
+    case 4: p.innerHTML = stepWaivers(); break;
+    case 5: p.innerHTML = stepReview(); break;
+  }
+}
+
+/* ---- Step 1: ticket & subsection ---- */
+function stepTicket(){
+  const t = currentTryout;
+  const hasSubs = !!t.subsections;
+  const ticketCards = t.tickets.map(function(tk){
+    const sel = reg.ticket === tk.name ? ' selected' : '';
+    return '<button class="choice-card'+sel+'" onclick="pickTicket(\''+escAttr(tk.name)+'\')">' +
+      '<div class="c-title">'+esc(tk.name)+'</div>' +
+      '<div class="c-desc">'+(hasSubs ? 'Trying out for the '+esc(tk.name) : esc(tk.name)+' age group')+'</div>' +
+      (hasSubs ? '' : '<div class="c-price">'+money(tk.price)+'</div>') +
+    '</button>';
+  }).join('');
+  let html = '' +
+  '<div class="step-q display">What are you trying out for?</div>' +
+  '<p class="step-help">'+(hasSubs
+    ? 'Pick your team, then choose your tryout type — your type sets your registration fee.'
+    : 'Pick your age group — your age group sets your registration fee.')+'</p>' +
+  '<div class="choice-grid'+(hasSubs ? '' : '" style="grid-template-columns:repeat(3,1fr)')+'">'+ticketCards+'</div>';
+  if(hasSubs && reg.ticket){
+    const subCards = t.subsections.map(function(s){
+      const sel = reg.sub === s.name ? ' selected' : '';
+      return '<button class="choice-card'+sel+'" onclick="pickSub(\''+escAttr(s.name)+'\')">' +
+        '<div class="c-title">'+esc(s.name)+'</div>' +
+        '<div class="c-desc">'+esc(s.desc)+'</div>' +
+        '<div class="c-price">'+money(s.price)+'</div>' +
+      '</button>';
+    }).join('');
+    html += '<div class="step-q display" style="font-size:1rem;margin-top:1.6rem">Tryout Type — '+esc(reg.ticket)+'</div>' +
+      '<div class="choice-grid" style="grid-template-columns:repeat(3,1fr)">'+subCards+'</div>';
+  }
+  return html;
+}
+function pickTicket(name){
+  reg.ticket = name;
+  renderFlow();
+}
+function pickSub(name){
+  reg.sub = name;
+  renderFlow();
+}
+
+/* ---- Step 2: player information ---- */
+function stepPlayer(){
+  const posOpts = '<option value="">Select...</option>' + POSITION_CHOICES.map(function(p){
+    return '<option'+(reg.player.pos1===p?' selected':'')+'>'+p+'</option>';
+  }).join('');
+  const posChecks = POSITION_CHOICES.map(function(p){
+    const on = reg.player.pos2.indexOf(p) !== -1;
+    return '<label class="pos-check'+(on?' checked':'')+'"><input type="checkbox" '+(on?'checked':'')+' onchange="toggleSecondary(\''+escAttr(p)+'\', this)">'+esc(p)+'</label>';
+  }).join('');
+  return '' +
+  '<div class="step-q display">Player Information</div>' +
+  '<div class="section-head">Player Information</div>' +
+  '<div class="section-body">' +
+    '<div class="form-grid">' +
+      '<div><label class="field-label" for="p-first">First Name <span class="req">*</span></label><input type="text" id="p-first" value="'+escAttr(reg.player.first)+'"></div>' +
+      '<div><label class="field-label" for="p-last">Last Name <span class="req">*</span></label><input type="text" id="p-last" value="'+escAttr(reg.player.last)+'"></div>' +
+      '<div><label class="field-label" for="p-bday">Birthdate <span class="req">*</span></label><input type="date" id="p-bday" value="'+escAttr(reg.player.birthdate)+'"></div>' +
+      '<div><label class="field-label" for="p-pos1">Primary Position <span class="req">*</span></label><select id="p-pos1">'+posOpts+'</select></div>' +
+      '<div class="full"><label class="field-label">Secondary Positions</label>' +
+        '<p class="field-tip">Click all positions you play</p>' +
+        '<div class="pos-grid">'+posChecks+'</div>' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+}
+function toggleSecondary(pos, el){
+  const i = reg.player.pos2.indexOf(pos);
+  if(i === -1) reg.player.pos2.push(pos); else reg.player.pos2.splice(i,1);
+  el.parentNode.classList.toggle('checked', i === -1);
+}
+
+/* ---- Step 3: parent/guardian ---- */
+function stepParent(){
+  let html = '' +
+  '<div class="step-q display">Parent/Guardian Contact</div>' +
+  '<div class="section-head">Parent/Guardian 1</div>' +
+  '<div class="section-body">' +
+    '<div class="form-grid">' +
+      '<div><label class="field-label" for="g1-first">First Name <span class="req">*</span></label><input type="text" id="g1-first" value="'+escAttr(reg.parent1.first)+'"></div>' +
+      '<div><label class="field-label" for="g1-last">Last Name <span class="req">*</span></label><input type="text" id="g1-last" value="'+escAttr(reg.parent1.last)+'"></div>' +
+      '<div><label class="field-label" for="g1-phone">Phone <span class="req">*</span></label><input type="tel" id="g1-phone" placeholder="(813) 555-0123" value="'+escAttr(reg.parent1.phone)+'"></div>' +
+      '<div><label class="field-label" for="g1-email">Email <span class="req">*</span></label><input type="email" id="g1-email" placeholder="name@email.com" value="'+escAttr(reg.parent1.email)+'"></div>' +
+    '</div>' +
+  '</div>';
+  if(!reg.parent2Shown){
+    html += '<div class="reveal-parent">' +
+      '<p class="step-help" style="margin-bottom:.8rem">Do you want another parent added with their contact information?</p>' +
+      '<button class="btn btn-outline-dark" onclick="showParent2()">+ Add Parent/Guardian 2</button>' +
+    '</div>';
+  } else {
+    html += '<div class="section-head" style="display:flex;justify-content:space-between;align-items:center">Parent/Guardian 2 <button class="link-red" style="color:#f4b6be" onclick="hideParent2()">Remove</button></div>' +
+    '<div class="section-body">' +
+      '<div class="form-grid">' +
+        '<div><label class="field-label" for="g2-first">First Name</label><input type="text" id="g2-first" value="'+escAttr(reg.parent2.first)+'"></div>' +
+        '<div><label class="field-label" for="g2-last">Last Name</label><input type="text" id="g2-last" value="'+escAttr(reg.parent2.last)+'"></div>' +
+        '<div><label class="field-label" for="g2-phone">Phone</label><input type="tel" id="g2-phone" value="'+escAttr(reg.parent2.phone)+'"></div>' +
+        '<div><label class="field-label" for="g2-email">Email</label><input type="email" id="g2-email" value="'+escAttr(reg.parent2.email)+'"></div>' +
+      '</div>' +
+    '</div>';
+  }
+  return html;
+}
+function showParent2(){
+  captureStep();
+  reg.parent2Shown = true;
+  renderStepPanel();
+}
+function hideParent2(){
+  captureStep();
+  reg.parent2Shown = false;
+  reg.parent2 = { first:'', last:'', phone:'', email:'' };
+  renderStepPanel();
+}
+
+/* ---- Step 4: post tryout contact ---- */
+function stepContact(){
+  const hasP2 = reg.parent2Shown && (reg.parent2.first || reg.parent2.email || reg.parent2.phone);
+  const anyChecked = reg.useP1 || reg.useP2;
+  let html = '' +
+  '<div class="step-q display">Post Tryout Contact Info</div>' +
+  '<p class="step-help">This is who CBU contacts after the tryout with results and next steps. Check one or both parents, or enter someone else below.</p>' +
+  '<div class="section-head red" style="margin-top:1.2rem">Post Tryout Contact Info</div>' +
+  '<div class="section-body">' +
+    '<label class="checkline"><input type="checkbox" '+(reg.useP1?'checked':'')+' onchange="toggleContactParent(\'p1\', this)">' +
+      '<span>Use same contact info as Parent/Guardian 1</span></label>' +
+    (hasP2
+      ? '<label class="checkline" style="background:#eef4fa;border-color:#cfe0ee"><input type="checkbox" '+(reg.useP2?'checked':'')+' onchange="toggleContactParent(\'p2\', this)" style="accent-color:var(--powder-dark)">' +
+        '<span>Use same contact info as Parent/Guardian 2</span></label>'
+      : '');
+  if(anyChecked){
+    html += '<div style="display:flex;flex-direction:column;gap:.5rem;margin-top:.2rem">';
+    if(reg.useP1) html += contactPreview(reg.parent1, 'Parent 1', 'pill-red');
+    if(reg.useP2) html += contactPreview(reg.parent2, 'Parent 2', 'pill-blue');
+    html += '</div>' +
+      '<p class="step-help" style="margin-top:.8rem;font-size:.78rem">Everyone listed above will receive post-tryout results and next steps.</p>';
+  } else {
+    html += '<div class="form-grid">' +
+      '<div><label class="field-label" for="c-first">First Name <span class="req">*</span></label>' +
+        '<input type="text" id="c-first" value="'+escAttr(reg.contact.first)+'"></div>' +
+      '<div><label class="field-label" for="c-last">Last Name <span class="req">*</span></label>' +
+        '<input type="text" id="c-last" value="'+escAttr(reg.contact.last)+'"></div>' +
+      '<div><label class="field-label" for="c-email">Email <span class="req">*</span></label>' +
+        '<input type="email" id="c-email" value="'+escAttr(reg.contact.email)+'"></div>' +
+      '<div><label class="field-label" for="c-phone">Phone <span class="req">*</span></label>' +
+        '<input type="tel" id="c-phone" value="'+escAttr(reg.contact.phone)+'"></div>' +
+    '</div>';
+  }
+  html += '</div>';
+  return html;
+}
+function contactPreview(p, label, pillCls){
+  return '<div style="display:flex;align-items:center;justify-content:space-between;gap:.8rem;background:var(--row-alt);border:1.5px solid var(--line);border-radius:8px;padding:.65rem .9rem;flex-wrap:wrap">' +
+    '<span style="font-weight:600;color:var(--ink);font-size:.9rem">'+esc(p.first+' '+p.last)+'</span>' +
+    '<span style="font-size:.82rem;color:var(--muted)">'+esc(p.email)+' · '+esc(p.phone)+'</span>' +
+    '<span class="pill '+pillCls+'">'+label+'</span>' +
+  '</div>';
+}
+function toggleContactParent(which, el){
+  if(which === 'p1') reg.useP1 = el.checked;
+  if(which === 'p2') reg.useP2 = el.checked;
+  captureContactIfManual();
+  renderStepPanel();
+}
+function captureContactIfManual(){
+  const f = document.getElementById('c-first');
+  if(f){
+    reg.contact = { first:val('c-first'), last:val('c-last'), email:val('c-email'), phone:val('c-phone') };
+  }
+}
+
+/* ---- Step 5: waivers ---- */
+function stepWaivers(){
+  let html = '' +
+  '<div class="step-q display">Waivers</div>' +
+  '<p class="step-help">Please read each waiver below. You must agree to all of them before you can pay and reserve your spot.</p>';
+  html += WAIVERS.map(function(wv,i){
+    const agreed = !!reg.waiversAgreed[wv.title];
+    return '<div class="waiver-doc">' +
+      '<div class="section-head red" style="margin-top:0;border-radius:0">'+esc(wv.title)+'</div>' +
+      '<div class="waiver-doc-body">'+esc(wv.body)+'</div>' +
+      '<div style="padding:.8rem .9rem;border-top:1px solid var(--line)">' +
+        '<label class="checkline" style="margin-bottom:0">' +
+          '<input type="checkbox" '+(agreed?'checked':'')+' onchange="agreeWaiver('+i+', this)">' +
+          '<span>I have read and agree to the '+esc(wv.title)+' <span style="color:var(--red)">*</span></span>' +
+        '</label>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+  html += '<p class="step-help" style="margin-top:1rem;font-size:.78rem">Your agreement is recorded with a date and time stamp when you complete payment.</p>';
+  return html;
+}
+function agreeWaiver(i, el){
+  reg.waiversAgreed[WAIVERS[i].title] = el.checked;
+}
+renderTryoutList();
+
+/* ---- Step 6: review & pay ---- */
+function stepReview(){
+  const price = currentPrice();
+  const p2 = reg.parent2Shown && (reg.parent2.first || reg.parent2.last)
+    ? esc(reg.parent2.first+' '+reg.parent2.last)+(reg.parent2.phone?' · '+esc(reg.parent2.phone):'')+(reg.parent2.email?' · '+esc(reg.parent2.email):'')
+    : null;
+  return '' +
+  '<div class="step-q display">Review &amp; Pay</div>' +
+  '<p class="step-help">Check everything below, then pay to reserve your tryout spot.</p>' +
+  '<dl class="review-grid">' +
+    '<dt>Player</dt><dd class="cell-strong"><strong>'+esc(reg.player.first+' '+reg.player.last)+'</strong></dd>' +
+    '<dt>Trying Out For</dt><dd><span class="pill pill-navy">'+esc(reg.ticket)+'</span>'+(reg.sub ? ' <span class="pill pill-blue">'+esc(reg.sub)+'</span>' : '')+'</dd>' +
+    '<dt>Birthdate</dt><dd>'+esc(reg.player.birthdate)+'</dd>' +
+    '<dt>Primary Position</dt><dd><span class="pill pill-navy">'+esc(reg.player.pos1)+'</span></dd>' +
+    '<dt>Secondary Positions</dt><dd>'+(reg.player.pos2.length ? esc(reg.player.pos2.join(' · ')) : '<span style="color:var(--muted)">None selected</span>')+'</dd>' +
+    '<dt>Parent/Guardian 1</dt><dd>'+esc(reg.parent1.first+' '+reg.parent1.last)+' · '+esc(reg.parent1.phone)+' · '+esc(reg.parent1.email)+'</dd>' +
+    (p2 ? '<dt>Parent/Guardian 2</dt><dd>'+p2+'</dd>' : '') +
+    '<dt>Post Tryout Contact'+(reg.contacts.length>1?'s':'')+'</dt><dd>'+reg.contacts.map(function(c){
+      return '<div style="margin:.2rem 0">'+esc(c.first+' '+c.last)+' · '+esc(c.email)+' · '+esc(c.phone)+
+        (c.label==='Parent 1'?' <span class="pill pill-red">Parent 1</span>':'')+
+        (c.label==='Parent 2'?' <span class="pill pill-blue">Parent 2</span>':'')+'</div>';
+    }).join('')+'</dd>' +
+    '<dt>Waivers</dt><dd>'+WAIVERS.map(function(wv){
+      return '<div style="margin:.2rem 0"><span class="pill pill-green">Agreed ✓</span> '+esc(wv.title)+'</div>';
+    }).join('')+'</dd>' +
+  '</dl>' +
+  '<div class="total-row"><span class="t-label">Registration Fee</span><span class="t-amt">'+money(price)+'</span></div>' +
+  '<p class="step-help" style="margin-top:.8rem;font-size:.78rem">Payment is processed securely. Your spot is reserved as soon as payment completes.</p>';
+}
+function completeRegistration(){
+  const price = currentPrice();
+  document.getElementById('confirm-msg').textContent =
+    reg.player.first+' '+reg.player.last+' has a tryout spot reserved.';
+  document.getElementById('confirm-box').innerHTML =
+    '<div class="cb-row"><span>Tryout</span><b>'+esc(currentTryout.name)+'</b></div>' +
+    '<div class="cb-row"><span>Trying Out For</span><b>'+esc(reg.ticket)+(reg.sub ? ' — '+esc(reg.sub) : '')+'</b></div>' +
+    '<div class="cb-row"><span>Player</span><b>'+esc(reg.player.first+' '+reg.player.last)+'</b></div>' +
+    '<div class="cb-row"><span>Fee Paid</span><b>'+money(price)+'</b></div>' +
+    '<div class="cb-row"><span>Results Sent To</span><b>'+esc(reg.contacts.map(function(c){ return c.first+' '+c.last+' ('+c.email+')'; }).join(', '))+'</b></div>' +
+    '<div class="cb-row"><span>Waivers Agreed</span><b>'+WAIVERS.length+' waiver'+(WAIVERS.length>1?'s':'')+' — '+new Date().toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'})+'</b></div>';
+  document.getElementById('confirm-org-message').innerHTML =
+    (currentTryout.message && currentTryout.message.trim())
+      ? '<div class="org-message"><div class="om-label">A Message From CBU Baseball</div>' +
+        '<div class="om-text">'+esc(currentTryout.message.trim())+'</div></div>'
+      : '';
+  document.getElementById('confirm-code').textContent =
+    'Confirmation: cbu_'+Math.random().toString(36).slice(2,10)+Math.random().toString(36).slice(2,10);
+  showView('view-confirm');
+}
+</script>
+</body>
+</html>

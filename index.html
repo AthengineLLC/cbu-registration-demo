@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CBU Registration Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy-bg:#0c1327;--navy-bg-2:#141d3a;--navy-deep:#0e1730;--card:#fff;
+  --red:#b91e2d;--red-dark:#8f1622;--powder:#6daed4;--ink:#16203c;--muted:#6b7590;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Inter',Arial,sans-serif;min-height:100vh;color:#eef1f8;
+  background:
+    radial-gradient(1200px 600px at 70% -10%, rgba(185,30,45,.12), transparent 60%),
+    linear-gradient(160deg,var(--navy-bg) 0%,var(--navy-bg-2) 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem 1rem;
+}
+.eyebrow{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.28em;font-size:.72rem;font-weight:600;color:var(--powder)}
+h1{font-family:'Oswald','Arial Narrow',Arial,sans-serif;text-transform:uppercase;font-weight:700;font-size:2.6rem;margin-top:.5rem;text-align:center}
+.rule{width:64px;height:4px;background:var(--red);margin:1rem auto 0;border-radius:2px}
+.sub{color:#aab3cc;font-size:.94rem;margin-top:1rem;text-align:center;max-width:520px}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-top:2.4rem;max-width:760px;width:100%}
+.card{
+  background:var(--card);border-radius:12px;color:var(--ink);padding:1.7rem 1.6rem;
+  box-shadow:0 18px 40px rgba(3,7,20,.45);text-decoration:none;display:block;
+  transition:transform .15s ease;
+}
+.card:hover{transform:translateY(-3px)}
+.pill{display:inline-block;font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.1em;font-size:.64rem;font-weight:600;padding:.28rem .65rem;border-radius:999px}
+.pill-red{background:#f8e3e6;color:var(--red)}
+.pill-blue{background:#e2eef7;color:#2d6f96}
+.card h2{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;font-weight:700;font-size:1.25rem;margin-top:.7rem;color:var(--navy-deep)}
+.card p{color:var(--muted);font-size:.86rem;margin-top:.5rem;line-height:1.55}
+.card .go{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.1em;font-size:.78rem;font-weight:600;color:var(--red);margin-top:1rem;display:inline-block}
+@media (max-width:680px){.cards{grid-template-columns:1fr}h1{font-size:2rem}}
+</style>
+</head>
+<body>
+  <div class="eyebrow">CBU Baseball · #RedHatNation</div>
+  <h1>Registration Demo</h1>
+  <div class="rule"></div>
+  <p class="sub">Clickable workflow demos for the registration system — the organization admin side and the parent-facing signup experience.</p>
+  <div class="cards">
+    <a class="card" href="admin.html">
+      <span class="pill pill-red">Admin</span>
+      <h2>Registration Management</h2>
+      <p>Create and edit registrations with the 10-step wizard, build templates and waivers, set pricing, view registrants, and message them with Comms.</p>
+      <span class="go">Open Admin Demo &rarr;</span>
+    </a>
+    <a class="card" href="registration.html">
+      <span class="pill pill-blue">Parent</span>
+      <h2>Player Registration</h2>
+      <p>The public experience: browse upcoming tryouts, open a tryout page, and register — tickets, player and parent info, waivers, and payment.</p>
+      <span class="go">Open Parent Demo &rarr;</span>
+    </a>
+  </div>
+</body>
+</html>

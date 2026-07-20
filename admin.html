@@ -1,0 +1,2515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CBU — Registration Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy-bg:#0c1327;
+  --navy-bg-2:#141d3a;
+  --navy-deep:#0e1730;
+  --navy-card:#111a33;
+  --card:#ffffff;
+  --row-alt:#f5f6fa;
+  --red:#b91e2d;
+  --red-dark:#8f1622;
+  --powder:#6daed4;
+  --powder-dark:#4d8fb6;
+  --ink:#16203c;
+  --muted:#6b7590;
+  --line:#e3e6ee;
+  --green:#1e7a44;
+  --green-bg:#e2f2e8;
+  --accent:var(--red);
+  --accent-dark:var(--red-dark);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Inter',-apple-system,'Segoe UI',Arial,sans-serif;
+  background:
+    radial-gradient(1200px 600px at 70% -10%, rgba(185,30,45,.12), transparent 60%),
+    linear-gradient(160deg,var(--navy-bg) 0%,var(--navy-bg-2) 100%);
+  background-attachment:fixed;
+  color:#eef1f8;
+  min-height:100vh;
+}
+.display{font-family:'Oswald','Arial Narrow',Arial,sans-serif;text-transform:uppercase;letter-spacing:.02em}
+.eyebrow{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.28em;font-size:.72rem;font-weight:600;color:var(--powder)}
+
+/* ---------- Top nav ---------- */
+.topnav{
+  position:sticky;top:0;z-index:50;
+  background:var(--navy-deep);
+  border-bottom:1px solid rgba(255,255,255,.07);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.85rem 2rem;
+}
+.brand{display:flex;align-items:center;gap:.9rem}
+.brand-logo{
+  font-family:'Oswald',Arial,sans-serif;font-weight:700;font-size:1.55rem;letter-spacing:.02em;
+  color:#fff;position:relative;line-height:1;
+}
+.brand-logo b{color:var(--red)}
+.brand-divider{width:1px;height:26px;background:rgba(255,255,255,.18)}
+.brand-label{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.2em;font-size:.78rem;color:#c6cde0;font-weight:600}
+.nav-user{display:flex;align-items:center;gap:.75rem;font-size:.8rem;color:#c6cde0}
+.nav-avatar{width:30px;height:30px;border-radius:50%;background:var(--red);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.75rem;color:#fff}
+
+/* ---------- Layout ---------- */
+.page{max-width:1120px;margin:0 auto;padding:2.4rem 2rem 5rem}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:1.2rem;margin-bottom:1.8rem}
+.page-title{font-size:2.5rem;font-weight:700;color:#fff;line-height:1.05}
+.page-title-sub{color:#aab3cc;font-size:.92rem;margin-top:.5rem;max-width:560px}
+.title-rule{width:64px;height:4px;background:var(--red);margin-top:.85rem;border-radius:2px}
+
+/* ---------- Buttons ---------- */
+.btn{
+  display:inline-flex;align-items:center;gap:.5rem;justify-content:center;
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.09em;
+  font-weight:600;font-size:.85rem;border-radius:8px;cursor:pointer;
+  padding:.72rem 1.35rem;border:2px solid transparent;transition:all .15s ease;
+  text-decoration:none;user-select:none;
+}
+.btn:focus-visible{outline:3px solid var(--powder);outline-offset:2px}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent-dark)}
+.btn-outline{background:transparent;color:#fff;border-color:rgba(255,255,255,.35)}
+.btn-outline:hover{border-color:#fff}
+.btn-outline-dark{background:transparent;color:var(--ink);border-color:#c6ccdb}
+.btn-outline-dark:hover{border-color:var(--ink)}
+.btn-ghost-red{background:transparent;color:var(--accent);border-color:var(--accent)}
+.btn-ghost-red:hover{background:var(--accent);color:#fff}
+.btn-sm{padding:.45rem .9rem;font-size:.74rem}
+.btn[disabled]{opacity:.4;cursor:not-allowed;pointer-events:none}
+@keyframes pulseRed{
+  0%,100%{box-shadow:0 0 0 0 rgba(185,30,45,.55);transform:scale(1)}
+  50%{box-shadow:0 0 0 12px rgba(185,30,45,0);transform:scale(1.03)}
+}
+@keyframes pulseBlue{
+  0%,100%{box-shadow:0 0 0 0 rgba(109,174,212,.6);transform:scale(1)}
+  50%{box-shadow:0 0 0 12px rgba(109,174,212,0);transform:scale(1.03)}
+}
+.btn-pulse-hs{background:var(--red);color:#fff;animation:pulseRed 1.6s ease-in-out infinite}
+.btn-pulse-hs:hover{background:var(--red-dark)}
+.btn-pulse-youth{background:var(--powder);color:#0c1327;animation:pulseBlue 1.6s ease-in-out infinite}
+.btn-pulse-youth:hover{background:var(--powder-dark);color:#fff}
+.btn-pulse-navy{background:var(--navy-deep);color:#fff;animation:pulseRed 1.6s ease-in-out infinite}
+.btn-pulse-navy:hover{background:#1b2444}
+
+/* ---------- Cards & tables ---------- */
+.card{background:var(--card);border-radius:12px;color:var(--ink);box-shadow:0 18px 40px rgba(3,7,20,.45);overflow:hidden}
+.card-pad{padding:1.8rem 2rem}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+thead th{
+  background:var(--navy-deep);color:#fff;text-align:left;
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.12em;
+  font-size:.7rem;font-weight:600;padding:.85rem 1.1rem;white-space:nowrap;
+}
+tbody td{padding:.9rem 1.1rem;border-bottom:1px solid var(--line);vertical-align:middle}
+tbody tr:nth-child(even){background:var(--row-alt)}
+tbody tr:last-child td{border-bottom:none}
+.cell-strong{font-weight:600;color:var(--ink)}
+.cell-sub{font-size:.76rem;color:var(--muted);margin-top:.15rem}
+.pill{
+  display:inline-block;font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;
+  letter-spacing:.1em;font-size:.66rem;font-weight:600;
+  padding:.28rem .65rem;border-radius:999px;white-space:nowrap;
+}
+.pill-green{background:var(--green-bg);color:var(--green)}
+.pill-red{background:#f8e3e6;color:var(--red)}
+.pill-blue{background:#e2eef7;color:#2d6f96}
+.pill-navy{background:#e8ebf4;color:var(--navy-deep)}
+button.pill{border:none;cursor:pointer;font-family:'Oswald',Arial,sans-serif}
+button.pill:hover{filter:brightness(.9);box-shadow:0 0 0 2px rgba(22,32,60,.12)}
+.link-red{color:var(--red);font-weight:600;font-size:.8rem;text-decoration:none;cursor:pointer;background:none;border:none;font-family:inherit}
+.link-red:hover{text-decoration:underline}
+
+/* ---------- Chevron step banner (signature) ---------- */
+.steps{display:flex;gap:6px;margin:2rem 0 1.6rem;flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px}
+.step-chev{
+  flex:1;min-width:78px;position:relative;
+  clip-path:polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%, 14px 50%);
+  background:#1b2444;color:#91a1c4;
+  padding:.7rem 1.4rem .7rem 1.5rem;
+}
+.step-chev:first-child{clip-path:polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%)}
+.step-num{font-family:'Oswald',Arial,sans-serif;font-size:.62rem;letter-spacing:.22em;font-weight:600;opacity:.75}
+.step-name{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;font-weight:600;font-size:.82rem;letter-spacing:.06em;margin-top:.1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.step-chev.done{background:#232f57;color:#c3cdea;cursor:pointer}
+.step-chev.done:hover{background:#2c3a6b;color:#fff}
+.step-chev.done:focus-visible{outline:3px solid var(--powder);outline-offset:2px}
+.step-chev.active{background:var(--accent);color:#fff;box-shadow:0 8px 22px rgba(0,0,0,.35)}
+.step-chev.done .step-num::after{content:" ✓"}
+
+/* ---------- Wizard step content ---------- */
+.step-panel{padding:2.2rem 2.4rem 2rem}
+.step-q{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;font-weight:600;font-size:1.35rem;color:var(--ink);letter-spacing:.02em}
+.step-help{color:var(--muted);font-size:.9rem;margin-top:.4rem;max-width:640px}
+.choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.1rem;margin-top:1.6rem}
+.choice-card{
+  border:2px solid var(--line);border-radius:12px;padding:1.5rem 1.4rem;cursor:pointer;
+  transition:all .15s ease;background:#fff;text-align:left;font-family:inherit;width:100%;
+}
+.choice-card:hover{border-color:#b7c0d6;transform:translateY(-2px)}
+.choice-card.selected{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent)}
+.choice-card .c-title{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;font-weight:700;font-size:1.15rem;color:var(--ink);letter-spacing:.03em}
+.choice-card .c-desc{color:var(--muted);font-size:.85rem;margin-top:.4rem}
+.choice-card .c-tag{margin-bottom:.6rem}
+.reveal{margin-top:1.3rem;display:none}
+.reveal.open{display:block}
+.field-label{display:block;font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.14em;font-size:.68rem;font-weight:600;color:var(--muted);margin-bottom:.4rem}
+input[type=text],input[type=date],select,textarea{
+  width:100%;max-width:420px;padding:.65rem .8rem;border:1.5px solid #c9cfdd;border-radius:8px;
+  font-family:'Inter',Arial,sans-serif;font-size:.9rem;color:var(--ink);background:#fff;
+}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--powder);border-color:var(--powder)}
+.wizard-nav{display:flex;justify-content:space-between;align-items:center;padding:1.2rem 2.4rem;background:var(--row-alt);border-top:1px solid var(--line)}
+
+/* ---------- Step 4 template preview ---------- */
+.tmpl-banner{
+  display:flex;align-items:center;gap:.9rem;background:#eef4fa;border:1.5px solid #cfe0ee;
+  border-left:5px solid var(--powder-dark);border-radius:10px;padding:1rem 1.2rem;margin-top:1.4rem;
+}
+.tmpl-banner.hs{background:#fdf0f1;border-color:#f0d3d7;border-left-color:var(--red)}
+.tmpl-banner .t-title{font-weight:700;font-size:.95rem;color:var(--ink)}
+.tmpl-banner .t-sub{font-size:.82rem;color:var(--muted);margin-top:.15rem}
+.preview-section{border:1.5px solid var(--line);border-radius:10px;margin-top:1rem;overflow:hidden}
+.preview-section-head{
+  background:var(--navy-deep);color:#fff;padding:.55rem 1rem;
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.12em;font-size:.72rem;font-weight:600;
+}
+.preview-field{display:flex;align-items:center;justify-content:space-between;padding:.55rem 1rem;border-top:1px solid var(--line);font-size:.85rem}
+.preview-field:first-of-type{border-top:none}
+.pf-meta{display:flex;gap:.45rem;align-items:center}
+.empty-state{
+  border:2px dashed #c9cfdd;border-radius:12px;padding:2.4rem;text-align:center;margin-top:1.6rem;
+}
+.empty-state .e-title{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;font-weight:600;font-size:1.05rem;color:var(--ink)}
+.empty-state .e-sub{color:var(--muted);font-size:.88rem;margin:.5rem auto 1.3rem;max-width:460px}
+
+/* ---------- Tickets ---------- */
+.ticket-row{display:flex;gap:.7rem;margin-top:1.4rem;flex-wrap:wrap}
+.ticket-list{margin-top:1.4rem;display:flex;flex-direction:column;gap:.55rem;max-width:560px}
+.ticket-item{
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--row-alt);border:1.5px solid var(--line);border-radius:9px;padding:.65rem .95rem;
+}
+.ticket-item.dragging{opacity:.35;border-style:dashed}
+.ticket-item .drag-handle{color:#9aa3ba;font-size:1rem;letter-spacing:-1px;user-select:none;margin-right:.1rem;cursor:grab;padding:.15rem .25rem}
+.ticket-item .drag-handle:active{cursor:grabbing}
+.ticket-block{display:flex;flex-direction:column}
+.sub-list{margin:.45rem 0 .2rem 2.4rem;display:flex;flex-direction:column;gap:.4rem}
+.sub-item{
+  display:flex;align-items:center;justify-content:space-between;
+  background:#fff;border:1.5px solid var(--line);border-radius:8px;padding:.45rem .8rem;font-size:.85rem;
+}
+.sub-name{font-weight:600;color:var(--ink);display:flex;align-items:center;gap:.55rem}
+.sub-tick{width:7px;height:7px;border-radius:50%;background:var(--accent);opacity:.65;display:inline-block}
+.sub-add{margin:.5rem 0 .3rem 2.4rem}
+.link-sub{background:none;border:none;color:var(--muted);font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.1em;font-size:.68rem;font-weight:600;cursor:pointer;padding:.2rem 0}
+.link-sub:hover{color:var(--accent)}
+.price-list{margin-top:1.4rem;max-width:560px}
+.price-row{
+  display:flex;align-items:center;justify-content:space-between;gap:1rem;
+  background:var(--row-alt);border:1.5px solid var(--line);border-radius:9px;padding:.6rem .95rem;margin-top:.5rem;
+}
+.pr-label{font-weight:600;font-size:.9rem;color:var(--ink)}
+.price-input{display:flex;align-items:center;gap:.35rem;font-weight:700;color:var(--ink)}
+.price-input input{width:96px;max-width:96px;text-align:right;font-weight:600}
+.price-group{margin-top:1.3rem;max-width:560px;border:1.5px solid var(--line);border-radius:10px;overflow:hidden;padding:0 .8rem .8rem}
+.price-group .price-row{background:#fff}
+.price-group-head{
+  background:var(--navy-deep);color:#fff;margin:0 -0.8rem .3rem;padding:.55rem 1rem;
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.12em;font-size:.72rem;font-weight:600;
+}
+.ticket-name{font-weight:600;font-size:.92rem;color:var(--ink);display:flex;align-items:center;gap:.6rem}
+.ticket-badge{width:10px;height:10px;border-radius:2px;background:var(--accent);display:inline-block}
+.chip-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.8rem}
+.chip{
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.08em;font-size:.72rem;font-weight:600;
+  border:1.5px solid #c9cfdd;background:#fff;color:var(--ink);border-radius:999px;padding:.4rem .85rem;cursor:pointer;
+}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.chip[disabled]{opacity:.35;pointer-events:none}
+.remove-x{background:none;border:none;color:var(--red);font-weight:700;cursor:pointer;font-size:.95rem;padding:.2rem .4rem;font-family:inherit}
+.remove-x:hover{color:var(--red-dark)}
+
+/* ---------- Review ---------- */
+.review-grid{display:grid;grid-template-columns:180px 1fr;gap:.4rem 1.4rem;margin-top:1.5rem;font-size:.92rem;max-width:720px}
+.review-grid dt{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.12em;font-size:.68rem;font-weight:600;color:var(--muted);padding-top:.35rem}
+.review-grid dd{color:var(--ink);padding:.25rem 0;border-bottom:1px solid var(--line)}
+.confirm-hero{text-align:center;padding:3rem 2rem 2.4rem}
+.confirm-check{
+  width:64px;height:64px;border-radius:50%;background:var(--green-bg);color:var(--green);
+  display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin:0 auto 1.2rem;font-weight:700;
+}
+.link-box{
+  display:flex;align-items:center;gap:.7rem;justify-content:center;margin:1.6rem auto 0;max-width:560px;
+  background:var(--row-alt);border:1.5px solid var(--line);border-radius:10px;padding:.8rem 1rem;
+}
+.link-box code{font-size:.88rem;color:var(--navy-deep);word-break:break-all}
+
+/* ---------- Fields manager ---------- */
+.tabs{display:flex;gap:.4rem;margin-bottom:1.4rem}
+.tab{
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.12em;font-size:.8rem;font-weight:600;
+  color:#aab3cc;background:transparent;border:none;cursor:pointer;padding:.6rem 1.1rem;border-bottom:3px solid transparent;
+}
+.tab.active{color:#fff;border-bottom-color:var(--red)}
+.toggle{
+  position:relative;width:44px;height:24px;border-radius:999px;background:#c9cfdd;border:none;cursor:pointer;transition:background .15s;
+}
+.toggle::after{
+  content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .15s;
+}
+.toggle.on{background:var(--green)}
+.toggle.on::after{left:23px}
+.applies-select{
+  width:auto;max-width:130px;padding:.32rem .5rem;font-size:.78rem;font-weight:600;
+  border:1.5px solid #c9cfdd;border-radius:8px;color:var(--ink);background:#fff;cursor:pointer;
+}
+/* ---------- Waivers ---------- */
+.waiver-item{border:1.5px solid var(--line);border-radius:10px;margin-top:.8rem;overflow:hidden;background:#fff}
+.waiver-head{display:flex;align-items:center;gap:.7rem;padding:.75rem 1rem}
+.waiver-head input[type=checkbox]{width:18px;height:18px;accent-color:var(--red);cursor:pointer;flex-shrink:0}
+.waiver-title{font-weight:600;color:var(--ink);font-size:.92rem;flex:1}
+.waiver-body{border-top:1px solid var(--line);background:var(--row-alt);padding:.9rem 1.1rem;font-size:.85rem;color:var(--ink);line-height:1.6}
+textarea{
+  width:100%;max-width:100%;min-height:110px;resize:vertical;padding:.65rem .8rem;
+  border:1.5px solid #c9cfdd;border-radius:8px;font-family:'Inter',Arial,sans-serif;font-size:.9rem;color:var(--ink);background:#fff;
+}
+/* ---------- Registrants dashboard ---------- */
+.filter-chip.active{background:var(--red);color:#fff;border-color:var(--red)}
+.stat-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.2rem}
+.stat-tile{background:var(--card);border-radius:12px;padding:1.2rem 1.4rem;color:var(--ink);box-shadow:0 12px 28px rgba(3,7,20,.35)}
+.stat-tile .st-num{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-weight:700;font-size:2.2rem;line-height:1;color:var(--navy-deep)}
+.stat-tile .st-label{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.16em;font-size:.66rem;font-weight:600;color:var(--muted);margin-top:.4rem}
+.stat-tile.accent-red .st-num{color:var(--red)}
+.stat-tile.accent-blue .st-num{color:var(--powder-dark)}
+.stat-cards{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.4rem}
+.break-row{display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;border-top:1px solid var(--line);font-size:.88rem}
+.break-row:first-of-type{border-top:none}
+.break-name{font-weight:600;color:var(--ink)}
+.break-count{font-family:'Oswald',Arial,sans-serif;font-weight:700;font-size:1.05rem;color:var(--navy-deep)}
+.break-subs{padding:.1rem 1rem .6rem;display:flex;gap:.4rem;flex-wrap:wrap;border-top:none}
+@media (max-width:760px){
+  .stat-tiles{grid-template-columns:1fr 1fr}
+  .stat-cards{grid-template-columns:1fr}
+}
+.add-field-form{background:var(--row-alt);border:1.5px solid var(--line);border-radius:12px;padding:1.4rem 1.6rem;margin-bottom:1.4rem;display:none}
+.add-field-form.open{display:block}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem 1.4rem}
+.form-grid .full{grid-column:1 / -1}
+.tmpl-cards{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem}
+.tmpl-card{border:2px solid var(--line);border-radius:12px;padding:1.6rem 1.5rem;background:#fff}
+.tmpl-card .c-title{font-family:'Oswald','Arial Narrow',Arial,sans-serif;text-transform:uppercase;font-weight:700;font-size:1.15rem;color:var(--navy-deep);letter-spacing:.03em}
+.tmpl-card .stat{font-size:.85rem;color:var(--muted);margin-top:.4rem}
+
+/* ---------- Template builder ---------- */
+.builder-section{border:1.5px solid var(--line);border-radius:12px;margin-bottom:1.2rem;background:#fff;overflow:hidden}
+.builder-section-head{
+  background:var(--navy-deep);color:#fff;padding:.7rem 1rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;
+}
+.bsh-name{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.12em;font-size:.8rem;font-weight:600}
+.bsh-tools{display:flex;gap:.35rem;align-items:center}
+.icon-btn{background:rgba(255,255,255,.12);border:none;color:#fff;border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:.8rem;line-height:1}
+.icon-btn:hover{background:rgba(255,255,255,.25)}
+.field-drop{min-height:14px;padding:.4rem .6rem}
+.b-field{
+  display:flex;align-items:center;gap:.7rem;padding:.55rem .8rem;margin:.35rem .4rem;border:1.5px solid var(--line);
+  border-radius:9px;background:#fff;font-size:.87rem;
+}
+.b-field.dragging{opacity:.35;border-style:dashed}
+.b-field .drag-handle{color:#9aa3ba;font-size:1rem;letter-spacing:-1px;user-select:none;cursor:grab;padding:.15rem .25rem}
+.b-field .drag-handle:active{cursor:grabbing}
+.b-field .f-name{font-weight:600;color:var(--ink);flex:1}
+.field-drop.drag-over{background:#eef4fa;border-radius:8px;outline:2px dashed var(--powder)}
+.b-addfield{margin:.5rem .4rem .7rem;display:none}
+.b-addfield.open{display:block}
+.inline-form{display:flex;gap:.6rem;flex-wrap:wrap;align-items:flex-end;background:var(--row-alt);border-radius:10px;padding:.9rem 1rem}
+.inline-form input[type=text],.inline-form select{max-width:200px}
+.opt-area{display:none;flex-basis:100%;width:100%;margin-top:.2rem;border-top:1px dashed #c9cfdd;padding-top:.8rem}
+.opt-area.open{display:block}
+.opt-line{display:flex;gap:.5rem;margin-top:.45rem;align-items:center}
+.opt-line input[type=text]{max-width:260px}
+.f-opts{font-size:.72rem;color:var(--muted);margin-top:.2rem;font-weight:400}
+.builder-toolbar{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1.4rem}
+
+/* ---------- Misc ---------- */
+.view{display:none}
+.view.active{display:block}
+.mt-1{margin-top:.6rem}.mt-2{margin-top:1.2rem}.mt-3{margin-top:2rem}
+.toast{
+  position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--navy-deep);color:#fff;padding:.8rem 1.4rem;border-radius:10px;font-size:.88rem;
+  opacity:0;pointer-events:none;transition:all .25s ease;z-index:99;border:1px solid rgba(255,255,255,.15);
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (max-width:760px){
+  .page{padding:1.6rem 1rem 4rem}
+  .choice-grid,.form-grid,.tmpl-cards{grid-template-columns:1fr}
+  .page-title{font-size:1.9rem}
+  .step-panel{padding:1.5rem 1.2rem}
+  .wizard-nav{padding:1rem 1.2rem}
+  .review-grid{grid-template-columns:1fr}
+  .review-grid dt{padding-top:.7rem}
+  .topnav{padding:.75rem 1rem}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="brand">
+    <div class="brand-logo">CB<b>U</b></div>
+    <div class="brand-divider"></div>
+    <div class="brand-label">Registration Management</div>
+  </div>
+  <div class="nav-user">
+    <span>Addison Maruszak · Organization Admin</span>
+    <div class="nav-avatar">AM</div>
+  </div>
+</nav>
+
+<!-- ============ VIEW: LANDING ============ -->
+<div class="view active" id="view-landing">
+  <div class="page">
+    <div class="page-head">
+      <div>
+        <div class="eyebrow">Organization Dashboard</div>
+        <h1 class="page-title display">Registration Management</h1>
+        <div class="title-rule"></div>
+        <p class="page-title-sub">Create tryout registrations, manage the fields you collect, and share signup links with players and parents.</p>
+      </div>
+      <div style="display:flex;gap:.8rem;flex-wrap:wrap">
+        <button class="btn btn-outline" onclick="openFieldsManager()">Registration Form Fields</button>
+        <button class="btn btn-primary" onclick="startWizard()">+ Create New Tryout</button>
+      </div>
+    </div>
+
+    <div id="template-cta"></div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:1rem 1.4rem;border-bottom:1px solid var(--line);background:#fff">
+        <span class="field-label" style="margin:0" id="reg-list-title">Active Registrations</span>
+        <button class="btn btn-outline-dark btn-sm" id="btn-archive-view" onclick="toggleArchiveView()">View Archive</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Registration</th><th>Type</th><th>Opens</th><th>Closes</th>
+              <th>Signups</th><th>Status</th><th>Link</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="reg-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ VIEW: REGISTRANTS ============ -->
+<div class="view" id="view-registrants">
+  <div class="page">
+    <button class="link-red" onclick="goHome()" style="color:#e58a95">&larr; Back to Registration Management</button>
+    <div class="page-head" style="margin-top:.8rem">
+      <div>
+        <div class="eyebrow">Registrants</div>
+        <h1 class="page-title display" style="font-size:2.1rem" id="registrants-title"></h1>
+        <div class="title-rule"></div>
+        <p class="page-title-sub" id="registrants-sub"></p>
+      </div>
+    </div>
+    <div id="registrants-filter" class="chip-row" style="margin-bottom:1.2rem"></div>
+    <div id="registrants-stats"></div>
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Player</th><th>Ticket</th><th>Parent/Guardian 1</th><th>Primary Pos.</th><th>Secondary Pos.</th></tr>
+          </thead>
+          <tbody id="registrants-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ VIEW: COMMS ============ -->
+<div class="view" id="view-comms">
+  <div class="page">
+    <button class="link-red" onclick="goHome()" style="color:#e58a95">&larr; Back to Registration Management</button>
+    <div class="page-head" style="margin-top:.8rem">
+      <div>
+        <div class="eyebrow">Communications</div>
+        <h1 class="page-title display" style="font-size:2.1rem" id="comms-title"></h1>
+        <div class="title-rule"></div>
+        <p class="page-title-sub" id="comms-sub"></p>
+      </div>
+    </div>
+
+    <div class="card card-pad" style="margin-bottom:1.4rem">
+      <div class="step-q" style="font-size:1.05rem">New Message</div>
+      <div class="mt-2">
+        <label class="field-label">To</label>
+        <div class="chip-row" id="comms-to" style="margin-top:.2rem"></div>
+      </div>
+      <div class="mt-2" style="max-width:560px">
+        <label class="field-label" for="cm-subject">Subject</label>
+        <input type="text" id="cm-subject" placeholder="e.g. Tryout day details" style="max-width:100%">
+      </div>
+      <div class="mt-2" style="max-width:680px">
+        <label class="field-label" for="cm-body">Message</label>
+        <textarea id="cm-body" style="min-height:130px" placeholder="Type your message to registrants..."></textarea>
+      </div>
+      <div class="mt-2">
+        <button class="btn btn-primary" onclick="sendComms()">Send Message</button>
+        <span class="step-help" style="display:inline-block;margin-left:.8rem;font-size:.78rem">Delivered by email to each registration's post-tryout contacts.</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:1rem 1.4rem;border-bottom:1px solid var(--line);background:#fff">
+        <span class="field-label" style="margin:0">Sent Messages</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Subject</th><th>To</th><th>Recipients</th><th>Sent</th></tr>
+          </thead>
+          <tbody id="comms-history"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ VIEW: WIZARD ============ -->
+<div class="view" id="view-wizard">
+  <div class="page">
+    <button class="link-red" onclick="confirmExitWizard()" style="color:#e58a95">&larr; Back to Registration Management</button>
+    <div class="page-head" style="margin-top:.8rem;margin-bottom:0">
+      <div>
+        <div class="eyebrow" id="wizard-eyebrow">Create New Tryout</div>
+        <h1 class="page-title display" style="font-size:2.1rem" id="wizard-title">New Tryout Registration</h1>
+      </div>
+    </div>
+
+    <div class="steps" id="step-banner"></div>
+
+    <div class="card">
+      <div class="step-panel" id="step-panel"></div>
+      <div class="wizard-nav">
+        <button class="btn btn-outline-dark" id="btn-back" onclick="wizardBack()">&larr; Back</button>
+        <button class="btn btn-primary" id="btn-next" onclick="wizardNext()">Continue &rarr;</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ VIEW: CONFIRMATION ============ -->
+<div class="view" id="view-confirm">
+  <div class="page" style="max-width:820px">
+    <div class="card">
+      <div class="confirm-hero">
+        <div class="confirm-check">&#10003;</div>
+        <div class="eyebrow" style="color:var(--green)">Registration Created</div>
+        <h1 class="step-q display" style="font-size:1.8rem;margin-top:.5rem" id="confirm-title">Your registration is live</h1>
+        <p class="step-help" style="margin:0.7rem auto 0" id="confirm-sub"></p>
+        <div class="link-box">
+          <code id="confirm-link">https://cbuapp.app/register/</code>
+          <button class="btn btn-ghost-red btn-sm" onclick="copyLink()">Copy Link</button>
+        </div>
+        <div class="mt-3">
+          <button class="btn btn-primary" onclick="finishToLanding()">Back to Registration Management</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ VIEW: FIELDS MANAGER ============ -->
+<div class="view" id="view-fields">
+  <div class="page">
+    <button class="link-red" onclick="goHome()" style="color:#e58a95">&larr; Back to Registration Management</button>
+    <div class="page-head" style="margin-top:.8rem">
+      <div>
+        <div class="eyebrow">Form Setup</div>
+        <h1 class="page-title display" style="font-size:2.1rem">Registration Form Fields</h1>
+        <div class="title-rule"></div>
+        <p class="page-title-sub">One field library powers every registration. Build fields once, organize them into templates, and reuse them across High School and Youth tryouts.</p>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" id="tab-fields" onclick="switchTab('fields')">Field Library</button>
+      <button class="tab" id="tab-templates" onclick="switchTab('templates')">Templates</button>
+      <button class="tab" id="tab-waivers" onclick="switchTab('waivers')">Waivers</button>
+    </div>
+
+    <!-- Fields tab -->
+    <div id="panel-fields">
+      <div class="card card-pad" style="margin-bottom:1.2rem">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem">
+          <div>
+            <div class="step-q" style="font-size:1.05rem">All Fields</div>
+            <div class="step-help">Toggle a field off to retire it without deleting it.</div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="toggleAddFieldForm()">+ Add New Field</button>
+        </div>
+        <div class="add-field-form" id="add-field-form">
+          <div class="form-grid">
+            <div>
+              <label class="field-label" for="nf-name">Field Name</label>
+              <input type="text" id="nf-name" placeholder="e.g. Travel Ball Experience">
+            </div>
+            <div>
+              <label class="field-label" for="nf-type">Input Type</label>
+              <select id="nf-type" onchange="toggleOptionsArea('nf', this)">
+                <option>Text</option><option>Dropdown</option><option>Check Box</option>
+                <option>Date</option><option>File Upload</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="nf-applies">Applies To</label>
+              <select id="nf-applies">
+                <option>Both</option><option>High School</option><option>Youth</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="nf-req">Required</label>
+              <select id="nf-req"><option>Optional</option><option>Required</option></select>
+            </div>
+            <div class="full">
+              <div class="opt-area" id="opt-area-nf">
+                <label class="field-label">Choices — players pick from these</label>
+                <div id="opt-lines-nf">
+                  <div class="opt-line"><input type="text" class="opt-input" placeholder="e.g. Right"></div>
+                  <div class="opt-line"><input type="text" class="opt-input" placeholder="e.g. Left"></div>
+                </div>
+                <button class="link-red" style="margin-top:.6rem" onclick="addOptionLine('nf')">+ Add another choice</button>
+              </div>
+            </div>
+            <div class="full">
+              <label class="field-label" for="nf-tip">Tooltip / Help Text (optional)</label>
+              <input type="text" id="nf-tip" placeholder="Shown to parents and players under the field" style="max-width:100%">
+            </div>
+            <div class="full" style="display:flex;gap:.7rem">
+              <button class="btn btn-primary btn-sm" id="nf-save" onclick="addLibraryField()">Save Field</button>
+              <button class="btn btn-outline-dark btn-sm" onclick="cancelFieldForm()">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Field</th><th>Input Type</th><th>Required</th><th>Applies To</th><th>Status</th><th>Edit</th></tr>
+            </thead>
+            <tbody id="field-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Templates tab -->
+    <div id="panel-templates" style="display:none">
+      <div class="tmpl-cards" id="tmpl-cards"></div>
+    </div>
+
+    <!-- Waivers tab -->
+    <div id="panel-waivers" style="display:none">
+      <div class="card card-pad" style="margin-bottom:1.2rem">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem">
+          <div>
+            <div class="step-q" style="font-size:1.05rem">Waiver Library</div>
+            <div class="step-help">Waivers you add to a registration must be agreed to before payment. Toggle one off to retire it without deleting it.</div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="toggleAddWaiverForm()">+ Add New Waiver</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:.8rem;margin-top:1.1rem;padding-top:1rem;border-top:1px solid var(--line)">
+          <button class="toggle" id="decline-toggle" onclick="toggleWaiversDeclined()" aria-label="I do not wish to use waivers"></button>
+          <div>
+            <div style="font-weight:600;font-size:.9rem;color:var(--ink)">I do not wish to use a waiver(s)</div>
+            <div class="step-help" style="font-size:.78rem;margin-top:.1rem">Turning this on hides the waiver setup reminder on your Registration Management page.</div>
+          </div>
+        </div>
+        <div class="add-field-form" id="add-waiver-form">
+          <div style="margin-bottom:.9rem"><label class="field-label" for="aw-title">Waiver Title</label>
+            <input type="text" id="aw-title" placeholder="e.g. Code of Conduct Agreement" style="max-width:100%"></div>
+          <div><label class="field-label" for="aw-body">Waiver Text — what the parent agrees to</label>
+            <textarea id="aw-body" placeholder="Type the full waiver language here..."></textarea></div>
+          <div style="display:flex;gap:.7rem;margin-top:.9rem">
+            <button class="btn btn-primary btn-sm" id="aw-save" onclick="saveAdminWaiver()">Save Waiver</button>
+            <button class="btn btn-outline-dark btn-sm" onclick="cancelWaiverForm()">Cancel</button>
+          </div>
+        </div>
+      </div>
+      <div id="waiver-admin-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ VIEW: TEMPLATE BUILDER ============ -->
+<div class="view" id="view-builder">
+  <div class="page">
+    <button class="link-red" id="builder-backlink" onclick="builderExit()" style="color:#e58a95">&larr; Back</button>
+    <div class="page-head" style="margin-top:.8rem">
+      <div>
+        <div class="eyebrow" id="builder-eyebrow">Template Builder</div>
+        <h1 class="page-title display" style="font-size:2.1rem" id="builder-title">Template</h1>
+        <div class="title-rule"></div>
+        <p class="page-title-sub">Drag fields to reorder them or move them between sections. Sections become headers on the registration form.</p>
+      </div>
+    </div>
+
+    <div class="builder-toolbar">
+      <div style="display:flex;gap:.8rem;align-items:flex-end;flex-wrap:wrap">
+        <button class="btn btn-outline" id="btn-add-section" onclick="showAddSection()">+ Add Section</button>
+        <div id="add-section-form" style="display:none;gap:.6rem;align-items:flex-end;background:var(--card);border-radius:10px;padding:.7rem .9rem;flex-wrap:wrap">
+          <div><label class="field-label">Section Name</label><input type="text" id="new-section-name" placeholder="e.g. Academic Information" onkeydown="if(event.key==='Enter')confirmAddSection()"></div>
+          <button class="btn btn-primary btn-sm" onclick="confirmAddSection()">Add</button>
+          <button class="btn btn-outline-dark btn-sm" onclick="hideAddSection()">Cancel</button>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="saveTemplate()">Save Template</button>
+    </div>
+
+    <div id="builder-sections"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =====================================================
+   STATE
+===================================================== */
+const TYPE_META = {
+  hs:    { label:'High School', desc:'High school, summer and fall programs', accent:'#b91e2d', accentDark:'#8f1622', pill:'pill-red' },
+  youth: { label:'Youth',       desc:'Fall and spring programs',              accent:'#6daed4', accentDark:'#4d8fb6', pill:'pill-blue' }
+};
+
+let waiverLibrary = [];
+
+/* Standard position list — used by every positional field. */
+const POSITION_CHOICES = ['RHP','LHP','1B','2B','3B','SS','C','CF','RF','LF','UTL','Switch Pitcher'];
+
+let fieldLibrary = [
+  {name:'First Name', type:'Text', req:true,  applies:'Both', on:true},
+  {name:'Last Name', type:'Text', req:true,  applies:'Both', on:true},
+  {name:'Birthdate', type:'Date', req:true,  applies:'Both', on:true},
+  {name:'Email', type:'Text', req:true,  applies:'Both', on:true},
+  {name:'Phone', type:'Text', req:true,  applies:'Both', on:true},
+  {name:'Primary Position', type:'Dropdown', req:true,  applies:'Both', on:true, options:POSITION_CHOICES.slice()},
+  {name:'Secondary Positions', type:'Check Box', req:false, applies:'Both', on:true, options:POSITION_CHOICES.slice(), tip:'Click all positions you play'},
+  {name:'Bats', type:'Dropdown', req:false, applies:'Both', on:true, options:['Right','Left','Switch']},
+  {name:'Throws', type:'Dropdown', req:false, applies:'Both', on:true, options:['Right','Left']},
+  {name:'Height', type:'Text', req:false, applies:'Both', on:true},
+  {name:'Weight', type:'Text', req:false, applies:'Both', on:true},
+  {name:'Current School', type:'Text', req:true,  applies:'Both', on:true},
+  {name:'Current School Coach', type:'Text', req:false, applies:'High School', on:true},
+  {name:'Coach Phone Number', type:'Text', req:false, applies:'High School', on:true},
+  {name:'Coach Email', type:'Text', req:false, applies:'High School', on:true},
+  {name:'Player HS Graduation Year', type:'Dropdown', req:true, applies:'High School', on:true},
+  {name:'GPA Weighted', type:'Text', req:false, applies:'High School', on:true},
+  {name:'GPA Unweighted', type:'Text', req:false, applies:'High School', on:true},
+  {name:'SAT', type:'Text', req:false, applies:'High School', on:true},
+  {name:'ACT', type:'Text', req:false, applies:'High School', on:true},
+  {name:'Parent/Guardian 1 First Name', type:'Text', req:true, applies:'Both', on:true},
+  {name:'Parent/Guardian 1 Last Name', type:'Text', req:true, applies:'Both', on:true},
+  {name:'Parent/Guardian 1 Phone', type:'Text', req:true, applies:'Both', on:true},
+  {name:'Parent/Guardian 1 Email', type:'Text', req:true, applies:'Both', on:true},
+  {name:'Parent/Guardian 2 First Name', type:'Text', req:false, applies:'Both', on:true},
+  {name:'Parent/Guardian 2 Last Name', type:'Text', req:false, applies:'Both', on:true},
+  {name:'Parent/Guardian 2 Phone', type:'Text', req:false, applies:'Both', on:true},
+  {name:'Parent/Guardian 2 Email', type:'Text', req:false, applies:'Both', on:true},
+  {name:'Use Same Contact Info as Parent/Guardian 1', type:'Check Box', req:false, applies:'Both', on:true, options:['Yes, use Parent/Guardian 1 contact info']},
+  {name:'Address', type:'Text', req:false, applies:'Both', on:true},
+  {name:'City', type:'Text', req:false, applies:'Both', on:true},
+  {name:'State', type:'Text', req:false, applies:'Both', on:true},
+  {name:'Zip Code', type:'Text', req:false, applies:'Both', on:true}
+];
+
+/* High School template exists; Youth starts empty so the demo shows both paths. */
+let templates = {
+  hs: null,
+  youth: null
+};
+
+function f(name,type,req,opts,tip){ return {name:name, type:type, req:req, options:opts, tip:tip}; }
+function fl(name,type,req,opts,tip){ const x = f(name,type,req,opts,tip); x.locked = true; x.reqLocked = !!req; return x; }
+
+/* Mandatory baseline — every template starts with these locked sections. */
+function mandatorySections(){
+  return [
+    { name:'Player Information', locked:true, fields:[
+      fl('First Name','Text',true), fl('Last Name','Text',true), fl('Birthdate','Date',true),
+      fl('Primary Position','Dropdown',true,POSITION_CHOICES.slice()),
+      fl('Secondary Positions','Check Box',false,POSITION_CHOICES.slice(),'Click all positions you play')
+    ]},
+    { name:'Parent/Guardian Contact', locked:true,
+      note:'On the player-facing form, only Parent/Guardian 1 shows at first — a button asks "Do you want another parent added with their contact information?" to reveal the Parent 2 fields.',
+      fields:[
+      fl('Parent/Guardian 1 First Name','Text',true),
+      fl('Parent/Guardian 1 Last Name','Text',true),
+      fl('Parent/Guardian 1 Phone','Text',true),
+      fl('Parent/Guardian 1 Email','Text',true),
+      fl('Parent/Guardian 2 First Name','Text',false),
+      fl('Parent/Guardian 2 Last Name','Text',false),
+      fl('Parent/Guardian 2 Phone','Text',false),
+      fl('Parent/Guardian 2 Email','Text',false)
+    ]},
+    { name:'Post Tryout Contact Info', locked:true, color:'red', fields:[
+      fl('Use Same Contact Info as Parent/Guardian 1','Check Box',false,['Yes, use Parent/Guardian 1 contact info']),
+      fl('Email','Text',true), fl('Phone','Text',true)
+    ]}
+  ];
+}
+
+function needsOptions(type){ return type === 'Dropdown' || type === 'Check Box'; }
+function optionsMarkup(prefix){
+  return '<div class="opt-area" id="opt-area-'+prefix+'">' +
+    '<label class="field-label">Choices — players pick from these</label>' +
+    '<div id="opt-lines-'+prefix+'">' + optLine() + optLine() + '</div>' +
+    '<button class="link-red" style="margin-top:.6rem" onclick="addOptionLine(\''+prefix+'\')">+ Add another choice</button>' +
+  '</div>';
+}
+function optLine(){
+  return '<div class="opt-line"><input type="text" class="opt-input" placeholder="e.g. Right"></div>';
+}
+function addOptionLine(prefix){
+  const box = document.getElementById('opt-lines-'+prefix);
+  const wrap = document.createElement('div');
+  wrap.innerHTML = optLine();
+  box.appendChild(wrap.firstChild);
+  const inputs = box.querySelectorAll('.opt-input');
+  inputs[inputs.length-1].focus();
+}
+function toggleOptionsArea(prefix, sel){
+  const area = document.getElementById('opt-area-'+prefix);
+  if(area) area.classList.toggle('open', needsOptions(sel.value));
+}
+function collectOptions(prefix){
+  const box = document.getElementById('opt-lines-'+prefix);
+  if(!box) return [];
+  const vals = [];
+  box.querySelectorAll('.opt-input').forEach(function(inp){
+    const v = inp.value.trim();
+    if(v) vals.push(v);
+  });
+  return vals;
+}
+function optsSub(fd){
+  return (fd.options && fd.options.length)
+    ? '<div class="f-opts">Choices: '+esc(fd.options.join(' · '))+'</div>' : '';
+}
+function tipSub(fd){
+  return fd.tip ? '<div class="f-opts" style="font-style:italic">'+esc(fd.tip)+'</div>' : '';
+}
+
+let registrations = [
+  { name:'Tampa Fall Tryout', type:'hs', opens:'Live now', closes:'Sep 26, 2026', signups:'20', status:'Published', link:'cbuapp.app/register/tampa-fall',
+    wiz:{ regName:'Tampa Fall Tryout', type:'hs', opensMode:'live', opensDate:'', closesMode:'date', closesDate:'2026-09-26',
+      addingFields:false, extraFields:[], reqOverrides:{},
+      tickets:[
+        {name:'2027 Team', subs:['Position Player','Pitcher Only','Position Player & Pitcher'], addingSub:false},
+        {name:'2028 Team', subs:['Position Player','Pitcher Only','Position Player & Pitcher'], addingSub:false},
+        {name:'2029 Team', subs:['Position Player','Pitcher Only','Position Player & Pitcher'], addingSub:false},
+        {name:'2030 Team', subs:['Position Player','Pitcher Only','Position Player & Pitcher'], addingSub:false}
+      ],
+      pricing:{advanced:false, values:{'s|Position Player':'50','s|Pitcher Only':'40','s|Position Player & Pitcher':'60'}},
+      waivers:[], waiverOpen:{}, addingWaiver:false,
+      postMessage:'Thanks for registering with CBU! Please arrive 30 minutes early to check in. Bring your own bat, glove, and helmet — catchers bring full gear.' },
+    comms:[ { to:'All Registrants', count:20, subject:'Tryout Day Details', when:'Jul 15, 2026, 9:12 AM' } ],
+    registrants:[
+      {player:'Jaxon Rivera',    ticket:'2027 Team', sub:'Position Player & Pitcher', parent:'Maria Rivera',     pos1:'SS',  pos2:'RHP · 2B'},
+      {player:'Cole Whitfield',  ticket:'2027 Team', sub:'Pitcher Only',              parent:'Dana Whitfield',   pos1:'RHP', pos2:'—'},
+      {player:'Trey Donaldson',  ticket:'2027 Team', sub:'Position Player',           parent:'Marcus Donaldson', pos1:'CF',  pos2:'RF · LF'},
+      {player:'Bryce Kellerman', ticket:'2027 Team', sub:'Position Player',           parent:'Todd Kellerman',   pos1:'1B',  pos2:'3B · C · LF · RF · RHP'},
+      {player:'Dominic Alvarez', ticket:'2027 Team', sub:'Position Player & Pitcher', parent:'Lucia Alvarez',    pos1:'C',   pos2:'RHP · 1B'},
+      {player:'Miles Carter',    ticket:'2028 Team', sub:'Position Player & Pitcher', parent:'Angela Carter',    pos1:'3B',  pos2:'RHP · 1B'},
+      {player:'Hudson Blake',    ticket:'2028 Team', sub:'Pitcher Only',              parent:'Jennifer Blake',   pos1:'LHP', pos2:'—'},
+      {player:'Ryder Simmons',   ticket:'2028 Team', sub:'Position Player',           parent:'Chris Simmons',    pos1:'SS',  pos2:'2B · 3B'},
+      {player:'Nolan Petrucci',  ticket:'2028 Team', sub:'Position Player',           parent:'Gina Petrucci',    pos1:'2B',  pos2:'SS · 3B · CF · LF · RF'},
+      {player:'Xavier Boone',    ticket:'2028 Team', sub:'Position Player & Pitcher', parent:'Derrick Boone',    pos1:'RF',  pos2:'RHP · CF'},
+      {player:'Brooks Hamilton', ticket:'2029 Team', sub:'Position Player',           parent:'Scott Hamilton',   pos1:'C',   pos2:'1B'},
+      {player:'Eli Vasquez',     ticket:'2029 Team', sub:'Pitcher Only',              parent:'Rosa Vasquez',     pos1:'LHP', pos2:'—'},
+      {player:'Camden Frost',    ticket:'2029 Team', sub:'Position Player',           parent:'Heather Frost',    pos1:'LF',  pos2:'CF · RF'},
+      {player:'Jude Okafor',     ticket:'2029 Team', sub:'Position Player & Pitcher', parent:'Amara Okafor',     pos1:'UTL', pos2:'RHP · SS · 2B · 1B · C'},
+      {player:'Tanner Reyes',    ticket:'2029 Team', sub:'Pitcher Only',              parent:'Monica Reyes',     pos1:'Switch Pitcher', pos2:'—'},
+      {player:'Grant Osborne',   ticket:'2030 Team', sub:'Position Player',           parent:'Kevin Osborne',    pos1:'2B',  pos2:'SS'},
+      {player:'Beckett Lowry',   ticket:'2030 Team', sub:'Position Player & Pitcher', parent:'Sarah Lowry',      pos1:'SS',  pos2:'RHP · 3B'},
+      {player:'Finn Gallagher',  ticket:'2030 Team', sub:'Pitcher Only',              parent:'Patrick Gallagher',pos1:'RHP', pos2:'—'},
+      {player:'Zion Whitaker',   ticket:'2030 Team', sub:'Position Player',           parent:'Denise Whitaker',  pos1:'CF',  pos2:'LF · RF · 1B'},
+      {player:'Asher Delgado',   ticket:'2030 Team', sub:'Position Player',           parent:'Rafael Delgado',   pos1:'3B',  pos2:'—'}
+    ]},
+  { name:'Jacksonville Fall Tryout', type:'youth', opens:'Aug 1, 2026', closes:'Sep 28, 2026', signups:'20', status:'Published', link:'cbuapp.app/register/jax-fall',
+    wiz:{ regName:'Jacksonville Fall Tryout', type:'youth', opensMode:'scheduled', opensDate:'2026-08-01', closesMode:'date', closesDate:'2026-09-28',
+      addingFields:false, extraFields:[], reqOverrides:{},
+      tickets:[
+        {name:'8U', subs:[], addingSub:false}, {name:'9U', subs:[], addingSub:false}, {name:'10U', subs:[], addingSub:false},
+        {name:'11U', subs:[], addingSub:false}, {name:'12U', subs:[], addingSub:false},
+        {name:'13U', subs:[], addingSub:false}, {name:'14U', subs:[], addingSub:false}
+      ],
+      pricing:{advanced:true, values:{'t|8U':'25','t|9U':'25','t|10U':'25','t|11U':'30','t|12U':'30','t|13U':'35','t|14U':'35'}},
+      waivers:[], waiverOpen:{}, addingWaiver:false,
+      postMessage:'' },
+    registrants:[
+      {player:'Mason Pruitt',    ticket:'8U',  sub:'', parent:'Ashley Pruitt',    pos1:'SS',  pos2:'RHP · 2B'},
+      {player:'Dylan Reyes',     ticket:'8U',  sub:'', parent:'Carlos Reyes',     pos1:'CF',  pos2:'—'},
+      {player:'Colton Barnes',   ticket:'9U',  sub:'', parent:'Melissa Barnes',   pos1:'1B',  pos2:'C · 3B'},
+      {player:'Levi Thompson',   ticket:'9U',  sub:'', parent:'Brian Thompson',   pos1:'RHP', pos2:'SS · 2B · 3B · CF · LF'},
+      {player:'Jaylen Brooks',   ticket:'9U',  sub:'', parent:'Tasha Brooks',     pos1:'2B',  pos2:'SS'},
+      {player:'Owen Fitzgerald', ticket:'10U', sub:'', parent:'Kelly Fitzgerald', pos1:'C',   pos2:'1B · 3B'},
+      {player:'Micah Sandoval',  ticket:'10U', sub:'', parent:'Elena Sandoval',   pos1:'SS',  pos2:'RHP · 2B · CF'},
+      {player:'Wyatt Kimball',   ticket:'10U', sub:'', parent:'Doug Kimball',     pos1:'LHP', pos2:'—'},
+      {player:'Ezra Montgomery', ticket:'11U', sub:'', parent:'Nicole Montgomery',pos1:'CF',  pos2:'LF · RF'},
+      {player:'Gavin Ortiz',     ticket:'11U', sub:'', parent:'Hector Ortiz',     pos1:'3B',  pos2:'1B · RHP'},
+      {player:'Silas Pemberton', ticket:'11U', sub:'', parent:'Rachel Pemberton', pos1:'UTL', pos2:'SS · 2B · 3B · C · CF'},
+      {player:'Kai Nakamura',    ticket:'12U', sub:'', parent:'Yuki Nakamura',    pos1:'SS',  pos2:'RHP'},
+      {player:'Bentley Crowe',   ticket:'12U', sub:'', parent:'Amanda Crowe',     pos1:'RF',  pos2:'CF · LF'},
+      {player:'Marcus Villareal',ticket:'12U', sub:'', parent:'Sofia Villareal',  pos1:'RHP', pos2:'1B · 3B'},
+      {player:'Judah Ellison',   ticket:'13U', sub:'', parent:'Terrence Ellison', pos1:'C',   pos2:'—'},
+      {player:'Rowan Maguire',   ticket:'13U', sub:'', parent:'Shannon Maguire',  pos1:'2B',  pos2:'SS · CF'},
+      {player:'Anders Holloway', ticket:'13U', sub:'', parent:'Erik Holloway',    pos1:'LHP', pos2:'1B · LF'},
+      {player:'Tobias Vance',    ticket:'14U', sub:'', parent:'Crystal Vance',    pos1:'SS',  pos2:'2B · 3B · RHP · CF · RF'},
+      {player:'Emmett Rourke',   ticket:'14U', sub:'', parent:'Sean Rourke',      pos1:'CF',  pos2:'—'},
+      {player:'Deacon Ashby',    ticket:'14U', sub:'', parent:'Lauren Ashby',     pos1:'Switch Pitcher', pos2:'1B'}
+    ]}
+];
+
+const STEPS = ['Name','Type','Opens','Closes','Form','Tickets','Pricing','Waivers','Message','Review'];
+
+let wiz = null;           /* wizard state */
+let builder = null;       /* template builder state */
+let dragSrc = null;       /* drag-and-drop source */
+
+/* =====================================================
+   VIEW SWITCHING
+===================================================== */
+function showView(id){
+  document.querySelectorAll('.view').forEach(function(v){ v.classList.remove('active'); });
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+function goHome(){
+  setAccent('hs');
+  renderRegTable();
+  showView('view-landing');
+}
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._h);
+  t._h = setTimeout(function(){ t.classList.remove('show'); }, 2400);
+}
+function setAccent(typeKey){
+  const m = TYPE_META[typeKey] || TYPE_META.hs;
+  document.documentElement.style.setProperty('--accent', m.accent);
+  document.documentElement.style.setProperty('--accent-dark', m.accentDark);
+}
+
+/* =====================================================
+   LANDING
+===================================================== */
+let showArchive = false;
+let waiversDeclined = false;
+function renderTemplateCta(){
+  const el = document.getElementById('template-cta');
+  const missing = [];
+  if(!templates.hs) missing.push('hs');
+  if(!templates.youth) missing.push('youth');
+  const needWaiver = waiverLibrary.length === 0 && !waiversDeclined;
+  if(missing.length === 0 && !needWaiver){ el.innerHTML = ''; return; }
+  const title = missing.length ? 'Set Up Your Templates First' : 'Set Up Your Waivers';
+  let text = '';
+  if(missing.length) text += 'We recommend creating your templates before beginning the registration process. Every tryout\'s registration form is built from its template — build them once and every registration starts ready. ';
+  if(needWaiver) text += 'Waivers must be agreed to before payment — create yours once and include it on any registration.';
+  let buttons = missing.map(function(key){
+    const m = TYPE_META[key];
+    return '<button class="btn '+(key==='hs'?'btn-pulse-hs':'btn-pulse-youth')+'" onclick="openBuilder(\''+key+'\',\'landing\')">Create Your '+m.label+' Template</button>';
+  }).join('');
+  if(needWaiver){
+    buttons += '<button class="btn btn-pulse-navy" onclick="createWaiverFromLanding()">Create Your Waiver</button>';
+  }
+  el.innerHTML = '<div class="card card-pad" style="margin-bottom:1.4rem;border-left:6px solid var(--red)">' +
+    '<div class="step-q" style="font-size:1.1rem">'+title+'</div>' +
+    '<p class="step-help">'+text+'</p>' +
+    '<div style="display:flex;gap:.9rem;flex-wrap:wrap;margin-top:1.1rem;align-items:center">'+buttons+'</div>' +
+  '</div>';
+}
+function createWaiverFromLanding(){
+  openFieldsManager();
+  switchTab('waivers');
+  const form = document.getElementById('add-waiver-form');
+  form.classList.add('open');
+  document.getElementById('aw-title').focus();
+}
+function toggleWaiversDeclined(){
+  waiversDeclined = !waiversDeclined;
+  syncDeclineToggle();
+  toast(waiversDeclined
+    ? 'Got it — no waivers. The setup reminder is hidden on Registration Management.'
+    : 'Waivers back on — the setup reminder will show until you create one.');
+}
+function syncDeclineToggle(){
+  const t = document.getElementById('decline-toggle');
+  if(t) t.classList.toggle('on', waiversDeclined);
+}
+function renderRegTable(){
+  renderTemplateCta();
+  const body = document.getElementById('reg-table-body');
+  const archivedCount = registrations.filter(function(r){ return r.archived; }).length;
+  document.getElementById('reg-list-title').textContent = showArchive ? 'Archived Registrations' : 'Active Registrations';
+  document.getElementById('btn-archive-view').textContent = showArchive ? '← Back to Active' : 'View Archive ('+archivedCount+')';
+  const rows = registrations.map(function(r,i){ return {r:r, i:i}; })
+    .filter(function(x){ return !!x.r.archived === showArchive; });
+  if(rows.length === 0){
+    body.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:1.6rem">' +
+      (showArchive ? 'No archived registrations. Archiving tidies old tryouts away without deleting their signups.'
+                   : 'No active registrations yet. Create a new tryout to get started.') + '</td></tr>';
+    return;
+  }
+  body.innerHTML = rows.map(function(x){
+    const r = x.r, i = x.i;
+    const m = TYPE_META[r.type];
+    const closed = r.status === 'Unpublished';
+    let actions;
+    if(showArchive){
+      actions = '<button class="pill pill-blue" onclick="viewRegistrants('+i+')" style="margin-right:.4rem">Registrants</button>' +
+        '<button class="pill pill-blue" onclick="toggleRegArchive('+i+')">Restore</button>';
+    } else {
+      actions = '<button class="pill pill-blue" onclick="viewRegistrants('+i+')" style="margin-right:.4rem">Registrants</button>' +
+        '<button class="pill pill-blue" onclick="openComms('+i+')" style="margin-right:.4rem">Comms</button>' +
+        '<button class="pill pill-navy" onclick="editRegistration('+i+')" style="margin-right:.4rem">Edit</button>' +
+        '<button class="pill pill-navy" onclick="toggleRegArchive('+i+')">Archive</button>';
+    }
+    const statusCell = showArchive
+      ? '<span class="pill '+(closed?'pill-navy':'pill-green')+'">'+esc(r.status)+'</span>'
+      : '<button class="pill '+(closed?'pill-navy':'pill-green')+'" onclick="toggleRegStatus('+i+')" title="'+(closed?'Click to publish — opens signups':'Click to unpublish — closes signups')+'">'+esc(r.status)+'</button>';
+    return '<tr'+((closed||showArchive)?' style="opacity:.6"':'')+'>' +
+      '<td><div class="cell-strong">'+esc(r.name)+'</div><div class="cell-sub">'+(showArchive?'Archived':(closed?'Closed to signups':'Open for signups'))+'</div></td>' +
+      '<td><span class="pill '+m.pill+'">'+m.label+'</span></td>' +
+      '<td>'+esc(r.opens)+'</td>' +
+      '<td>'+esc(r.closes)+'</td>' +
+      '<td>'+esc(r.signups)+'</td>' +
+      '<td>'+statusCell+'</td>' +
+      '<td><button class="link-red" onclick="copyText(\''+r.link+'\')">Copy link</button></td>' +
+      '<td style="white-space:nowrap">'+actions+'</td>' +
+    '</tr>';
+  }).join('');
+}
+function toggleArchiveView(){
+  showArchive = !showArchive;
+  renderRegTable();
+}
+
+/* ---- Comms ---- */
+let commsIdx = null, commsTargets = [];   /* empty = All Registrants */
+function openComms(i){
+  commsIdx = i;
+  commsTargets = [];
+  const r = registrations[i];
+  r.comms = r.comms || [];
+  document.getElementById('comms-title').textContent = r.name;
+  document.getElementById('comms-sub').textContent =
+    'Message the people who have registered for this tryout. Pick who it goes to — click multiple tickets to combine them — write it, and send.';
+  document.getElementById('cm-subject').value = '';
+  document.getElementById('cm-body').value = '';
+  renderCommsChips();
+  renderCommsHistory();
+  showView('view-comms');
+}
+function commsTickets(){
+  const r = registrations[commsIdx];
+  const order = [];
+  (r.registrants || []).forEach(function(p){ if(order.indexOf(p.ticket) === -1) order.push(p.ticket); });
+  return order;
+}
+function ticketCount(t){
+  return (registrations[commsIdx].registrants || []).filter(function(p){ return p.ticket === t; }).length;
+}
+function commsCount(){
+  const list = registrations[commsIdx].registrants || [];
+  if(commsTargets.length === 0) return list.length;
+  return list.filter(function(p){ return commsTargets.indexOf(p.ticket) !== -1; }).length;
+}
+function renderCommsChips(){
+  const el = document.getElementById('comms-to');
+  const allActive = commsTargets.length === 0;
+  el.innerHTML = '<button class="chip filter-chip'+(allActive?' active':'')+'" onclick="pickCommsTo(\'ALL\')">All Registrants ('+(registrations[commsIdx].registrants||[]).length+')</button>' +
+    commsTickets().map(function(t){
+      const sel = commsTargets.indexOf(t) !== -1;
+      return '<button class="chip filter-chip'+(sel?' active':'')+'" onclick="pickCommsTo(\''+escAttr(t)+'\')">'+esc(t)+' ('+ticketCount(t)+')</button>';
+    }).join('') +
+    (allActive ? '' : '<span class="step-help" style="align-self:center;font-size:.76rem;color:#aab3cc;margin-left:.3rem">Sending to '+commsCount()+' registrant'+(commsCount()===1?'':'s')+'</span>');
+}
+function pickCommsTo(v){
+  if(v === 'ALL'){
+    commsTargets = [];
+  } else {
+    const i = commsTargets.indexOf(v);
+    if(i === -1) commsTargets.push(v); else commsTargets.splice(i,1);
+  }
+  renderCommsChips();
+}
+function renderCommsHistory(){
+  const body = document.getElementById('comms-history');
+  const list = registrations[commsIdx].comms || [];
+  if(list.length === 0){
+    body.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:1.6rem">No messages sent yet. Your first message to registrants will appear here.</td></tr>';
+    return;
+  }
+  body.innerHTML = list.map(function(msg){
+    return '<tr>' +
+      '<td class="cell-strong">'+esc(msg.subject)+'</td>' +
+      '<td><span class="pill pill-navy">'+esc(msg.to)+'</span></td>' +
+      '<td>'+msg.count+'</td>' +
+      '<td>'+esc(msg.when)+'</td>' +
+    '</tr>';
+  }).join('');
+}
+function sendComms(){
+  const subject = document.getElementById('cm-subject').value.trim();
+  const bodyTxt = document.getElementById('cm-body').value.trim();
+  if(!subject){ toast('Give your message a subject'); return; }
+  if(!bodyTxt){ toast('Type your message before sending'); return; }
+  const count = commsCount();
+  if(count === 0){ toast('No registrants to send to yet'); return; }
+  const label = commsTargets.length === 0 ? 'All Registrants'
+    : commsTickets().filter(function(t){ return commsTargets.indexOf(t) !== -1; }).join(' · ');
+  registrations[commsIdx].comms.unshift({
+    to: label,
+    count: count,
+    subject: subject,
+    when: new Date().toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'})
+  });
+  document.getElementById('cm-subject').value = '';
+  document.getElementById('cm-body').value = '';
+  toast('"'+subject+'" sent to '+count+' recipient'+(count===1?'':'s'));
+  renderCommsHistory();
+}
+let regView = { idx:null, ticket:null };
+function viewRegistrants(i){
+  regView = { idx:i, ticket:null };
+  renderRegistrantsPage();
+  showView('view-registrants');
+}
+function setRegFilter(t){
+  regView.ticket = t === '__all__' ? null : t;
+  renderRegistrantsPage();
+}
+function playerPositionSet(p){
+  const set = [p.pos1];
+  if(p.pos2 && p.pos2 !== '—'){
+    p.pos2.split('·').forEach(function(s){ const v = s.trim(); if(v) set.push(v); });
+  }
+  return set;
+}
+function renderRegistrantsPage(){
+  const r = registrations[regView.idx];
+  const all = r.registrants || [];
+  const list = regView.ticket ? all.filter(function(p){ return p.ticket === regView.ticket; }) : all;
+
+  document.getElementById('registrants-title').textContent = r.name;
+  document.getElementById('registrants-sub').textContent =
+    (regView.ticket ? regView.ticket + ' — ' : '') + (list.length === 1 ? '1 registrant' : list.length + ' registrants');
+
+  /* Ticket order = first appearance in the data */
+  const ticketOrder = [];
+  all.forEach(function(p){ if(ticketOrder.indexOf(p.ticket) === -1) ticketOrder.push(p.ticket); });
+
+  /* Filter chips */
+  const fEl = document.getElementById('registrants-filter');
+  fEl.innerHTML = '<button class="chip filter-chip'+(!regView.ticket?' active':'')+'" onclick="setRegFilter(\'__all__\')">All Tickets</button>' +
+    ticketOrder.map(function(t){
+      return '<button class="chip filter-chip'+(regView.ticket===t?' active':'')+'" onclick="setRegFilter(\''+escAttr(t)+'\')">'+esc(t)+'</button>';
+    }).join('');
+
+  /* Headline stats (computed on the filtered list) */
+  const pitcherPos = ['RHP','LHP','Switch Pitcher'];
+  const pitchers = list.filter(function(p){
+    return playerPositionSet(p).some(function(pos){ return pitcherPos.indexOf(pos) !== -1; });
+  }).length;
+  const catchers = list.filter(function(p){
+    return playerPositionSet(p).indexOf('C') !== -1;
+  }).length;
+
+  /* Ticket + subsection breakdown */
+  const showTickets = regView.ticket ? [regView.ticket] : ticketOrder;
+  const ticketRows = showTickets.map(function(t){
+    const inTicket = all.filter(function(p){ return p.ticket === t; });
+    const subCounts = {};
+    inTicket.forEach(function(p){ if(p.sub){ subCounts[p.sub] = (subCounts[p.sub]||0)+1; } });
+    let row = '<div class="break-row"><span class="break-name">'+esc(t)+'</span><span class="break-count">'+inTicket.length+'</span></div>';
+    const subKeys = Object.keys(subCounts);
+    if(subKeys.length){
+      row += '<div class="break-subs">' + subKeys.map(function(s){
+        return '<span class="pill pill-blue">'+esc(s)+' — '+subCounts[s]+'</span>';
+      }).join('') + '</div>';
+    }
+    return row;
+  }).join('');
+
+  /* Primary position breakdown (primary only, standard order) */
+  const posRows = POSITION_CHOICES.map(function(pos){
+    const n = list.filter(function(p){ return p.pos1 === pos; }).length;
+    return n ? '<div class="break-row"><span class="break-name">'+esc(pos)+'</span><span class="break-count">'+n+'</span></div>' : '';
+  }).join('');
+
+  document.getElementById('registrants-stats').innerHTML =
+    '<div class="stat-tiles">' +
+      '<div class="stat-tile"><div class="st-num">'+list.length+'</div><div class="st-label">'+(regView.ticket?esc(regView.ticket)+' Registrants':'Total Registrants')+'</div></div>' +
+      '<div class="stat-tile accent-red"><div class="st-num">'+pitchers+'</div><div class="st-label">Pitchers Registered</div></div>' +
+      '<div class="stat-tile accent-blue"><div class="st-num">'+catchers+'</div><div class="st-label">Catchers Registered</div></div>' +
+    '</div>' +
+    '<div class="stat-cards">' +
+      '<div class="preview-section" style="margin-top:0;background:#fff"><div class="preview-section-head">Players Per Ticket</div>'+ticketRows+'</div>' +
+      '<div class="preview-section" style="margin-top:0;background:#fff"><div class="preview-section-head">Primary Positions</div>'+
+        (posRows || '<div class="break-row"><span class="break-name" style="color:var(--muted)">No registrants yet</span></div>')+'</div>' +
+    '</div>';
+
+  /* Table */
+  const body = document.getElementById('registrants-body');
+  if(list.length === 0){
+    body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:1.8rem">No registrants yet. Signups will appear here as players register through your link.</td></tr>';
+  } else {
+    body.innerHTML = list.map(function(p,idx){
+      return '<tr>' +
+        '<td class="cell-strong">'+(idx+1)+'</td>' +
+        '<td class="cell-strong">'+esc(p.player)+'</td>' +
+        '<td><div class="cell-strong">'+esc(p.ticket)+'</div>' +
+          (p.sub ? '<div style="margin-top:.25rem"><span class="pill pill-blue">'+esc(p.sub)+'</span></div>' : '') + '</td>' +
+        '<td>'+esc(p.parent)+'</td>' +
+        '<td><span class="pill pill-navy">'+esc(p.pos1)+'</span></td>' +
+        '<td>'+(p.pos2 && p.pos2 !== '—' ? '<span class="pill pill-navy">'+esc(p.pos2)+'</span>' : '<span style="color:var(--muted)">—</span>')+'</td>' +
+      '</tr>';
+    }).join('');
+  }
+}
+function toggleRegArchive(i){
+  const r = registrations[i];
+  const archiving = !r.archived;
+  r.archived = archiving;
+  if(archiving && r.status !== 'Unpublished'){ r.status = 'Unpublished'; }
+  toast(archiving ? '"'+r.name+'" archived — its link is unpublished and it\'s tucked away in the archive'
+                  : '"'+r.name+'" restored to active registrations');
+  renderRegTable();
+}
+function toggleRegStatus(i){
+  const r = registrations[i];
+  const unpublishing = r.status !== 'Unpublished';
+  r.status = unpublishing ? 'Unpublished' : 'Published';
+  toast(unpublishing ? '"'+r.name+'" is unpublished — the link no longer accepts signups'
+                     : '"'+r.name+'" is published — signups are open');
+  renderRegTable();
+}
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function copyText(txt){
+  navigator.clipboard && navigator.clipboard.writeText('https://'+txt);
+  toast('Link copied');
+}
+
+/* =====================================================
+   WIZARD
+===================================================== */
+function startWizard(){
+  wiz = { step:0, type:null, opensMode:null, opensDate:'', closesMode:null, closesDate:'',
+          addingFields:false, extraFields:[], reqOverrides:{}, tickets:[], regName:'',
+          pricing:{advanced:false, values:{}},
+          waivers:null, waiverOpen:{}, addingWaiver:false,
+          postMessage:'', isEdit:false, editIdx:null };
+  setAccent('hs');
+  renderWizard();
+  showView('view-wizard');
+}
+function confirmExitWizard(){
+  setAccent('hs');
+  showView('view-landing');
+}
+function renderWizard(){
+  document.getElementById('wizard-title').textContent =
+    wiz.regName.trim() ? wiz.regName.trim() : 'New Tryout Registration';
+  document.getElementById('wizard-eyebrow').textContent =
+    wiz.isEdit ? 'Edit Registration' : 'Create New Tryout';
+  renderStepBanner();
+  renderStepPanel();
+  const back = document.getElementById('btn-back');
+  const next = document.getElementById('btn-next');
+  back.style.visibility = wiz.step === 0 ? 'hidden' : 'visible';
+  next.textContent = wiz.step === STEPS.length-1
+    ? (wiz.isEdit ? 'Save Changes' : 'Complete Registration')
+    : 'Continue →';
+}
+function renderStepBanner(){
+  const el = document.getElementById('step-banner');
+  el.innerHTML = STEPS.map(function(s,i){
+    let cls = 'step-chev';
+    const clickable = i < wiz.step || (wiz.isEdit && i !== wiz.step);
+    if(clickable) cls += ' done';
+    if(i === wiz.step) cls += ' active';
+    const click = clickable ? ' onclick="goToStep('+i+')" role="button" tabindex="0" title="Go to '+s+'" onkeydown="if(event.key===\'Enter\')goToStep('+i+')"' : '';
+    return '<div class="'+cls+'"'+click+'><div class="step-num">Step '+(i+1)+'</div><div class="step-name">'+s+'</div></div>';
+  }).join('');
+}
+function goToStep(i){
+  if(i === wiz.step) return;
+  if(!wiz.isEdit && i >= wiz.step) return;
+  wiz.step = i;
+  renderWizard();
+}
+function wizardBack(){
+  if(wiz.step > 0){ wiz.step--; renderWizard(); }
+}
+function wizardNext(){
+  if(!validateStep()) return;
+  if(wiz.step === STEPS.length-1){ completeRegistration(); return; }
+  wiz.step++;
+  renderWizard();
+}
+function validateStep(){
+  switch(wiz.step){
+    case 0:
+      if(!wiz.regName.trim()){ toast('Name this registration to continue'); return false; }
+      wiz.regName = wiz.regName.trim();
+      return true;
+    case 1:
+      if(!wiz.type){ toast('Choose a tryout type to continue'); return false; }
+      return true;
+    case 2:
+      if(!wiz.opensMode){ toast('Choose when registration opens'); return false; }
+      if(wiz.opensMode==='scheduled' && !wiz.opensDate){ toast('Pick an open date'); return false; }
+      return true;
+    case 3:
+      if(!wiz.closesMode){ toast('Choose when registration closes'); return false; }
+      if(wiz.closesMode==='date' && !wiz.closesDate){ toast('Pick a closing date'); return false; }
+      return true;
+    case 4:
+      if(!templates[wiz.type]){ toast('Create a '+TYPE_META[wiz.type].label+' template to continue'); return false; }
+      return true;
+    case 5:
+      if(wiz.tickets.length === 0){ toast('Add at least one tryout ticket'); return false; }
+      return true;
+    case 6:
+      const keys = currentPriceKeys();
+      for(let i=0;i<keys.length;i++){
+        const v = wiz.pricing.values[keys[i].k];
+        if(!v || isNaN(parseFloat(v))){ toast('Enter a price for every line'); return false; }
+      }
+      return true;
+    case 9:
+      if(!templates[wiz.type]){
+        toast('Create a '+TYPE_META[wiz.type].label+' template in the Form step before saving');
+        wiz.step = 4;
+        renderWizard();
+        return false;
+      }
+      if(wiz.tickets.length === 0){
+        toast('Add at least one tryout ticket before saving');
+        wiz.step = 5;
+        renderWizard();
+        return false;
+      }
+      return true;
+  }
+  return true;
+}
+
+function renderStepPanel(){
+  const p = document.getElementById('step-panel');
+  switch(wiz.step){
+    case 0: p.innerHTML = stepName(); break;
+    case 1: p.innerHTML = stepType(); break;
+    case 2: p.innerHTML = stepOpens(); break;
+    case 3: p.innerHTML = stepCloses(); break;
+    case 4: p.innerHTML = stepForm(); break;
+    case 5: p.innerHTML = stepTickets(); break;
+    case 6: p.innerHTML = stepPricing(); break;
+    case 7: p.innerHTML = stepWaivers(); break;
+    case 8: p.innerHTML = stepMessage(); break;
+    case 9: p.innerHTML = stepReview(); break;
+  }
+}
+
+/* ---- Step 1: name ---- */
+function stepName(){
+  return '' +
+  '<div class="step-q display">Name this registration</div>' +
+  '<p class="step-help">This is the name players and parents will see when they open your signup link, and how it appears in your Registration Management list.</p>' +
+  '<div class="mt-2" style="max-width:480px">' +
+    '<label class="field-label" for="wname">Registration Name</label>' +
+    '<input type="text" id="wname" placeholder="e.g. CBU Summer 2026 Tryouts" value="'+escAttr(wiz.regName)+'" ' +
+      'oninput="wiz.regName=this.value" onkeydown="if(event.key===\'Enter\')wizardNext()" style="max-width:100%">' +
+  '</div>';
+}
+
+/* ---- Step 1: type ---- */
+function stepType(){
+  return '' +
+  '<div class="step-q display">What kind of tryout is this?</div>' +
+  '<p class="step-help">The tryout type sets which registration template and ticket options you\'ll see in the next steps.</p>' +
+  '<div class="choice-grid">' +
+    typeCard('hs') + typeCard('youth') +
+  '</div>';
+}
+function typeCard(key){
+  const m = TYPE_META[key];
+  const sel = wiz.type === key ? ' selected' : '';
+  return '<button class="choice-card'+sel+'" onclick="pickType(\''+key+'\')">' +
+    '<div class="c-tag"><span class="pill '+m.pill+'">'+m.label+'</span></div>' +
+    '<div class="c-title">'+m.label+' Tryout</div>' +
+    '<div class="c-desc">'+m.desc+'</div>' +
+  '</button>';
+}
+function pickType(key){
+  wiz.type = key;
+  setAccent(key);
+  renderWizard();
+}
+
+/* ---- Step 2: opens ---- */
+function stepOpens(){
+  const liveSel = wiz.opensMode==='live' ? ' selected' : '';
+  const schSel  = wiz.opensMode==='scheduled' ? ' selected' : '';
+  return '' +
+  '<div class="step-q display">When should registration open?</div>' +
+  '<p class="step-help">Your registration link is generated either way — this controls when players and parents can start signing up through it.</p>' +
+  '<div class="choice-grid">' +
+    '<button class="choice-card'+liveSel+'" onclick="pickOpens(\'live\')">' +
+      '<div class="c-title">Live Immediately</div>' +
+      '<div class="c-desc">The link goes live as soon as you complete this registration.</div>' +
+    '</button>' +
+    '<button class="choice-card'+schSel+'" onclick="pickOpens(\'scheduled\')">' +
+      '<div class="c-title">Scheduled Open Date</div>' +
+      '<div class="c-desc">The link exists now, but signups open on a date you choose.</div>' +
+    '</button>' +
+  '</div>' +
+  '<div class="reveal'+(wiz.opensMode==='scheduled'?' open':'')+'">' +
+    '<label class="field-label" for="opens-date">Registration opens on</label>' +
+    '<input type="date" id="opens-date" value="'+wiz.opensDate+'" onchange="wiz.opensDate=this.value">' +
+  '</div>';
+}
+function pickOpens(mode){ wiz.opensMode = mode; renderStepPanel(); }
+
+/* ---- Step 3: closes ---- */
+function stepCloses(){
+  const indSel  = wiz.closesMode==='indefinite' ? ' selected' : '';
+  const dateSel = wiz.closesMode==='date' ? ' selected' : '';
+  return '' +
+  '<div class="step-q display">When should registration close?</div>' +
+  '<p class="step-help">You can always close a registration manually from the Registration Management page.</p>' +
+  '<div class="choice-grid">' +
+    '<button class="choice-card'+indSel+'" onclick="pickCloses(\'indefinite\')">' +
+      '<div class="c-title">Open Indefinitely</div>' +
+      '<div class="c-desc">Signups stay open until you close them yourself.</div>' +
+    '</button>' +
+    '<button class="choice-card'+dateSel+'" onclick="pickCloses(\'date\')">' +
+      '<div class="c-title">Set a Closing Date</div>' +
+      '<div class="c-desc">Signups close automatically on the date you choose.</div>' +
+    '</button>' +
+  '</div>' +
+  '<div class="reveal'+(wiz.closesMode==='date'?' open':'')+'">' +
+    '<label class="field-label" for="closes-date">Registration closes on</label>' +
+    '<input type="date" id="closes-date" value="'+wiz.closesDate+'" onchange="wiz.closesDate=this.value">' +
+  '</div>';
+}
+function pickCloses(mode){ wiz.closesMode = mode; renderStepPanel(); }
+
+/* ---- Step 4: registration form ---- */
+function stepForm(){
+  const m = TYPE_META[wiz.type];
+  const tmpl = templates[wiz.type];
+  if(!tmpl){
+    return '' +
+    '<div class="step-q display">Registration Form</div>' +
+    '<p class="step-help">Your registration form comes from your '+m.label+' Template — but one hasn\'t been created yet.</p>' +
+    '<div class="empty-state">' +
+      '<div class="e-title">No '+m.label+' Template yet</div>' +
+      '<div class="e-sub">Build it once and every future '+m.label.toLowerCase()+' tryout will start from it. You\'ll choose sections, add fields, and set the order.</div>' +
+      '<button class="btn btn-primary" onclick="openBuilder(\''+wiz.type+'\', \'wizard\')">Make a '+m.label+' Template</button>' +
+    '</div>';
+  }
+  const bannerCls = wiz.type==='hs' ? ' hs' : '';
+  let html = '' +
+  '<div class="step-q display">Registration Form</div>' +
+  '<p class="step-help">This is the form players and parents will fill out when they register. Click <strong>Required</strong> or <strong>Optional</strong> on any field to switch it for this registration.</p>' +
+  '<div class="tmpl-banner'+bannerCls+'">' +
+    '<div>' +
+      '<div class="t-title">You\'re using the '+esc(tmpl.name)+'</div>' +
+      '<div class="t-sub">Selected automatically because this is a '+m.label+' tryout. ' +
+        countFields(tmpl)+' fields across '+tmpl.sections.length+' sections.</div>' +
+    '</div>' +
+  '</div>';
+
+  html += tmpl.sections.map(function(sec){
+    let fields = sec.fields.map(function(fd){
+      return previewFieldRow(fd, false, sec.name);
+    }).join('');
+    wiz.extraFields.forEach(function(x){
+      if(x.section === sec.name) fields += previewFieldRow(x, true, sec.name);
+    });
+    return '<div class="preview-section"><div class="preview-section-head"'+(sec.color==='red'?' style="background:var(--red)"':'')+'>'+esc(sec.name)+'</div>'+fields+
+      (sec.note ? '<div class="preview-field" style="justify-content:flex-start;color:var(--muted);font-size:.78rem;font-style:italic">'+esc(sec.note)+'</div>' : '')+'</div>';
+  }).join('');
+
+  html += '<div class="mt-2"><button class="btn btn-outline-dark btn-sm" onclick="openBuilder(\''+wiz.type+'\',\'wizard\')">Edit This Template</button>' +
+    '<span class="step-help" style="display:inline-block;margin-left:.8rem;font-size:.78rem">Template changes apply to every future '+m.label.toLowerCase()+' tryout.</span></div>';
+
+  html += '' +
+  '<div class="mt-3">' +
+    '<div class="step-q" style="font-size:1rem">Do you need to add fields to this registration to collect more information?</div>' +
+    '<p class="step-help">Fields you add here apply to this registration only. To change the template for every tryout, edit it under Registration Form Fields.</p>' +
+    '<div style="display:flex;gap:.8rem;margin-top:1rem;flex-wrap:wrap">' +
+      '<button class="btn '+(wiz.addingFields?'btn-primary':'btn-ghost-red')+' btn-sm" onclick="wiz.addingFields=true;renderStepPanel()">Yes, add more fields</button>' +
+      '<button class="btn btn-outline-dark btn-sm" onclick="wiz.addingFields=false;renderStepPanel()">No, the template covers it</button>' +
+    '</div>' +
+  '</div>';
+
+  if(wiz.addingFields){
+    const opts = tmpl.sections.map(function(s){ return '<option>'+esc(s.name)+'</option>'; }).join('');
+    html += '' +
+    '<div class="inline-form mt-2">' +
+      '<div><label class="field-label" for="xf-name">Field Name</label><input type="text" id="xf-name" placeholder="e.g. Jersey Size"></div>' +
+      '<div><label class="field-label" for="xf-type">Input Type</label><select id="xf-type" onchange="toggleOptionsArea(\'xf\', this)"><option>Text</option><option>Dropdown</option><option>Check Box</option><option>Date</option><option>File Upload</option></select></div>' +
+      '<div><label class="field-label" for="xf-sec">Section</label><select id="xf-sec">'+opts+'</select></div>' +
+      '<div><label class="field-label" for="xf-req">Required</label><select id="xf-req"><option>Optional</option><option>Required</option></select></div>' +
+      '<button class="btn btn-primary btn-sm" onclick="addExtraField()">Add Field</button>' +
+      optionsMarkup('xf') +
+    '</div>';
+  }
+  return html;
+}
+function previewFieldRow(fd, added, secName){
+  const req = effReq(fd, added, secName);
+  const lockedReq = !added && fd.reqLocked;
+  const reqPill = lockedReq
+    ? '<span class="pill pill-red" title="Mandatory — required on every registration">&#128274; Required</span>'
+    : '<button class="pill '+(req?'pill-red':'pill-navy')+'" ' +
+        'data-sec="'+escAttr(secName)+'" data-name="'+escAttr(fd.name)+'" data-added="'+(added?'1':'0')+'" ' +
+        'onclick="toggleReqEv(this)" title="Click to switch for this registration">'+(req?'Required':'Optional')+'</button>';
+  return '<div class="preview-field"><span>'+esc(fd.name)+tipSub(fd)+optsSub(fd)+'</span>' +
+    '<span class="pf-meta">' +
+      (added ? '<span class="pill pill-blue">Added</span>' : '') +
+      '<span class="pill pill-navy">'+esc(fd.type)+'</span>' +
+      reqPill +
+    '</span></div>';
+}
+function escAttr(s){ return esc(s).replace(/"/g,'&quot;'); }
+function effReq(fd, added, secName){
+  if(added) return fd.req;
+  const k = secName+'||'+fd.name;
+  return (k in wiz.reqOverrides) ? wiz.reqOverrides[k] : fd.req;
+}
+function toggleReqEv(btn){
+  const sec = btn.dataset.sec, name = btn.dataset.name, added = btn.dataset.added === '1';
+  if(added){
+    const x = wiz.extraFields.find(function(e){ return e.section === sec && e.name === name; });
+    if(x) x.req = !x.req;
+  } else {
+    const tmpl = templates[wiz.type];
+    const s = tmpl.sections.find(function(ss){ return ss.name === sec; });
+    const fd = s && s.fields.find(function(ff){ return ff.name === name; });
+    const k = sec+'||'+name;
+    const cur = (k in wiz.reqOverrides) ? wiz.reqOverrides[k] : (fd ? fd.req : false);
+    wiz.reqOverrides[k] = !cur;
+  }
+  renderStepPanel();
+}
+function countFields(tmpl){
+  return tmpl.sections.reduce(function(n,s){ return n + s.fields.length; }, 0);
+}
+function addExtraField(){
+  const name = document.getElementById('xf-name').value.trim();
+  if(!name){ toast('Give the field a name'); return; }
+  const type = document.getElementById('xf-type').value;
+  const opts = collectOptions('xf');
+  if(needsOptions(type) && opts.length === 0){ toast('Add at least one choice for players to pick from'); return; }
+  wiz.extraFields.push({
+    name:name,
+    type:type,
+    section:document.getElementById('xf-sec').value,
+    req:document.getElementById('xf-req').value === 'Required',
+    options: needsOptions(type) ? opts : undefined
+  });
+  toast('"'+name+'" added to this registration');
+  renderStepPanel();
+}
+
+/* ---- Step 5: tickets ---- */
+function stepTickets(){
+  const m = TYPE_META[wiz.type];
+  const isHS = wiz.type === 'hs';
+  const suggestions = isHS ? ['2027 Team','2028 Team','2029 Team','2030 Team']
+                           : ['8U','9U','10U','11U','12U','13U','14U'];
+  const chips = suggestions.map(function(s){
+    const used = wiz.tickets.some(function(t){ return t.name === s; });
+    return '<button class="chip" '+(used?'disabled':'')+' onclick="addTicket(\''+s+'\')">+ '+s+'</button>';
+  }).join('');
+  const list = wiz.tickets.length === 0
+    ? '<p class="step-help mt-2">No tickets yet. Every registration needs at least one — it\'s what a player selects when they sign up.</p>'
+    : '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.6rem;margin-top:1.4rem;max-width:560px">' +
+        '<span class="field-label" style="margin:0">Your Tickets</span>' +
+        '<button class="chip" style="border-color:var(--accent);color:var(--accent)" onclick="addAllSubsEverywhere()">+ Add All 3 Subsections to Every Ticket</button>' +
+      '</div>' +
+      '<div class="ticket-list" style="margin-top:.6rem">' + wiz.tickets.map(function(t,i){
+        return '<div class="ticket-block">' +
+          '<div class="ticket-item" draggable="false" data-ti="'+i+'" ' +
+            'ondragstart="ticketDragStart(event)" ondragend="ticketDragEnd(event)" ' +
+            'ondragover="ticketDragOver(event)" ondrop="ticketDrop(event)">' +
+            '<span class="ticket-name"><span class="drag-handle" onmousedown="enableRowDrag(event)" title="Drag to reorder">⠿</span><span class="ticket-badge"></span>'+esc(t.name)+'</span>' +
+            '<span style="display:flex;align-items:center;gap:.4rem">' +
+              (t.subs.length ? '<span class="pill pill-navy">'+t.subs.length+' subsection'+(t.subs.length>1?'s':'')+'</span>' : '') +
+              '<button class="remove-x" onclick="removeTicket('+i+')" aria-label="Remove '+esc(t.name)+'">&times;</button>' +
+            '</span>' +
+          '</div>' +
+          subArea(t,i) +
+        '</div>';
+      }).join('') + '</div>' +
+      '<p class="step-help" style="margin-top:.7rem;font-size:.78rem">Drag tickets to set the order players see them in.</p>';
+  return '' +
+  '<div class="step-q display">Tryout Tickets</div>' +
+  '<p class="step-help">Tickets are what a player is trying out <strong>for</strong>. ' +
+    (isHS ? 'For high school tryouts, that\'s usually a graduation-year team.'
+          : 'For youth tryouts, that\'s usually an age group.') +
+  ' When a player registers, they pick their ticket — and if a ticket has subsections, they pick one of those too.</p>' +
+  '<div class="ticket-row">' +
+    '<div style="flex:1;min-width:220px"><label class="field-label" for="ticket-input">Ticket Name</label>' +
+    '<input type="text" id="ticket-input" placeholder="'+(isHS?'e.g. 2028 Team':'e.g. 10U')+'" onkeydown="if(event.key===\'Enter\')addTicketFromInput()"></div>' +
+    '<button class="btn btn-primary btn-sm" style="align-self:flex-end" onclick="addTicketFromInput()">Add Ticket</button>' +
+  '</div>' +
+  '<div class="chip-row">'+chips+'</div>' +
+  list;
+}
+function subArea(t,i){
+  let html = '';
+  if(t.subs.length){
+    html += '<div class="sub-list">' + t.subs.map(function(s,j){
+      return '<div class="sub-item"><span class="sub-name"><span class="sub-tick"></span>'+esc(s)+'</span>' +
+        '<button class="remove-x" onclick="removeSub('+i+','+j+')" aria-label="Remove '+esc(s)+'">&times;</button></div>';
+    }).join('') + '</div>';
+  }
+  if(t.addingSub){
+    const quick = ['Position Player','Pitcher Only','Position Player & Pitcher'];
+    const allUsed = quick.every(function(s){ return t.subs.indexOf(s) !== -1; });
+    let subChips = '<button class="chip" style="border-color:var(--accent);color:var(--accent)" '+(allUsed?'disabled':'')+' onclick="addAllSubs('+i+')">+ Add All 3</button>';
+    subChips += quick.map(function(s){
+      const used = t.subs.indexOf(s) !== -1;
+      return '<button class="chip" '+(used?'disabled':'')+' onclick="addSub('+i+',\''+s+'\')">+ '+s+'</button>';
+    }).join('');
+    html += '<div class="sub-add">' +
+      '<div class="chip-row" style="margin-top:.2rem">'+subChips+'</div>' +
+      '<div class="ticket-row" style="margin-top:.6rem;max-width:480px">' +
+        '<div style="flex:1;min-width:180px"><input type="text" id="sub-input-'+i+'" placeholder="e.g. Position Player" ' +
+          'onkeydown="if(event.key===\'Enter\')addSubFromInput('+i+')"></div>' +
+        '<button class="btn btn-primary btn-sm" onclick="addSubFromInput('+i+')">Add</button>' +
+        '<button class="btn btn-outline-dark btn-sm" onclick="wiz.tickets['+i+'].addingSub=false;renderStepPanel()">Done</button>' +
+      '</div>' +
+    '</div>';
+  } else {
+    html += '<div class="sub-add"><button class="link-sub" onclick="wiz.tickets['+i+'].addingSub=true;renderStepPanel()">+ Add Subsection</button>' +
+      (t.subs.length && wiz.tickets.length > 1 ? '<button class="link-sub" style="margin-left:1rem;color:var(--accent)" onclick="copySubsToAll('+i+')">Copy to all tickets</button>' : '') +
+    '</div>';
+  }
+  return html;
+}
+function addTicketFromInput(){
+  const el = document.getElementById('ticket-input');
+  const v = el.value.trim();
+  if(!v){ toast('Type a ticket name first'); return; }
+  addTicket(v);
+}
+function addTicket(name){
+  if(wiz.tickets.some(function(t){ return t.name === name; })){ toast('That ticket is already added'); return; }
+  wiz.tickets.push({name:name, subs:[], addingSub:false});
+  renderStepPanel();
+}
+function removeTicket(i){
+  wiz.tickets.splice(i,1);
+  renderStepPanel();
+}
+function addSubFromInput(i){
+  const el = document.getElementById('sub-input-'+i);
+  const v = el.value.trim();
+  if(!v){ toast('Type a subsection name first'); return; }
+  addSub(i,v);
+}
+function addSub(i,name){
+  if(wiz.tickets[i].subs.indexOf(name) !== -1){ toast('That subsection is already added'); return; }
+  wiz.tickets[i].subs.push(name);
+  renderStepPanel();
+  const el = document.getElementById('sub-input-'+i);
+  if(el) el.focus();
+}
+function removeSub(i,j){
+  wiz.tickets[i].subs.splice(j,1);
+  renderStepPanel();
+}
+function addAllSubs(i){
+  ['Position Player','Pitcher Only','Position Player & Pitcher'].forEach(function(s){
+    if(wiz.tickets[i].subs.indexOf(s) === -1) wiz.tickets[i].subs.push(s);
+  });
+  renderStepPanel();
+}
+function addAllSubsEverywhere(){
+  const quick = ['Position Player','Pitcher Only','Position Player & Pitcher'];
+  let touched = 0;
+  wiz.tickets.forEach(function(t){
+    quick.forEach(function(s){
+      if(t.subs.indexOf(s) === -1){ t.subs.push(s); touched++; }
+    });
+  });
+  toast(touched ? 'All 3 subsections added to every ticket' : 'Every ticket already has all 3 subsections');
+  renderStepPanel();
+}
+function copySubsToAll(i){
+  const src = wiz.tickets[i].subs;
+  let touched = 0;
+  wiz.tickets.forEach(function(t,j){
+    if(j === i) return;
+    src.forEach(function(s){
+      if(t.subs.indexOf(s) === -1){ t.subs.push(s); touched++; }
+    });
+  });
+  toast(touched ? 'Subsections copied to every ticket' : 'Every ticket already has these subsections');
+  renderStepPanel();
+}
+
+/* ---- Step 7: pricing ---- */
+function uniqueSubs(){
+  const seen = [];
+  wiz.tickets.forEach(function(t){
+    t.subs.forEach(function(s){ if(seen.indexOf(s) === -1) seen.push(s); });
+  });
+  return seen;
+}
+function hasAnySubs(){
+  return wiz.tickets.some(function(t){ return t.subs.length > 0; });
+}
+function currentPriceKeys(){
+  /* Returns [{k, label, group}] for every price input the current mode requires. */
+  const keys = [];
+  const adv = wiz.pricing.advanced;
+  if(!hasAnySubs()){
+    if(!adv){ keys.push({k:'flat', label:'All tickets', group:''}); }
+    else {
+      wiz.tickets.forEach(function(t){ keys.push({k:'t|'+t.name, label:t.name, group:''}); });
+    }
+    return keys;
+  }
+  if(!adv){
+    uniqueSubs().forEach(function(s){ keys.push({k:'s|'+s, label:s, group:'Subsection prices — apply across every ticket'}); });
+    wiz.tickets.forEach(function(t){
+      if(t.subs.length === 0) keys.push({k:'t|'+t.name, label:t.name, group:'Tickets without subsections'});
+    });
+  } else {
+    wiz.tickets.forEach(function(t){
+      if(t.subs.length === 0) keys.push({k:'t|'+t.name, label:t.name+' — single price', group:t.name});
+      else t.subs.forEach(function(s){ keys.push({k:'m|'+t.name+'|'+s, label:s, group:t.name}); });
+    });
+  }
+  return keys;
+}
+function onPrice(inp){
+  wiz.pricing.values[inp.dataset.k] = inp.value;
+}
+function priceRow(key){
+  const v = wiz.pricing.values[key.k] || '';
+  return '<div class="price-row"><span class="pr-label">'+esc(key.label)+'</span>' +
+    '<span class="price-input">$ <input type="text" inputmode="decimal" placeholder="0.00" value="'+escAttr(v)+'" data-k="'+escAttr(key.k)+'" oninput="onPrice(this)"></span></div>';
+}
+function stepPricing(){
+  const subs = hasAnySubs();
+  const adv = wiz.pricing.advanced;
+  const keys = currentPriceKeys();
+  let html = '<div class="step-q display">Pricing</div>';
+
+  if(!subs){
+    html += '<p class="step-help">' + (adv
+      ? 'Set the price for each ticket. Players pay based on the ticket they choose.'
+      : 'One price covers every ticket in this registration. If different age groups pay different amounts, switch to per-ticket pricing below.') + '</p>';
+    html += '<div class="price-list">' + keys.map(priceRow).join('') + '</div>';
+    html += '<div class="mt-2"><button class="link-red" onclick="togglePriceAdvanced()">' +
+      (adv ? '&larr; Use one price for everything' : 'Set a different price per ticket &rarr;') + '</button></div>';
+    return html;
+  }
+
+  /* Subsections exist — they drive the pricing. */
+  html += '<p class="step-help">Your tickets have subsections, so pricing follows the subsections. ' + (adv
+    ? 'Set each ticket\'s subsection prices individually.'
+    : 'These prices apply to every ticket — a Pitcher Only pays the same whether they\'re a 2027 or a 2030. Tickets without subsections get their own single price.') + '</p>';
+
+  if(!adv){
+    const groups = {};
+    keys.forEach(function(k){ (groups[k.group] = groups[k.group] || []).push(k); });
+    Object.keys(groups).forEach(function(g){
+      html += '<div class="price-group"><div class="price-group-head">'+esc(g)+'</div>' +
+        groups[g].map(priceRow).join('') + '</div>';
+    });
+    html += '<div class="mt-2"><button class="link-red" onclick="togglePriceAdvanced()">Set different subsection prices per ticket &rarr;</button>' +
+      '<span class="step-help" style="display:inline-block;margin-left:.8rem;font-size:.78rem">Rarely needed — most organizations price subsections the same across age groups.</span></div>';
+  } else {
+    wiz.tickets.forEach(function(t){
+      const tKeys = keys.filter(function(k){ return k.group === t.name; });
+      html += '<div class="price-group"><div class="price-group-head">'+esc(t.name)+'</div>' +
+        tKeys.map(priceRow).join('') + '</div>';
+    });
+    html += '<div class="mt-2"><button class="link-red" onclick="togglePriceAdvanced()">&larr; Use the same subsection prices for every ticket</button></div>';
+  }
+  return html;
+}
+function togglePriceAdvanced(){
+  wiz.pricing.advanced = !wiz.pricing.advanced;
+  renderStepPanel();
+}
+
+/* ---- Step 8: waivers ---- */
+function stepWaivers(){
+  const active = waiverLibrary.filter(function(wv){ return wv.on !== false; });
+  if(wiz.waivers === null){
+    wiz.waivers = active.map(function(wv){ return wv.title; });
+  }
+  let html = '<div class="step-q display">Waivers</div>' +
+  '<p class="step-help">Players and parents must read and agree to each waiver below <strong>before they can pay</strong>. Check the waivers to include in this registration.</p>';
+  if(active.length === 0){
+    html += '<div class="empty-state">' +
+      '<div class="e-title">No waivers yet</div>' +
+      '<div class="e-sub">'+(waiversDeclined
+        ? 'You chose not to use waivers — click Continue to skip this step, or create one below if you\'ve changed your mind.'
+        : 'Create your first waiver — it\'s saved to your waiver library so every future registration can use it.')+'</div>' +
+      (wiz.addingWaiver ? '' : '<button class="btn btn-primary" onclick="wiz.addingWaiver=true;renderStepPanel()">+ Create New Waiver</button>') +
+    '</div>';
+  } else {
+    html += active.map(function(wv){
+      const sel = wiz.waivers.indexOf(wv.title) !== -1;
+      const open = !!wiz.waiverOpen[wv.title];
+      return '<div class="waiver-item">' +
+        '<div class="waiver-head">' +
+          '<input type="checkbox" '+(sel?'checked':'')+' onchange="toggleWizWaiver(\''+escAttr(wv.title)+'\', this)" aria-label="Include '+escAttr(wv.title)+'">' +
+          '<span class="waiver-title">'+esc(wv.title)+'</span>' +
+          '<button class="link-red" onclick="toggleWaiverView(\''+escAttr(wv.title)+'\')">'+(open?'Hide':'View')+'</button>' +
+        '</div>' +
+        (open ? '<div class="waiver-body">'+esc(wv.body)+'</div>' : '') +
+      '</div>';
+    }).join('');
+    if(!wiz.addingWaiver){
+      html += '<div class="mt-2"><button class="btn btn-outline-dark btn-sm" onclick="wiz.addingWaiver=true;renderStepPanel()">+ Create New Waiver</button></div>';
+    }
+  }
+  if(wiz.addingWaiver){
+    html += '<div style="background:var(--row-alt);border:1.5px solid var(--line);border-radius:12px;padding:1.2rem 1.3rem;margin-top:1.2rem">' +
+      '<div style="margin-bottom:.9rem"><label class="field-label" for="ww-title">Waiver Title</label>' +
+        '<input type="text" id="ww-title" placeholder="e.g. Code of Conduct Agreement" style="max-width:100%"></div>' +
+      '<div><label class="field-label" for="ww-body">Waiver Text — what the parent agrees to</label>' +
+        '<textarea id="ww-body" placeholder="Type the full waiver language here..."></textarea></div>' +
+      '<div style="display:flex;gap:.7rem;margin-top:.9rem">' +
+        '<button class="btn btn-primary btn-sm" onclick="addWizWaiver()">Save Waiver</button>' +
+        '<button class="btn btn-outline-dark btn-sm" onclick="wiz.addingWaiver=false;renderStepPanel()">Cancel</button>' +
+      '</div>' +
+    '</div>';
+  }
+  return html;
+}
+function toggleWizWaiver(title, el){
+  const i = wiz.waivers.indexOf(title);
+  if(el.checked && i === -1) wiz.waivers.push(title);
+  if(!el.checked && i !== -1) wiz.waivers.splice(i,1);
+}
+function toggleWaiverView(title){
+  wiz.waiverOpen[title] = !wiz.waiverOpen[title];
+  renderStepPanel();
+}
+function addWizWaiver(){
+  const title = document.getElementById('ww-title').value.trim();
+  const body = document.getElementById('ww-body').value.trim();
+  if(!title){ toast('Give the waiver a title'); return; }
+  if(!body){ toast('Enter the waiver text parents will agree to'); return; }
+  if(waiverLibrary.some(function(wv){ return wv.title.toLowerCase() === title.toLowerCase(); })){
+    toast('A waiver with that title already exists'); return;
+  }
+  waiverLibrary.push({ title:title, body:body, on:true });
+  wiz.waivers.push(title);
+  wiz.addingWaiver = false;
+  toast('"'+title+'" added — and saved to your waiver library');
+  renderStepPanel();
+}
+
+/* ---- Step 9: post-registration message ---- */
+function stepMessage(){
+  return '' +
+  '<div class="step-q display">Post-Registration Message</div>' +
+  '<p class="step-help">Shown to the parent on their confirmation screen right after they complete payment. Use it for next steps — what to bring, arrival time, who to contact. Leave it blank to use the standard confirmation.</p>' +
+  '<div class="mt-2" style="max-width:680px">' +
+    '<label class="field-label" for="pm-input">Your Message (optional)</label>' +
+    '<textarea id="pm-input" style="min-height:150px" placeholder="e.g. Thanks for registering with CBU! Please arrive 30 minutes early to check in. Bring your own bat, glove, and helmet — catchers bring full gear. Questions? Email tryouts@cbubaseball.com." oninput="wiz.postMessage=this.value">'+esc(wiz.postMessage)+'</textarea>' +
+  '</div>' +
+  '<p class="step-help" style="margin-top:.8rem;font-size:.78rem">Tip: this message is also included in the confirmation email.</p>';
+}
+function pricingSummary(){
+  return currentPriceKeys().map(function(k){
+    const v = wiz.pricing.values[k.k] || '0';
+    const label = k.group && k.group.indexOf('Subsection prices') === -1 && k.group.indexOf('Tickets without') === -1
+      ? k.group + ' — ' + k.label : k.label;
+    return '<div style="margin:.2rem 0">'+esc(label)+': <strong>$'+esc(parseFloat(v).toFixed(2))+'</strong></div>';
+  }).join('');
+}
+let ticketDragSrc = null;
+function ticketDragStart(e){
+  const el = e.currentTarget;
+  ticketDragSrc = +el.dataset.ti;
+  el.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  try{ e.dataTransfer.setData('text/plain',''); }catch(err){}
+}
+function ticketDragEnd(e){
+  e.currentTarget.classList.remove('dragging');
+  ticketDragSrc = null;
+}
+function ticketDragOver(e){
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+}
+function ticketDrop(e){
+  e.preventDefault();
+  if(ticketDragSrc === null) return;
+  let to = +e.currentTarget.dataset.ti;
+  const item = wiz.tickets.splice(ticketDragSrc,1)[0];
+  if(ticketDragSrc < to) to--;
+  const rect = e.currentTarget.getBoundingClientRect();
+  if(e.clientY > rect.top + rect.height/2) to++;
+  wiz.tickets.splice(to,0,item);
+  ticketDragSrc = null;
+  renderStepPanel();
+}
+
+/* ---- Step 6: review ---- */
+function stepReview(){
+  const m = TYPE_META[wiz.type];
+  const tmpl = templates[wiz.type];
+  const opens = wiz.opensMode==='live' ? 'Live immediately' : 'Opens '+fmtDate(wiz.opensDate);
+  const closes = wiz.closesMode==='indefinite' ? 'Open indefinitely' : 'Closes '+fmtDate(wiz.closesDate);
+  return '' +
+  '<div class="step-q display">Review &amp; Complete</div>' +
+  '<p class="step-help">Check everything below, then complete the registration to generate your signup link.</p>' +
+  '<dl class="review-grid">' +
+    '<dt>Registration Name</dt><dd class="cell-strong">'+esc(wiz.regName)+'</dd>' +
+    '<dt>Tryout Type</dt><dd><span class="pill '+m.pill+'">'+m.label+'</span></dd>' +
+    '<dt>Registration Opens</dt><dd>'+esc(opens)+'</dd>' +
+    '<dt>Registration Closes</dt><dd>'+esc(closes)+'</dd>' +
+    '<dt>Registration Form</dt><dd>'+(tmpl
+      ? esc(tmpl.name)+' · '+countFields(tmpl)+' template fields' +
+        (wiz.extraFields.length ? ' + '+wiz.extraFields.length+' added for this registration' : '')
+      : '<span style="color:var(--red);font-weight:600">No '+m.label+' template yet — create one in the Form step</span>')+'</dd>' +
+    '<dt>Tryout Tickets</dt><dd>'+wiz.tickets.map(function(t){
+      return '<div style="margin:.25rem 0"><span class="pill pill-navy" style="margin-right:.45rem">'+esc(t.name)+'</span>' +
+        (t.subs.length ? '<span style="font-size:.8rem;color:var(--muted)">'+esc(t.subs.join(' · '))+'</span>' : '') +
+      '</div>';
+    }).join('')+'</dd>' +
+    '<dt>Pricing</dt><dd>'+pricingSummary()+'</dd>' +
+    '<dt>Waivers</dt><dd>'+((wiz.waivers && wiz.waivers.length)
+      ? wiz.waivers.map(function(t){ return '<span class="pill pill-navy" style="margin-right:.35rem">'+esc(t)+'</span>'; }).join('') +
+        '<div class="cell-sub" style="margin-top:.35rem">Must be agreed to before payment</div>'
+      : '<span style="color:var(--muted)">None</span>')+'</dd>' +
+    '<dt>Post-Reg. Message</dt><dd>'+(wiz.postMessage.trim()
+      ? '<span style="font-size:.85rem">'+esc(wiz.postMessage.trim())+'</span>'
+      : '<span style="color:var(--muted)">Standard confirmation</span>')+'</dd>' +
+  '</dl>';
+}
+function fmtDate(iso){
+  if(!iso) return '';
+  const d = new Date(iso + 'T12:00:00');
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+}
+function editRegistration(i){
+  const r = registrations[i];
+  if(!r.wiz){ toast('This registration has no saved settings to edit'); return; }
+  wiz = JSON.parse(JSON.stringify(r.wiz));
+  wiz.step = 0;
+  wiz.isEdit = true;
+  wiz.editIdx = i;
+  wiz.addingFields = false;
+  wiz.addingWaiver = false;
+  wiz.waiverOpen = {};
+  if(wiz.postMessage === undefined) wiz.postMessage = '';
+  setAccent(wiz.type || 'hs');
+  renderWizard();
+  showView('view-wizard');
+}
+function completeRegistration(){
+  const opensDisp = wiz.opensMode==='live' ? 'Live now' : fmtDate(wiz.opensDate);
+  const closesDisp = wiz.closesMode==='indefinite' ? 'Indefinite' : fmtDate(wiz.closesDate);
+  const snapshot = JSON.parse(JSON.stringify(wiz));
+  snapshot.step = 0; snapshot.isEdit = false; snapshot.editIdx = null;
+  if(wiz.isEdit){
+    const r = registrations[wiz.editIdx];
+    r.name = wiz.regName;
+    r.type = wiz.type;
+    r.opens = opensDisp;
+    r.closes = closesDisp;
+    r.wiz = snapshot;
+    renderRegTable();
+    document.getElementById('confirm-title').textContent = 'Your registration is updated';
+    document.getElementById('confirm-sub').textContent =
+      'Changes to "'+wiz.regName+'" are saved. The registration link is unchanged.';
+    document.getElementById('confirm-link').textContent = 'https://'+r.link;
+    showView('view-confirm');
+    return;
+  }
+  const m = TYPE_META[wiz.type];
+  const slug = (wiz.type==='hs'?'hs':'youth')+'-tryout-'+Math.random().toString(36).slice(2,6);
+  const link = 'cbuapp.app/register/'+slug;
+  registrations.unshift({
+    name: wiz.regName,
+    type: wiz.type,
+    opens: opensDisp,
+    closes: closesDisp,
+    signups: '0',
+    registrants: [],
+    status: 'Published',
+    link: link,
+    wiz: snapshot
+  });
+  renderRegTable();
+  document.getElementById('confirm-title').textContent =
+    wiz.opensMode==='live' ? 'Your registration is live' : 'Your registration is scheduled';
+  document.getElementById('confirm-sub').textContent =
+    wiz.opensMode==='live'
+      ? 'Share the link below — players and parents can sign up right now.'
+      : 'Share the link below — signups open automatically on '+fmtDate(wiz.opensDate)+'.';
+  document.getElementById('confirm-link').textContent = 'https://'+link;
+  showView('view-confirm');
+}
+function copyLink(){
+  const txt = document.getElementById('confirm-link').textContent;
+  navigator.clipboard && navigator.clipboard.writeText(txt);
+  toast('Link copied');
+}
+function finishToLanding(){
+  setAccent('hs');
+  showView('view-landing');
+}
+
+/* =====================================================
+   FIELDS MANAGER
+===================================================== */
+function openFieldsManager(){
+  setAccent('hs');
+  renderFieldTable();
+  renderTemplateCards();
+  renderWaiverPanel();
+  syncDeclineToggle();
+  showView('view-fields');
+}
+function switchTab(which){
+  document.getElementById('tab-fields').classList.toggle('active', which==='fields');
+  document.getElementById('tab-templates').classList.toggle('active', which==='templates');
+  document.getElementById('tab-waivers').classList.toggle('active', which==='waivers');
+  document.getElementById('panel-fields').style.display = which==='fields' ? 'block' : 'none';
+  document.getElementById('panel-templates').style.display = which==='templates' ? 'block' : 'none';
+  document.getElementById('panel-waivers').style.display = which==='waivers' ? 'block' : 'none';
+}
+function renderFieldTable(){
+  const body = document.getElementById('field-table-body');
+  body.innerHTML = fieldLibrary.map(function(fd,i){
+    return '<tr>' +
+      '<td class="cell-strong">'+esc(fd.name)+'</td>' +
+      '<td>'+esc(fd.type)+(fd.options && fd.options.length ? '<div class="f-opts">'+fd.options.length+' choices: '+esc(fd.options.join(' · '))+'</div>' : '')+'</td>' +
+      '<td><span class="pill '+(fd.req?'pill-red':'pill-navy')+'">'+(fd.req?'Required':'Optional')+'</span></td>' +
+      '<td><select class="applies-select" onchange="setApplies('+i+',this.value)">' +
+        ['Both','High School','Youth'].map(function(a){ return '<option'+(a===fd.applies?' selected':'')+'>'+a+'</option>'; }).join('') +
+      '</select></td>' +
+      '<td><button class="toggle'+(fd.on?' on':'')+'" onclick="toggleField('+i+')" aria-label="Toggle '+esc(fd.name)+'"></button></td>' +
+      '<td><button class="pill pill-navy" onclick="editField('+i+')">Edit</button></td>' +
+    '</tr>';
+  }).join('');
+}
+let editingFieldIdx = null;
+function editField(i){
+  editingFieldIdx = i;
+  const fd = fieldLibrary[i];
+  const form = document.getElementById('add-field-form');
+  form.classList.add('open');
+  document.getElementById('nf-name').value = fd.name;
+  document.getElementById('nf-type').value = fd.type;
+  document.getElementById('nf-applies').value = fd.applies;
+  document.getElementById('nf-req').value = fd.req ? 'Required' : 'Optional';
+  document.getElementById('nf-tip').value = fd.tip || '';
+  document.getElementById('nf-save').textContent = 'Save Changes';
+  /* Prefill choice lines */
+  const lines = document.getElementById('opt-lines-nf');
+  const opts = fd.options && fd.options.length ? fd.options : ['',''];
+  lines.innerHTML = opts.map(function(o){
+    return '<div class="opt-line"><input type="text" class="opt-input" value="'+escAttr(o)+'" placeholder="e.g. Right"></div>';
+  }).join('');
+  document.getElementById('opt-area-nf').classList.toggle('open', needsOptions(fd.type));
+  form.scrollIntoView({behavior:'smooth', block:'center'});
+  document.getElementById('nf-name').focus();
+}
+function cancelFieldForm(){
+  editingFieldIdx = null;
+  resetFieldForm();
+  document.getElementById('add-field-form').classList.remove('open');
+}
+function resetFieldForm(){
+  document.getElementById('nf-name').value = '';
+  document.getElementById('nf-type').value = 'Text';
+  document.getElementById('nf-applies').value = 'Both';
+  document.getElementById('nf-req').value = 'Optional';
+  document.getElementById('nf-tip').value = '';
+  document.getElementById('nf-save').textContent = 'Save Field';
+  const lines = document.getElementById('opt-lines-nf');
+  lines.innerHTML = '<div class="opt-line"><input type="text" class="opt-input" placeholder="e.g. Right"></div>' +
+                    '<div class="opt-line"><input type="text" class="opt-input" placeholder="e.g. Left"></div>';
+  document.getElementById('opt-area-nf').classList.remove('open');
+}
+function appliesPill(a){
+  if(a==='High School') return 'pill-red';
+  if(a==='Youth') return 'pill-blue';
+  return 'pill-navy';
+}
+function toggleField(i){
+  fieldLibrary[i].on = !fieldLibrary[i].on;
+  renderFieldTable();
+}
+function setApplies(i,v){
+  fieldLibrary[i].applies = v;
+  toast('"'+fieldLibrary[i].name+'" now applies to '+v);
+}
+function toggleAddFieldForm(){
+  const form = document.getElementById('add-field-form');
+  if(form.classList.contains('open')){ cancelFieldForm(); return; }
+  editingFieldIdx = null;
+  resetFieldForm();
+  form.classList.add('open');
+  document.getElementById('nf-name').focus();
+}
+function addLibraryField(){
+  const name = document.getElementById('nf-name').value.trim();
+  if(!name){ toast('Give the field a name'); return; }
+  const type = document.getElementById('nf-type').value;
+  const opts = collectOptions('nf');
+  if(needsOptions(type) && opts.length === 0){ toast('Add at least one choice for players to pick from'); return; }
+  const data = {
+    name:name,
+    type:type,
+    req:document.getElementById('nf-req').value === 'Required',
+    applies:document.getElementById('nf-applies').value,
+    tip:document.getElementById('nf-tip').value.trim(),
+    options: needsOptions(type) ? opts : undefined
+  };
+  if(editingFieldIdx !== null){
+    data.on = fieldLibrary[editingFieldIdx].on;
+    fieldLibrary[editingFieldIdx] = data;
+    toast('"'+name+'" updated');
+  } else {
+    data.on = true;
+    fieldLibrary.unshift(data);
+    toast('"'+name+'" added to the field library');
+  }
+  cancelFieldForm();
+  renderFieldTable();
+}
+let waiverEditIdx = null;
+function renderWaiverPanel(){
+  const el = document.getElementById('waiver-admin-list');
+  if(waiverLibrary.length === 0){
+    el.innerHTML = '<div class="card card-pad"><div class="empty-state" style="margin-top:0">' +
+      '<div class="e-title">No waivers yet</div>' +
+      '<div class="e-sub">Add your first waiver above — liability releases and photo/video releases are the usual starting points.</div>' +
+    '</div></div>';
+    return;
+  }
+  el.innerHTML = waiverLibrary.map(function(wv,i){
+    if(waiverEditIdx === i){
+      return '<div class="card card-pad" style="margin-bottom:1rem">' +
+        '<div style="margin-bottom:.9rem"><label class="field-label" for="ew-title-'+i+'">Waiver Title</label>' +
+          '<input type="text" id="ew-title-'+i+'" value="'+escAttr(wv.title)+'" style="max-width:100%"></div>' +
+        '<div><label class="field-label" for="ew-body-'+i+'">Waiver Text</label>' +
+          '<textarea id="ew-body-'+i+'">'+esc(wv.body)+'</textarea></div>' +
+        '<div style="display:flex;gap:.7rem;margin-top:.9rem">' +
+          '<button class="btn btn-primary btn-sm" onclick="saveWaiverEdit('+i+')">Save Changes</button>' +
+          '<button class="btn btn-outline-dark btn-sm" onclick="waiverEditIdx=null;renderWaiverPanel()">Cancel</button>' +
+        '</div>' +
+      '</div>';
+    }
+    return '<div class="card" style="margin-bottom:1rem'+(wv.on===false?';opacity:.6':'')+'">' +
+      '<div style="display:flex;align-items:center;gap:.8rem;padding:.9rem 1.3rem;flex-wrap:wrap">' +
+        '<span class="waiver-title" style="font-family:\'Oswald\',Arial,sans-serif;text-transform:uppercase;letter-spacing:.04em;font-size:1rem">'+esc(wv.title)+'</span>' +
+        '<span style="display:flex;align-items:center;gap:.5rem;margin-left:auto">' +
+          '<button class="pill pill-navy" onclick="waiverEditIdx='+i+';renderWaiverPanel()">Edit</button>' +
+          '<button class="toggle'+(wv.on!==false?' on':'')+'" onclick="toggleWaiverOn('+i+')" aria-label="Toggle '+escAttr(wv.title)+'"></button>' +
+        '</span>' +
+      '</div>' +
+      '<div class="waiver-body">'+esc(wv.body)+'</div>' +
+    '</div>';
+  }).join('');
+}
+function toggleWaiverOn(i){
+  waiverLibrary[i].on = waiverLibrary[i].on === false ? true : false;
+  renderWaiverPanel();
+}
+function saveWaiverEdit(i){
+  const title = document.getElementById('ew-title-'+i).value.trim();
+  const body = document.getElementById('ew-body-'+i).value.trim();
+  if(!title){ toast('Give the waiver a title'); return; }
+  if(!body){ toast('Enter the waiver text'); return; }
+  waiverLibrary[i].title = title;
+  waiverLibrary[i].body = body;
+  waiverEditIdx = null;
+  renderWaiverPanel();
+  toast('"'+title+'" updated');
+}
+function toggleAddWaiverForm(){
+  const form = document.getElementById('add-waiver-form');
+  if(form.classList.contains('open')){ cancelWaiverForm(); return; }
+  form.classList.add('open');
+  document.getElementById('aw-title').focus();
+}
+function cancelWaiverForm(){
+  document.getElementById('aw-title').value = '';
+  document.getElementById('aw-body').value = '';
+  document.getElementById('add-waiver-form').classList.remove('open');
+}
+function saveAdminWaiver(){
+  const title = document.getElementById('aw-title').value.trim();
+  const body = document.getElementById('aw-body').value.trim();
+  if(!title){ toast('Give the waiver a title'); return; }
+  if(!body){ toast('Enter the waiver text parents will agree to'); return; }
+  if(waiverLibrary.some(function(wv){ return wv.title.toLowerCase() === title.toLowerCase(); })){
+    toast('A waiver with that title already exists'); return;
+  }
+  waiverLibrary.push({ title:title, body:body, on:true });
+  cancelWaiverForm();
+  renderWaiverPanel();
+  toast('"'+title+'" added to the waiver library');
+}
+function renderTemplateCards(){
+  const el = document.getElementById('tmpl-cards');
+  el.innerHTML = ['hs','youth'].map(function(key){
+    const m = TYPE_META[key];
+    const t = templates[key];
+    if(t){
+      return '<div class="tmpl-card">' +
+        '<span class="pill '+m.pill+'">'+m.label+'</span>' +
+        '<div class="c-title mt-1">'+esc(t.name)+'</div>' +
+        '<div class="stat">'+t.sections.length+' sections · '+countFields(t)+' fields</div>' +
+        '<div class="mt-2"><button class="btn btn-ghost-red btn-sm" onclick="openBuilder(\''+key+'\',\'fields\')">Edit Template</button></div>' +
+      '</div>';
+    }
+    return '<div class="tmpl-card" style="border-style:dashed">' +
+      '<span class="pill '+m.pill+'">'+m.label+'</span>' +
+      '<div class="c-title mt-1">'+m.label+' Template</div>' +
+      '<div class="stat">Not created yet. Build it once and every '+m.label.toLowerCase()+' tryout starts from it.</div>' +
+      '<div class="mt-2"><button class="btn btn-primary btn-sm" onclick="openBuilder(\''+key+'\',\'fields\')">Make a '+m.label+' Template</button></div>' +
+    '</div>';
+  }).join('');
+}
+
+/* =====================================================
+   TEMPLATE BUILDER
+===================================================== */
+function openBuilder(typeKey, returnTo){
+  const m = TYPE_META[typeKey];
+  setAccent(typeKey);
+  const existing = templates[typeKey];
+  builder = {
+    typeKey: typeKey,
+    returnTo: returnTo,
+    renamingSi: null,
+    removePendingSi: null,
+    name: existing ? existing.name : m.label+' Template',
+    sections: existing
+      ? JSON.parse(JSON.stringify(existing.sections))
+      : mandatorySections()
+  };
+  document.getElementById('builder-title').textContent = builder.name;
+  document.getElementById('builder-eyebrow').textContent = m.label+' · Template Builder';
+  document.getElementById('builder-backlink').innerHTML =
+    '&larr; ' + (returnTo==='wizard' ? 'Back to Create New Tryout'
+               : returnTo==='landing' ? 'Back to Registration Management'
+               : 'Back to Registration Form Fields');
+  renderBuilder();
+  hideAddSection();
+  showView('view-builder');
+}
+function builderExit(){
+  if(builder.returnTo === 'wizard'){ renderWizard(); showView('view-wizard'); }
+  else if(builder.returnTo === 'landing'){ setAccent('hs'); renderRegTable(); showView('view-landing'); }
+  else { openFieldsManager(); switchTab('templates'); }
+}
+function renderBuilder(){
+  const el = document.getElementById('builder-sections');
+  el.innerHTML = builder.sections.map(function(sec,si){
+    const renaming = builder.renamingSi === si;
+    const pendingRemove = builder.removePendingSi === si;
+    const headName = renaming
+      ? '<input type="text" id="rename-input-'+si+'" value="'+escAttr(sec.name)+'" style="max-width:260px;padding:.35rem .6rem;border-radius:6px;border:none;font-weight:600" ' +
+        'onkeydown="if(event.key===\'Enter\')saveRename('+si+');if(event.key===\'Escape\')cancelRename()">'
+      : '<span class="bsh-name">'+esc(sec.name)+'</span>';
+    const tools = renaming
+      ? '<button class="icon-btn" onclick="saveRename('+si+')" title="Save name" style="background:var(--green)">&#10003;</button>' +
+        '<button class="icon-btn" onclick="cancelRename()" title="Cancel">&times;</button>'
+      : '<button class="icon-btn" onclick="moveSection('+si+',-1)" title="Move section up" '+(si===0?'disabled style="opacity:.35"':'')+'>&#9650;</button>' +
+        '<button class="icon-btn" onclick="moveSection('+si+',1)" title="Move section down" '+(si===builder.sections.length-1?'disabled style="opacity:.35"':'')+'>&#9660;</button>' +
+        (sec.locked
+          ? '<span title="Mandatory on every template" style="font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;opacity:.85;padding:0 .35rem;font-family:\'Oswald\',Arial,sans-serif;font-weight:600">&#128274; Required</span>'
+          : '<button class="icon-btn" onclick="renameSection('+si+')" title="Rename section">&#9998;</button>' +
+            '<button class="icon-btn" onclick="removeSection('+si+')" title="'+(pendingRemove?'Click again to remove':'Remove section')+'"'+(pendingRemove?' style="background:var(--red)"':'')+'>&times;</button>');
+    const fields = sec.fields.map(function(fd,fi){
+      return '<div class="b-field" draggable="false" data-si="'+si+'" data-fi="'+fi+'" ' +
+        'ondragstart="dragStart(event)" ondragend="dragEnd(event)" ondragover="dragOverField(event)" ondrop="dropOnField(event)">' +
+        '<span class="drag-handle" onmousedown="enableRowDrag(event)" title="Drag to move">⠿</span>' +
+        '<span class="f-name">'+esc(fd.name)+tipSub(fd)+optsSub(fd)+'</span>' +
+        '<span class="pill pill-navy">'+esc(fd.type)+'</span>' +
+        (fd.reqLocked
+          ? '<span class="pill pill-red" title="Mandatory — always required">Required</span>'
+          : '<button class="pill '+(fd.req?'pill-red':'pill-navy')+'" onclick="toggleBuilderReq('+si+','+fi+')" title="Click to switch">'+(fd.req?'Required':'Optional')+'</button>') +
+        (fd.locked
+          ? '<span title="Mandatory field — on every template" style="font-size:.85rem;padding:.15rem .35rem;user-select:none">&#128274;</span>'
+          : '<button class="remove-x" onclick="removeBuilderField('+si+','+fi+')" aria-label="Remove field">&times;</button>') +
+      '</div>';
+    }).join('');
+    return '<div class="card builder-section">' +
+      '<div class="builder-section-head"'+(sec.color==='red'?' style="background:var(--red)"':'')+'>' +
+        headName +
+        '<span class="bsh-tools">' + tools + '</span>' +
+      '</div>' +
+      '<div class="field-drop" data-si="'+si+'" ondragover="dragOverList(event)" ondragleave="dragLeaveList(event)" ondrop="dropOnList(event)">' +
+        fields +
+        (sec.fields.length===0 ? '<p class="step-help" style="padding:.5rem .4rem">Drag fields here or add one below.</p>' : '') +
+      '</div>' +
+      (sec.note ? '<p class="step-help" style="padding:.1rem 1.1rem .5rem;font-size:.76rem;font-style:italic">'+esc(sec.note)+'</p>' : '') +
+      '<div style="padding:0 1rem 1rem">' +
+        '<button class="btn btn-outline-dark btn-sm" onclick="toggleSectionAdd('+si+')">+ Add Field to Section</button>' +
+        '<div class="b-addfield" id="b-addfield-'+si+'">' +
+          libPicker(si) +
+          '<div class="field-label" style="margin:1rem 0 .2rem">Or create a new field — it\'s saved to your field library too</div>' +
+          '<div class="inline-form">' +
+            '<div><label class="field-label">Field Name</label><input type="text" id="bf-name-'+si+'" placeholder="e.g. SAT"></div>' +
+            '<div><label class="field-label">Input Type</label><select id="bf-type-'+si+'" onchange="toggleOptionsArea(\'bf-'+si+'\', this)"><option>Text</option><option>Dropdown</option><option>Check Box</option><option>Date</option><option>File Upload</option></select></div>' +
+            '<div><label class="field-label">Applies To</label><select id="bf-app-'+si+'">' +
+              ['Both','High School','Youth'].map(function(a){
+                const def = builder.typeKey==='hs' ? 'High School' : 'Youth';
+                return '<option'+(a===def?' selected':'')+'>'+a+'</option>';
+              }).join('') +
+            '</select></div>' +
+            '<div><label class="field-label">Required</label><select id="bf-req-'+si+'"><option>Optional</option><option>Required</option></select></div>' +
+            '<div style="flex:1;min-width:180px"><label class="field-label">Tooltip / Help Text (optional)</label><input type="text" id="bf-tip-'+si+'" placeholder="Shown under the field" style="max-width:100%"></div>' +
+            '<button class="btn btn-primary btn-sm" onclick="addBuilderField('+si+')">Add</button>' +
+            optionsMarkup('bf-'+si) +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+function toggleSectionAdd(si){
+  document.getElementById('b-addfield-'+si).classList.toggle('open');
+}
+function availableLibraryFields(){
+  /* Library fields matching this template's type that aren't already in the template. */
+  const inTemplate = {};
+  builder.sections.forEach(function(sec){
+    sec.fields.forEach(function(fd){ inTemplate[fd.name.toLowerCase()] = true; });
+  });
+  const want = builder.typeKey === 'hs' ? 'High School' : 'Youth';
+  return fieldLibrary.filter(function(fd){
+    return fd.on !== false &&
+      (fd.applies === 'Both' || fd.applies === want) &&
+      !inTemplate[fd.name.toLowerCase()];
+  });
+}
+function libPicker(si){
+  const avail = availableLibraryFields();
+  const opts = avail.length
+    ? avail.map(function(fd){ return '<option value="'+escAttr(fd.name)+'">'+esc(fd.name)+' ('+esc(fd.type)+')</option>'; }).join('')
+    : '<option value="">All matching library fields are already in this template</option>';
+  return '<div class="inline-form" style="margin-top:.8rem">' +
+    '<div style="flex:1;min-width:240px"><label class="field-label">Add From Field Library</label>' +
+      '<select id="bf-lib-'+si+'" '+(avail.length?'':'disabled')+' style="max-width:100%">'+opts+'</select></div>' +
+    '<button class="btn btn-ghost-red btn-sm" '+(avail.length?'':'disabled')+' onclick="addFieldFromLibrary('+si+')">Add From Library</button>' +
+  '</div>';
+}
+function addFieldFromLibrary(si){
+  const sel = document.getElementById('bf-lib-'+si);
+  const name = sel && sel.value;
+  if(!name){ toast('No library field selected'); return; }
+  const fd = fieldLibrary.find(function(x){ return x.name === name; });
+  if(!fd) return;
+  builder.sections[si].fields.push({name:fd.name, type:fd.type, req:fd.req, options:fd.options ? fd.options.slice() : undefined});
+  toast('"'+fd.name+'" added from the field library');
+  renderBuilder();
+  document.getElementById('b-addfield-'+si).classList.add('open');
+}
+function addBuilderField(si){
+  const name = document.getElementById('bf-name-'+si).value.trim();
+  if(!name){ toast('Give the field a name'); return; }
+  const type = document.getElementById('bf-type-'+si).value;
+  const opts = collectOptions('bf-'+si);
+  if(needsOptions(type) && opts.length === 0){ toast('Add at least one choice for players to pick from'); return; }
+  const req = document.getElementById('bf-req-'+si).value === 'Required';
+  const applies = document.getElementById('bf-app-'+si).value;
+  const tip = document.getElementById('bf-tip-'+si).value.trim();
+  builder.sections[si].fields.push({
+    name:name, type:type, req:req,
+    options: needsOptions(type) ? opts : undefined
+  });
+  /* Sync into the field library for future use if it isn't there yet. */
+  const exists = fieldLibrary.some(function(fd){ return fd.name.toLowerCase() === name.toLowerCase(); });
+  if(!exists){
+    fieldLibrary.unshift({ name:name, type:type, req:req, applies:applies, tip:tip, on:true,
+      options: needsOptions(type) ? opts.slice() : undefined });
+    toast('"'+name+'" added — and saved to your field library');
+  } else {
+    toast('"'+name+'" added to the section');
+  }
+  renderBuilder();
+  document.getElementById('b-addfield-'+si).classList.add('open');
+}
+function removeBuilderField(si,fi){
+  builder.sections[si].fields.splice(fi,1);
+  renderBuilder();
+}
+function toggleBuilderReq(si,fi){
+  const fd = builder.sections[si].fields[fi];
+  if(fd.reqLocked) return;
+  fd.req = !fd.req;
+  renderBuilder();
+}
+function showAddSection(){
+  document.getElementById('add-section-form').style.display = 'flex';
+  document.getElementById('btn-add-section').style.display = 'none';
+  document.getElementById('new-section-name').focus();
+}
+function hideAddSection(){
+  document.getElementById('add-section-form').style.display = 'none';
+  document.getElementById('btn-add-section').style.display = '';
+  document.getElementById('new-section-name').value = '';
+}
+function confirmAddSection(){
+  const name = document.getElementById('new-section-name').value.trim();
+  if(!name){ toast('Give the section a name'); return; }
+  builder.sections.push({name:name, fields:[]});
+  hideAddSection();
+  renderBuilder();
+  toast('"'+name+'" section added');
+}
+function renameSection(si){
+  builder.renamingSi = si;
+  renderBuilder();
+  const el = document.getElementById('rename-input-'+si);
+  if(el){ el.focus(); el.select(); }
+}
+function saveRename(si){
+  const el = document.getElementById('rename-input-'+si);
+  const v = el.value.trim();
+  if(!v){ toast('Give the section a name'); return; }
+  builder.sections[si].name = v;
+  builder.renamingSi = null;
+  renderBuilder();
+}
+function cancelRename(){
+  builder.renamingSi = null;
+  renderBuilder();
+}
+function removeSection(si){
+  const sec = builder.sections[si];
+  if(sec.fields.length > 0 && builder.removePendingSi !== si){
+    builder.removePendingSi = si;
+    toast('"'+sec.name+'" has '+sec.fields.length+' fields — click × again to remove it');
+    renderBuilder();
+    return;
+  }
+  builder.removePendingSi = null;
+  builder.sections.splice(si,1);
+  renderBuilder();
+}
+function moveSection(si,dir){
+  const target = si + dir;
+  if(target < 0 || target >= builder.sections.length) return;
+  const tmp = builder.sections[si];
+  builder.sections[si] = builder.sections[target];
+  builder.sections[target] = tmp;
+  renderBuilder();
+}
+function saveTemplate(){
+  templates[builder.typeKey] = { name: builder.name, sections: builder.sections };
+  toast(builder.name + ' saved');
+  builderExit();
+}
+
+/* ---- Drag and drop ---- */
+function enableRowDrag(e){
+  const row = e.currentTarget.closest('.b-field, .ticket-item');
+  if(row) row.setAttribute('draggable','true');
+}
+document.addEventListener('mouseup', function(){
+  document.querySelectorAll('.b-field[draggable="true"], .ticket-item[draggable="true"]').forEach(function(el){
+    el.setAttribute('draggable','false');
+  });
+});
+function dragStart(e){
+  const el = e.currentTarget;
+  dragSrc = { si:+el.dataset.si, fi:+el.dataset.fi };
+  el.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  try{ e.dataTransfer.setData('text/plain',''); }catch(err){}
+}
+function dragEnd(e){
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('.field-drop').forEach(function(d){ d.classList.remove('drag-over'); });
+  dragSrc = null;
+}
+function dragOverField(e){
+  e.preventDefault();
+  e.stopPropagation();
+  e.dataTransfer.dropEffect = 'move';
+}
+function dropOnField(e){
+  e.preventDefault();
+  e.stopPropagation();
+  if(!dragSrc) return;
+  const el = e.currentTarget;
+  const toSi = +el.dataset.si, toFi = +el.dataset.fi;
+  moveField(dragSrc.si, dragSrc.fi, toSi, toFi);
+}
+function dragOverList(e){
+  e.preventDefault();
+  e.currentTarget.classList.add('drag-over');
+  e.dataTransfer.dropEffect = 'move';
+}
+function dragLeaveList(e){
+  e.currentTarget.classList.remove('drag-over');
+}
+function dropOnList(e){
+  e.preventDefault();
+  if(!dragSrc) return;
+  const toSi = +e.currentTarget.dataset.si;
+  moveField(dragSrc.si, dragSrc.fi, toSi, builder.sections[toSi].fields.length);
+}
+function moveField(fromSi, fromFi, toSi, toFi){
+  const item = builder.sections[fromSi].fields.splice(fromFi,1)[0];
+  if(fromSi === toSi && fromFi < toFi) toFi--;
+  builder.sections[toSi].fields.splice(toFi,0,item);
+  dragSrc = null;
+  renderBuilder();
+}
+
+/* =====================================================
+   INIT
+===================================================== */
+renderRegTable();
+</script>
+</body>
+</html>
