@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CBU Baseball — Season Registration</title>
+<!--
+  ============================================================
+  CBU APP — SEASON REGISTRATION (PARENT VIEW) — CLICKABLE DEMO
+  ============================================================
+  Built from the CBU starter template. Mock data throughout.
+  Flow: Invite summary -> Player Info -> Waivers -> Jersey
+  Package (with extra-package toggle) -> Jersey Sizing (sizes
+  + optional extra pieces; skippable with a do-it-now nudge)
+  -> Payment (full / plan / offline) -> Confirmation.
+  Sizing sits BEFORE payment because sizing can add purchases.
+  Installment rule: the plan is a set DOWN PAYMENT + monthly
+  payments, and ALL apparel purchases are charged with the
+  down payment — never spread across installments.
+  Jersey package contents, per-item sizes, and per-item prices
+  come from the admin's jersey package setup — mocked in
+  PACKAGE below.
+  ============================================================
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============ TOKENS ============ */
+:root{
+  --navy-bg:#0c1327;
+  --navy-bg-2:#141d3a;
+  --navy-deep:#0e1730;
+  --card:#ffffff;
+  --row-alt:#f5f6fa;
+  --red:#b91e2d;
+  --red-dark:#8f1622;
+  --powder:#6daed4;
+  --powder-dark:#4d8fb6;
+  --ink:#16203c;
+  --muted:#6b7590;
+  --line:#e3e6ee;
+  --green:#1e7a44;
+  --green-bg:#e2f2e8;
+  --accent:var(--red);
+  --accent-dark:var(--red-dark);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;overflow-x:hidden}
+body{
+  font-family:'Inter',-apple-system,'Segoe UI',Arial,sans-serif;
+  background:
+    radial-gradient(1200px 600px at 70% -10%, rgba(185,30,45,.12), transparent 60%),
+    linear-gradient(160deg,var(--navy-bg) 0%,var(--navy-bg-2) 100%);
+  background-attachment:fixed;
+  color:#eef1f8;min-height:100vh;overflow-x:hidden;max-width:100vw;
+}
+.display{font-family:'Oswald','Arial Narrow',Arial,sans-serif;text-transform:uppercase;letter-spacing:.02em}
+.eyebrow{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.28em;font-size:.72rem;font-weight:600;color:var(--powder)}
+
+/* ============ TOP NAV ============ */
+.topnav{
+  position:sticky;top:0;z-index:50;background:var(--navy-deep);
+  border-bottom:1px solid rgba(255,255,255,.07);
+  display:flex;align-items:center;justify-content:space-between;padding:.85rem 2rem;
+}
+.brand{display:flex;align-items:center;gap:.9rem}
+.brand-logo{font-family:'Oswald',Arial,sans-serif;font-weight:700;font-size:1.55rem;color:#fff;line-height:1}
+.brand-logo b{color:var(--red)}
+.brand-divider{width:1px;height:26px;background:rgba(255,255,255,.18)}
+.brand-label{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.2em;font-size:.78rem;color:#c6cde0;font-weight:600}
+
+/* ============ LAYOUT ============ */
+.page{max-width:1120px;margin:0 auto;padding:2.4rem 2rem 5rem}
+.page-title{font-size:2.5rem;font-weight:700;color:#fff;line-height:1.05}
+.page-title-sub{color:#aab3cc;font-size:.92rem;margin-top:.5rem;max-width:560px}
+.title-rule{width:64px;height:4px;background:var(--red);margin-top:.85rem;border-radius:2px}
+
+/* ============ BUTTONS ============ */
+.btn{
+  display:inline-flex;align-items:center;gap:.5rem;justify-content:center;
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.09em;
+  font-weight:600;font-size:.85rem;border-radius:8px;cursor:pointer;
+  padding:.72rem 1.35rem;border:2px solid transparent;transition:all .15s ease;
+  text-decoration:none;user-select:none;
+}
+.btn:focus-visible{outline:3px solid var(--powder);outline-offset:2px}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent-dark)}
+.btn-outline{background:transparent;color:#fff;border-color:rgba(255,255,255,.35)}
+.btn-outline:hover{border-color:#fff}
+.btn-outline-dark{background:transparent;color:var(--ink);border-color:#c6ccdb}
+.btn-outline-dark:hover{border-color:var(--ink)}
+.btn-ghost-red{background:transparent;color:var(--accent);border-color:var(--accent)}
+.btn-ghost-red:hover{background:var(--accent);color:#fff}
+.btn-sm{padding:.45rem .9rem;font-size:.74rem}
+.btn[disabled]{opacity:.4;cursor:not-allowed;pointer-events:none}
+.link-red{color:var(--red);font-weight:600;font-size:.8rem;text-decoration:none;cursor:pointer;background:none;border:none;font-family:inherit}
+.link-red:hover{text-decoration:underline}
+
+/* ============ CARDS ============ */
+.card{background:var(--card);border-radius:12px;color:var(--ink);box-shadow:0 18px 40px rgba(3,7,20,.45);overflow:hidden}
+.card-pad{padding:1.8rem 2rem}
+
+/* ============ PILLS ============ */
+.pill{
+  display:inline-block;font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;
+  letter-spacing:.1em;font-size:.66rem;font-weight:600;
+  padding:.28rem .65rem;border-radius:999px;white-space:nowrap;
+}
+.pill-green{background:var(--green-bg);color:var(--green)}
+.pill-red{background:#f8e3e6;color:var(--red)}
+.pill-blue{background:#e2eef7;color:#2d6f96}
+.pill-navy{background:#e8ebf4;color:var(--navy-deep)}
+.pill-amber{background:#fdf1e0;color:#a5670e}
+
+/* ============ CHEVRON STEP BANNER ============ */
+.steps{display:flex;gap:6px;margin:2rem 0 1.6rem;flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px}
+.step-chev{
+  flex:1;min-width:88px;position:relative;
+  clip-path:polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%, 14px 50%);
+  background:#1b2444;color:#91a1c4;padding:.7rem 1.4rem .7rem 1.5rem;
+}
+.step-chev:first-child{clip-path:polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%)}
+.step-num{font-family:'Oswald',Arial,sans-serif;font-size:.62rem;letter-spacing:.22em;font-weight:600;opacity:.75}
+.step-name{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;font-weight:600;font-size:.82rem;letter-spacing:.06em;margin-top:.1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.step-chev.done{background:#232f57;color:#c3cdea;cursor:pointer}
+.step-chev.done:hover{background:#2c3a6b;color:#fff}
+.step-chev.active{background:var(--accent);color:#fff;box-shadow:0 8px 22px rgba(0,0,0,.35)}
+.step-chev.done .step-num::after{content:" ✓"}
+.step-chev.skipped{background:#151d38;color:#5a6788}
+
+/* ============ CHIPS (size pickers) ============ */
+.chip-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.6rem}
+.chip{
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.08em;font-size:.72rem;font-weight:600;
+  border:1.5px solid #c9cfdd;background:#fff;color:var(--ink);border-radius:999px;padding:.4rem .85rem;cursor:pointer;
+}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.chip.active{background:var(--red);color:#fff;border-color:var(--red)}
+
+/* ============ FORMS ============ */
+.field-label{display:block;font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.14em;font-size:.68rem;font-weight:600;color:var(--muted);margin-bottom:.4rem}
+input[type=text],input[type=date],input[type=email],input[type=tel],select{
+  width:100%;max-width:420px;padding:.65rem .8rem;border:1.5px solid #c9cfdd;border-radius:8px;
+  font-family:'Inter',Arial,sans-serif;font-size:.9rem;color:var(--ink);background:#fff;
+}
+input:focus,select:focus{outline:2px solid var(--powder);border-color:var(--powder)}
+input.err{border-color:var(--red);background:#fff7f8}
+.err-msg{color:var(--red);font-size:.75rem;font-weight:600;margin-top:.3rem;display:none}
+.err-msg.show{display:block}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem 1.4rem}
+.form-grid .full{grid-column:1 / -1}
+
+/* ============ TOGGLE SWITCH ============ */
+.toggle{position:relative;width:44px;height:24px;border-radius:999px;background:#c9cfdd;border:none;cursor:pointer;transition:background .15s;flex:0 0 auto}
+.toggle::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .15s}
+.toggle.on{background:var(--green)}
+.toggle.on::after{left:23px}
+
+/* ============ SECTION HEADERS ============ */
+.section-head{
+  background:var(--navy-deep);color:#fff;padding:.6rem 1rem;border-radius:8px 8px 0 0;
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.12em;font-size:.74rem;font-weight:600;margin-top:1.5rem;
+}
+.section-head.red{background:var(--red)}
+.section-body{border:1.5px solid var(--line);border-top:none;border-radius:0 0 8px 8px;padding:1.1rem}
+
+/* ============ PAGE-SPECIFIC ============ */
+/* Invite summary rows */
+.invite-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0}
+.invite-cell{padding:1.1rem 1.3rem;border-right:1.5px solid var(--line)}
+.invite-cell:last-child{border-right:none}
+.invite-k{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.16em;font-size:.62rem;font-weight:600;color:var(--muted)}
+.invite-v{font-weight:700;color:var(--ink);font-size:1.02rem;margin-top:.3rem}
+.invite-v .display{font-size:1.15rem}
+
+/* Waiver box */
+.waiver-scroll{
+  max-height:190px;overflow-y:auto;border:1.5px solid var(--line);border-radius:8px;
+  background:var(--row-alt);padding:.9rem 1rem;font-size:.83rem;color:#3a445f;line-height:1.55;
+}
+.waiver-scroll p{margin-bottom:.7rem}
+.agree-row{display:flex;align-items:flex-start;gap:.6rem;margin-top:.8rem}
+.agree-row input[type=checkbox]{width:18px;height:18px;margin-top:2px;accent-color:var(--green);flex:0 0 auto;cursor:pointer}
+.agree-row label{font-size:.86rem;font-weight:600;color:var(--ink);cursor:pointer}
+
+/* Option cards */
+.opt-card{
+  border:2px solid var(--line);border-radius:10px;padding:1rem 1.1rem;cursor:pointer;
+  transition:border-color .15s, box-shadow .15s;background:#fff;
+}
+.opt-card:hover{border-color:#aab3cc}
+.opt-card.selected{border-color:var(--green);box-shadow:0 0 0 3px rgba(30,122,68,.12)}
+.opt-card.declined{border-color:var(--navy-deep);box-shadow:0 0 0 3px rgba(14,23,48,.08)}
+.opt-card.static{cursor:default}
+.opt-card.static:hover{border-color:var(--line)}
+.opt-title{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.06em;font-weight:600;font-size:.95rem;color:var(--ink)}
+.opt-price{font-family:'Oswald',Arial,sans-serif;font-weight:700;font-size:1.15rem;color:var(--red);white-space:nowrap}
+.opt-desc{font-size:.82rem;color:var(--muted);margin-top:.35rem;line-height:1.5}
+.opt-head{display:flex;justify-content:space-between;gap:1rem;align-items:flex-start}
+.opt-actions{display:flex;gap:.6rem;margin-top:.8rem;flex-wrap:wrap}
+
+/* Extra-package toggle row */
+.extra-pkg-row{
+  display:flex;align-items:center;gap:.8rem;margin-top:1rem;padding:.85rem 1rem;
+  border:1.5px dashed #c9cfdd;border-radius:10px;background:var(--row-alt);
+}
+.extra-pkg-row.on{border-color:var(--green);background:var(--green-bg)}
+.extra-pkg-text{font-size:.86rem;color:var(--ink);line-height:1.45}
+
+/* Sizing item cards */
+.size-card{border:2px solid var(--line);border-radius:10px;padding:1rem 1.1rem;background:#fff;margin-bottom:1rem}
+.size-card.chosen{border-color:var(--green)}
+.size-card.needs{border-color:var(--red);box-shadow:0 0 0 3px rgba(185,30,45,.1)}
+.size-card:last-child{margin-bottom:0}
+.extra-piece{border-top:1.5px dashed var(--line);margin-top:.9rem;padding-top:.9rem}
+.group-label{
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.14em;font-size:.72rem;font-weight:600;
+  color:var(--muted);margin:1.2rem 0 .6rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;
+}
+.group-label:first-child{margin-top:0}
+
+/* Recommendation / pending banners */
+.rec-banner{
+  background:var(--green-bg);border:1.5px solid #bfe0cc;border-radius:10px;padding:.9rem 1.1rem;
+  font-size:.86rem;color:#14532d;line-height:1.55;margin-bottom:1.1rem;
+}
+.pend-banner{
+  background:#fdf1e0;border:1.5px solid #e7c98a;border-radius:10px;padding:.9rem 1.1rem;
+  font-size:.86rem;color:#7a5410;line-height:1.55;
+}
+
+/* Payment type cards */
+.pay-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+.pay-card{border:2px solid var(--line);border-radius:10px;padding:1rem 1.1rem;cursor:pointer;transition:all .15s;background:#fff}
+.pay-card:hover{border-color:#aab3cc}
+.pay-card.selected{border-color:var(--red);box-shadow:0 0 0 3px rgba(185,30,45,.12)}
+.pay-name{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.06em;font-weight:600;font-size:.9rem;color:var(--ink)}
+.pay-amt{font-family:'Oswald',Arial,sans-serif;font-weight:700;font-size:1.3rem;color:var(--navy-deep);margin-top:.4rem}
+.pay-card.selected .pay-amt{color:var(--red)}
+.pay-sub{font-size:.76rem;color:var(--muted);margin-top:.3rem;line-height:1.45}
+
+/* Order summary */
+.sum-row{display:flex;justify-content:space-between;gap:1rem;padding:.55rem 0;border-bottom:1px solid var(--line);font-size:.9rem}
+.sum-row:last-child{border-bottom:none}
+.sum-row .sr-l{color:#3a445f}
+.sum-row .sr-r{font-weight:700;color:var(--ink);white-space:nowrap}
+.sum-row.total{border-top:2px solid var(--ink);border-bottom:none;margin-top:.2rem;padding-top:.7rem}
+.sum-row.total .sr-l{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.1em;font-weight:600;color:var(--ink)}
+.sum-row.total .sr-r{font-family:'Oswald',Arial,sans-serif;font-size:1.2rem;color:var(--red)}
+
+/* Installment schedule */
+.sched-row{display:flex;justify-content:space-between;gap:1rem;padding:.5rem .2rem;border-bottom:1px dashed var(--line);font-size:.85rem}
+.sched-row:last-child{border-bottom:none}
+.sched-when{color:#3a445f}
+.sched-amt{font-weight:700;color:var(--ink)}
+
+/* Confirmation */
+.confirm-hero{text-align:center;padding:2.2rem 1.5rem 1.6rem}
+.check-ring{
+  width:74px;height:74px;border-radius:50%;background:var(--green-bg);color:var(--green);
+  display:flex;align-items:center;justify-content:center;font-size:2.1rem;font-weight:700;margin:0 auto 1rem;
+}
+.check-ring.pending{background:#fdf1e0;color:#a5670e}
+.confirm-title{font-size:1.7rem;color:var(--ink)}
+.confirm-sub{color:var(--muted);font-size:.92rem;margin-top:.5rem;max-width:520px;margin-left:auto;margin-right:auto}
+
+/* Utility */
+.step-panel{display:none}
+.step-panel.active{display:block}
+.step-foot{display:flex;justify-content:space-between;gap:1rem;margin-top:1.6rem;flex-wrap:wrap}
+.note-line{font-size:.8rem;color:var(--muted);line-height:1.5}
+.mut-strong{font-weight:700;color:var(--ink)}
+
+/* ============ TOAST ============ */
+.toast{
+  position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--navy-deep);color:#fff;padding:.8rem 1.4rem;border-radius:10px;font-size:.88rem;
+  opacity:0;pointer-events:none;transition:all .25s ease;z-index:99;border:1px solid rgba(255,255,255,.15);max-width:90vw;text-align:center;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ============ MOBILE ============ */
+@media (max-width:760px){
+  .page{padding:1.6rem 1rem 4rem}
+  .page-title{font-size:1.9rem}
+  .form-grid{grid-template-columns:1fr}
+  .topnav{padding:.7rem .9rem}
+  .brand{gap:.55rem}
+  .brand-logo{font-size:1.25rem}
+  .brand-label{font-size:.58rem;letter-spacing:.12em}
+  .steps{flex-wrap:wrap;overflow-x:visible;gap:5px;padding-bottom:0}
+  .step-chev{flex:0 0 calc(33.333% - 4px);min-width:0;padding:.5rem .95rem .5rem 1.05rem}
+  .step-num{font-size:.52rem}
+  .step-name{font-size:.66rem;letter-spacing:.03em}
+  .invite-grid{grid-template-columns:1fr 1fr}
+  .invite-cell{border-bottom:1.5px solid var(--line)}
+  .invite-cell:nth-child(2n){border-right:none}
+  .invite-cell:nth-child(3),.invite-cell:nth-child(4){border-bottom:none}
+  .pay-grid{grid-template-columns:1fr}
+  input[type=text],input[type=date],input[type=email],input[type=tel],select{max-width:100%}
+  .card-pad{padding:1.3rem 1.1rem}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="brand">
+    <div class="brand-logo">CB<b>U</b></div>
+    <div class="brand-divider"></div>
+    <div class="brand-label">Season Registration</div>
+  </div>
+  <span class="pill pill-navy">Summer 2026</span>
+</nav>
+
+<div class="page">
+
+  <!-- Page header -->
+  <div class="eyebrow">You're Invited</div>
+  <h1 class="page-title display">CBU United 2028 — Summer 2026</h1>
+  <div class="title-rule"></div>
+  <p class="page-title-sub">Congratulations — you've been offered a roster spot. Complete the steps below to register for the season and secure your place on the team.</p>
+
+  <!-- Invite summary -->
+  <div class="card" style="margin-top:1.6rem">
+    <div class="invite-grid">
+      <div class="invite-cell">
+        <div class="invite-k">Team</div>
+        <div class="invite-v display">CBU United 2028</div>
+      </div>
+      <div class="invite-cell">
+        <div class="invite-k">Season</div>
+        <div class="invite-v">Summer 2026</div>
+      </div>
+      <div class="invite-cell">
+        <div class="invite-k">Invited As</div>
+        <div class="invite-v"><span class="pill pill-red">Position Player &amp; Pitcher</span></div>
+      </div>
+      <div class="invite-cell">
+        <div class="invite-k">Season Fee</div>
+        <div class="invite-v display" style="color:var(--red)">$1,950</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step banner -->
+  <div class="steps" id="stepBanner">
+    <div class="step-chev active" data-step="1"><div class="step-num">Step 1</div><div class="step-name">Player Info</div></div>
+    <div class="step-chev" data-step="2"><div class="step-num">Step 2</div><div class="step-name">Waivers</div></div>
+    <div class="step-chev" data-step="3"><div class="step-num">Step 3</div><div class="step-name">Jersey Package</div></div>
+    <div class="step-chev" data-step="4"><div class="step-num">Step 4</div><div class="step-name" id="chev4Name">Jersey Sizing</div></div>
+    <div class="step-chev" data-step="5"><div class="step-num">Step 5</div><div class="step-name">Payment</div></div>
+    <div class="step-chev" data-step="6"><div class="step-num">Step 6</div><div class="step-name">Confirmation</div></div>
+  </div>
+
+  <!-- ================= STEP 1 — PLAYER INFO ================= -->
+  <div class="step-panel active" id="panel1">
+    <div class="card card-pad">
+      <div class="section-head" style="margin-top:0">Player Information</div>
+      <div class="section-body">
+        <div class="form-grid">
+          <div>
+            <label class="field-label">Player First Name *</label>
+            <input type="text" id="pFirst" placeholder="First name">
+            <div class="err-msg" id="err-pFirst">Player first name is required.</div>
+          </div>
+          <div>
+            <label class="field-label">Player Last Name *</label>
+            <input type="text" id="pLast" placeholder="Last name">
+            <div class="err-msg" id="err-pLast">Player last name is required.</div>
+          </div>
+          <div>
+            <label class="field-label">Birthdate *</label>
+            <input type="date" id="pDob">
+            <div class="err-msg" id="err-pDob">Birthdate is required.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-head">Parent / Guardian 1</div>
+      <div class="section-body">
+        <div class="form-grid">
+          <div>
+            <label class="field-label">First Name *</label>
+            <input type="text" id="g1First" placeholder="First name">
+            <div class="err-msg" id="err-g1First">First name is required.</div>
+          </div>
+          <div>
+            <label class="field-label">Last Name *</label>
+            <input type="text" id="g1Last" placeholder="Last name">
+            <div class="err-msg" id="err-g1Last">Last name is required.</div>
+          </div>
+          <div>
+            <label class="field-label">Phone *</label>
+            <input type="tel" id="g1Phone" placeholder="(813) 555-0100">
+            <div class="err-msg" id="err-g1Phone">Phone is required.</div>
+          </div>
+          <div>
+            <label class="field-label">Email *</label>
+            <input type="email" id="g1Email" placeholder="name@email.com">
+            <div class="err-msg" id="err-g1Email">A valid email is required.</div>
+          </div>
+        </div>
+        <div style="margin-top:1rem">
+          <button class="btn btn-outline-dark btn-sm" id="addG2Btn" onclick="showParent2()">+ Add Another Parent / Guardian</button>
+        </div>
+      </div>
+
+      <div id="g2Block" style="display:none">
+        <div class="section-head" style="display:flex;justify-content:space-between;align-items:center">
+          <span>Parent / Guardian 2 (Optional)</span>
+          <button class="link-red" style="color:#fff;text-decoration:underline" onclick="hideParent2()">Remove</button>
+        </div>
+        <div class="section-body">
+          <div class="form-grid">
+            <div><label class="field-label">First Name</label><input type="text" id="g2First" placeholder="First name"></div>
+            <div><label class="field-label">Last Name</label><input type="text" id="g2Last" placeholder="Last name"></div>
+            <div><label class="field-label">Phone</label><input type="tel" id="g2Phone" placeholder="(813) 555-0100"></div>
+            <div><label class="field-label">Email</label><input type="email" id="g2Email" placeholder="name@email.com"></div>
+          </div>
+        </div>
+      </div>
+
+      <p class="note-line" style="margin-top:1.2rem">Already in the CBU app? Please enter your contact information fresh anyway — this keeps your player profile current for the season. Full player details are managed on your player profile after registration.</p>
+
+      <div class="step-foot">
+        <!-- DEMO ONLY (safe to keep; strip for production): fills fake player/parent info -->
+        <button class="btn btn-outline-dark btn-sm" onclick="simulateInfo()">⚡ Simulate Player &amp; Parent Info</button>
+        <!-- /DEMO ONLY -->
+        <button class="btn btn-primary" onclick="submitStep1()">Continue To Waivers →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= STEP 2 — WAIVERS ================= -->
+  <div class="step-panel" id="panel2">
+    <div class="card card-pad">
+      <div class="section-head" style="margin-top:0">Season Waivers</div>
+      <div class="section-body">
+        <p class="note-line" style="margin-bottom:1rem">Your organization requires the following waivers for this season. Read each one, then check the agreement box. Both must be agreed to before you can continue.</p>
+
+        <div class="opt-card static" style="margin-bottom:1.1rem">
+          <div class="opt-title">Liability &amp; Medical Release Waiver</div>
+          <div class="waiver-scroll" style="margin-top:.7rem">
+            <p><strong>Assumption of Risk.</strong> I understand that participation in baseball activities — including practices, training sessions, tournaments, and travel — involves inherent risks of injury. On behalf of myself and the player named in this registration, I knowingly and voluntarily assume all such risks.</p>
+            <p><strong>Release.</strong> I release CBU Baseball, its coaches, directors, staff, and facility partners from any and all claims arising out of ordinary participation in team activities during the Summer 2026 season.</p>
+            <p><strong>Medical Authorization.</strong> In the event of an injury or medical emergency where I cannot be reached, I authorize CBU staff to seek and consent to reasonable medical treatment for my player.</p>
+            <p><strong>Insurance.</strong> I confirm the player is covered by medical insurance, and I understand CBU Baseball does not provide primary medical coverage for participants.</p>
+            <p>This is sample waiver language for demo purposes. Final waiver text is set by the organization in Registration Management.</p>
+          </div>
+          <div class="agree-row">
+            <input type="checkbox" id="waiver1" onchange="waiverChanged()">
+            <label for="waiver1">I have read and agree to the Liability &amp; Medical Release Waiver.</label>
+          </div>
+        </div>
+
+        <div class="opt-card static">
+          <div class="opt-title">Code of Conduct &amp; Media Release</div>
+          <div class="waiver-scroll" style="margin-top:.7rem">
+            <p><strong>Conduct.</strong> Players and families agree to represent CBU Baseball with class — toward teammates, coaches, umpires, and opponents — at every event. Unsportsmanlike conduct by a player or family member may result in suspension from team activities.</p>
+            <p><strong>Media Release.</strong> I grant CBU Baseball permission to use photos and video of the player taken at team events for team pages, recruiting materials, and social media.</p>
+            <p><strong>Communication.</strong> I agree to receive team communications by email and text regarding schedules, events, and season logistics.</p>
+            <p>This is sample waiver language for demo purposes. Final waiver text is set by the organization in Registration Management.</p>
+          </div>
+          <div class="agree-row">
+            <input type="checkbox" id="waiver2" onchange="waiverChanged()">
+            <label for="waiver2">I have read and agree to the Code of Conduct &amp; Media Release.</label>
+          </div>
+        </div>
+
+        <div class="err-msg" id="err-waivers" style="margin-top:.8rem">Please agree to both waivers to continue.</div>
+      </div>
+
+      <div class="step-foot">
+        <button class="btn btn-outline-dark" onclick="goStep(1)">← Back</button>
+        <button class="btn btn-primary" onclick="submitStep2()">Continue To Jersey Package →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= STEP 3 — JERSEY PACKAGE ================= -->
+  <div class="step-panel" id="panel3">
+    <div class="card card-pad">
+      <div class="section-head" style="margin-top:0">Jersey Package &amp; Season Add-Ons</div>
+      <div class="section-body">
+        <p class="note-line" style="margin-bottom:1rem">Choose your uniform package for the season. Next you'll pick sizes for everything — and you can grab extra pieces there too. All apparel is charged with your first payment.</p>
+
+        <div class="opt-card" id="optJersey" style="margin-bottom:1.1rem">
+          <div class="opt-head">
+            <div>
+              <div class="opt-title">2026 United Jersey Package</div>
+              <div class="opt-desc">Two game jerseys (red &amp; white), game hat, belt, and sock set. Required for players who don't already have current-season uniforms.</div>
+            </div>
+            <div class="opt-price">$150</div>
+          </div>
+          <div class="opt-actions">
+            <button class="btn btn-primary btn-sm" onclick="setJersey(true)">Add To Registration</button>
+            <button class="btn btn-outline-dark btn-sm" onclick="setJersey(false)">No Thanks — I Have Uniforms</button>
+          </div>
+          <div style="margin-top:.7rem"><span class="pill pill-navy" id="jerseyState">No Selection Yet</span></div>
+
+          <!-- Extra full package toggle — only shows once the package is added -->
+          <div class="extra-pkg-row" id="extraPkgRow" style="display:none">
+            <button class="toggle" id="extraToggle" onclick="toggleExtraPackage()" aria-label="Add a second jersey package"></button>
+            <div class="extra-pkg-text">
+              <span class="mut-strong">"I hate laundry" — add a second full jersey package (+$150).</span><br>
+              Two of everything, sized separately on the next step. Rare, but some families swear by it.
+            </div>
+          </div>
+        </div>
+
+        <div class="opt-card" id="optPractice">
+          <div class="opt-head">
+            <div>
+              <div class="opt-title">Practice Pack <span class="pill pill-navy" style="margin-left:.4rem">Optional</span></div>
+              <div class="opt-desc">Two practice tees and a practice hat for team workouts.</div>
+            </div>
+            <div class="opt-price">$60</div>
+          </div>
+          <div class="opt-actions">
+            <button class="btn btn-ghost-red btn-sm" id="practiceBtn" onclick="togglePractice()">Add Practice Pack</button>
+          </div>
+        </div>
+
+        <div class="err-msg" id="err-jersey" style="margin-top:.8rem">Please make a jersey package selection (add it, or choose "No Thanks").</div>
+      </div>
+
+      <div class="step-foot">
+        <button class="btn btn-outline-dark" onclick="goStep(2)">← Back</button>
+        <button class="btn btn-primary" id="step3Btn" onclick="submitStep3()">Continue To Jersey Sizing →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= STEP 4 — JERSEY SIZING (BEFORE PAYMENT) ================= -->
+  <div class="step-panel" id="panel4">
+    <div class="card card-pad">
+
+      <!-- Phase A: pick sizes -->
+      <div id="sizingPick">
+        <div class="section-head red" style="margin-top:0">Jersey Sizing — 2026 United Jersey Package</div>
+        <div class="section-body">
+          <div class="rec-banner">
+            <strong>We recommend completing your sizing now</strong> — it takes about a minute, and your jersey order can't be placed until sizes are in. <span id="deadlineLine"></span> Your sizes attach to your registration and player profile, so you can review or update them there anytime. Want a spare of anything? Add extra pieces below and they'll be added to your total. And parents — this package is player gear only, but CBU has a <span style="font-weight:700">fan gear store</span> for the whole family; you'll find the link at the bottom of your confirmation page.
+          </div>
+          <div class="pend-banner" id="skipWarn" style="display:none;margin-bottom:1.1rem">
+            <strong>Heads up before you skip:</strong> you've added <span id="skipWarnItems"></span> as extra pieces. Extras are purchased on this step, so skipping removes them from your order. Your included package sizes can be finished later from your player profile.
+            <div style="display:flex;gap:.6rem;margin-top:.8rem;flex-wrap:wrap">
+              <button class="btn btn-outline-dark btn-sm" onclick="confirmSkip()">Skip Anyway — Remove Extras</button>
+              <button class="btn btn-primary btn-sm" onclick="cancelSkip()">Keep Sizing</button>
+            </div>
+          </div>
+          <div id="sizingItems"><!-- item groups filled by JS from PACKAGE --></div>
+          <div class="err-msg" id="err-sizing" style="margin-top:.8rem">Please choose a size for each highlighted item.</div>
+        </div>
+        <div class="step-foot">
+          <button class="btn btn-outline-dark" onclick="goStep(3)">← Back</button>
+          <div style="display:flex;gap:.8rem;flex-wrap:wrap">
+            <button class="btn btn-outline-dark" onclick="skipSizing()">Skip For Now — I'll Do It Later</button>
+            <button class="btn btn-primary" onclick="reviewSizes()">Review My Sizes →</button>
+          </div>
+        </div>
+        <p class="note-line" style="margin-top:.8rem;text-align:right">Skipping? You can complete sizing anytime from your player profile — just don't wait too long, or your jersey order may be delayed. Extra pieces can't be skipped-and-added-later here; those are added on this step.</p>
+      </div>
+
+      <!-- Phase B: triple-check review -->
+      <div id="sizingReview" style="display:none">
+        <div class="section-head red" style="margin-top:0">Triple-Check Your Sizes</div>
+        <div class="section-body">
+          <p class="note-line" style="margin-bottom:1rem">Custom uniform orders can't be exchanged, so give this one last look. If anything's off, go back and fix it now.</p>
+          <div id="reviewRows"><!-- filled by JS --></div>
+          <div class="agree-row" style="margin-top:1.1rem">
+            <input type="checkbox" id="sizesConfirm">
+            <label for="sizesConfirm">I've triple-checked these sizes and they're correct.</label>
+          </div>
+          <div class="err-msg" id="err-sizesConfirm">Please confirm you've triple-checked your sizes.</div>
+        </div>
+        <div class="step-foot">
+          <button class="btn btn-outline-dark" onclick="backToPick()">← Back To Sizes</button>
+          <button class="btn btn-primary" onclick="confirmSizes()">Submit Sizes →</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= STEP 5 — PAYMENT ================= -->
+  <div class="step-panel" id="panel5">
+    <div class="card card-pad">
+      <div class="section-head" style="margin-top:0">Order Summary</div>
+      <div class="section-body" id="orderSummary"><!-- filled by JS --></div>
+
+      <div class="section-head">How Would You Like To Pay?</div>
+      <div class="section-body">
+        <div class="pay-grid">
+          <div class="pay-card" id="payFull" onclick="setPayType('full')">
+            <div class="pay-name">Pay In Full</div>
+            <div class="pay-amt" id="fullAmt">$0</div>
+            <div class="pay-sub">One payment today. You're done.</div>
+          </div>
+          <div class="pay-card" id="payPlan" onclick="setPayType('plan')">
+            <div class="pay-name">Payment Plan</div>
+            <div class="pay-amt" id="planAmt">$0 today</div>
+            <div class="pay-sub" id="planSub">Down payment today, then scheduled payments. All jersey and apparel purchases are charged with the down payment.</div>
+          </div>
+          <div class="pay-card" id="payOffline" onclick="setPayType('offline')">
+            <div class="pay-name">Pay Offline</div>
+            <div class="pay-amt">$0 today</div>
+            <div class="pay-sub" id="offlineSub"><strong>Paid in full</strong> — register now, pay CBU directly by check or cash. Your spot is held as <strong>Payment Pending</strong> until the organization records your payment.</div>
+          </div>
+        </div>
+
+        <div id="planSchedule" style="display:none;margin-top:1.1rem">
+          <div class="field-label" style="margin-bottom:.5rem">Your Payment Schedule</div>
+          <div id="schedRows"><!-- filled by JS --></div>
+        </div>
+        <div id="offlineHowBox" style="display:none;margin-top:1.1rem">
+          <div class="field-label" style="margin-bottom:.5rem">How To Pay Offline</div>
+          <div class="pend-banner" id="offlineHowText"></div>
+        </div>
+        <div class="err-msg" id="err-paytype" style="margin-top:.8rem">Please choose a payment option.</div>
+      </div>
+
+      <div id="cardBlock">
+        <div class="section-head">Card Details</div>
+        <div class="section-body">
+          <div class="form-grid">
+            <div class="full">
+              <label class="field-label">Name On Card *</label>
+              <input type="text" id="ccName" placeholder="Name as it appears on card">
+              <div class="err-msg" id="err-ccName">Name on card is required.</div>
+            </div>
+            <div>
+              <label class="field-label">Card Number *</label>
+              <input type="text" id="ccNum" inputmode="numeric" placeholder="4242 4242 4242 4242">
+              <div class="err-msg" id="err-ccNum">Card number is required.</div>
+            </div>
+            <div>
+              <label class="field-label">Expiration *</label>
+              <input type="text" id="ccExp" inputmode="numeric" placeholder="MM / YY">
+              <div class="err-msg" id="err-ccExp">Expiration is required.</div>
+            </div>
+            <div>
+              <label class="field-label">CVC *</label>
+              <input type="text" id="ccCvc" inputmode="numeric" placeholder="123">
+              <div class="err-msg" id="err-ccCvc">CVC is required.</div>
+            </div>
+            <div>
+              <label class="field-label">Billing Zip *</label>
+              <input type="text" id="ccZip" inputmode="numeric" placeholder="33602">
+              <div class="err-msg" id="err-ccZip">Billing zip is required.</div>
+            </div>
+          </div>
+          <p class="note-line" style="margin-top:1rem">Demo only — no real payment is processed. In the live app this connects to Stripe.</p>
+          <!-- DEMO ONLY (safe to keep; strip for production): fills fake card details -->
+          <div style="margin-top:.8rem">
+            <button class="btn btn-outline-dark btn-sm" onclick="simulateCard()">⚡ Simulate Card Details</button>
+          </div>
+          <!-- /DEMO ONLY -->
+        </div>
+      </div>
+
+      <div class="step-foot">
+        <button class="btn btn-outline-dark" onclick="backFromPayment()">← Back</button>
+        <button class="btn btn-primary" id="payBtn" onclick="submitStep5()">Choose A Payment Option</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= STEP 6 — CONFIRMATION ================= -->
+  <div class="step-panel" id="panel6">
+    <div class="card">
+      <div class="confirm-hero">
+        <div class="check-ring" id="confirmRing">✓</div>
+        <h2 class="confirm-title display" id="confirmTitle">You're Registered!</h2>
+        <p class="confirm-sub" id="confirmSub"></p>
+      </div>
+      <div class="card-pad" style="padding-top:0">
+        <div class="section-head" style="margin-top:0">Registration Summary</div>
+        <div class="section-body" id="confirmSummary"><!-- filled by JS --></div>
+
+        <div id="confirmOfflineBlock" style="display:none">
+          <div class="section-head red">How To Pay Offline</div>
+          <div class="section-body">
+            <div class="pend-banner" id="confirmOfflineText"></div>
+          </div>
+        </div>
+
+        <div id="confirmSizesBlock" style="display:none">
+          <div class="section-head">Jersey Package Sizes</div>
+          <div class="section-body">
+            <div id="confirmSizesRows"><!-- filled by JS --></div>
+            <p class="note-line" style="margin-top:.8rem">Need a change? Your sizes live on your player profile — you can review or edit them there.</p>
+          </div>
+        </div>
+
+        <div id="confirmSizesPending" style="display:none">
+          <div class="section-head">Jersey Sizing — Not Completed Yet</div>
+          <div class="section-body">
+            <div class="pend-banner">
+              You skipped sizing during registration. <strong>Sizes are due by <span id="pendDeadline"></span></strong> — if they're not in by then, your player's jerseys won't make the first uniform order. Complete sizing anytime from your player profile.
+            </div>
+          </div>
+        </div>
+
+        <div class="section-head">Player Profile</div>
+        <div class="section-body">
+          <p style="font-size:.9rem;color:#3a445f;line-height:1.6">A player profile has been created for <span class="mut-strong" id="confirmPlayerName">your player</span> in the CBU app. Season details, positional info, and everything your coaches need will be managed there. Watch your email for app access.</p>
+        </div>
+
+        <!-- Content below is entered manually by the admin (Post-Registration Message step) -->
+        <div id="postRegMsgBlock">
+          <div class="section-head" id="postRegTitle">A Message From The Team</div>
+          <div class="section-body">
+            <p style="font-size:.9rem;color:#3a445f;line-height:1.6" id="postRegBody"></p>
+          </div>
+        </div>
+
+        <!-- Fan gear store — link set by admin (SEASON.fanGearUrl) -->
+        <div class="section-head">Rep The Family — CBU Fan Gear</div>
+        <div class="section-body" style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">
+          <p style="font-size:.9rem;color:#3a445f;line-height:1.6;max-width:560px">The jersey package covers your player — parents, siblings, and grandparents get their gear here. Shirts, hats, and more in the CBU fan gear store.</p>
+          <a class="btn btn-ghost-red btn-sm" id="fanGearLink" href="#" target="_blank" rel="noopener">Shop Fan Gear →</a>
+        </div>
+
+        <div class="step-foot" style="margin-top:1.4rem">
+          <span class="note-line">Questions? Reply to your invitation email and your team staff will help.</span>
+          <button class="btn btn-outline-dark btn-sm" onclick="resetDemo()">Restart Demo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= MOCK SEASON CONFIG (set by admin in Team Management) ================= */
+var SEASON = {
+  team: 'CBU United 2028',
+  season: 'Summer 2026',
+  ticket: 'Position Player & Pitcher',
+  fee: 1950,
+  sizingDeadline: 'August 1, 2026',   /* set by admin — sizes due to make the first uniform order */
+  fanGearUrl: 'https://cbubaseball.com/fan-gear',   /* set by admin — org fan gear store link */
+  /* Post-registration message BODY — entered by the admin. The title is automatic:
+     "A Message From [Team Name]". Blank body = section hidden. */
+  postRegMessage: 'Welcome to the team! Our first team workout is <span class="mut-strong">Saturday, August 8 at 9:00 AM</span> at the CBU training facility. Your coaching staff will reach out this week with the full summer calendar. #RedHatNation',
+  /* How-to-pay-offline instructions — entered by the admin when offline payment is enabled */
+  offlineInstructions: 'Bring a check made out to CBU Baseball to the front desk at the CBU training facility, or hand it to your head coach at the first workout. Include your player\'s name and team in the memo line.',
+  plan: {
+    downPayment: 300,   /* set by admin per season — apparel is charged on top of this */
+    /* Payment dates come straight from the admin's schedule (monthly, biweekly, or custom) */
+    dates: ['August 20, 2026', 'September 20, 2026', 'October 20, 2026']
+  }
+};
+
+/* ================= MOCK JERSEY PACKAGE (set by admin in jersey package setup) =================
+   The admin side defines the package price, what's in it, the size options
+   per item, AND a price per item (used when families buy extra pieces).
+   This object is what the backend will feed this page.                       */
+var PACKAGE = {
+  name: '2026 United Jersey Package',
+  price: 150,
+  items: [
+    { id: 'jerseyRed',   name: 'Game Jersey — Red',   desc: 'Sublimated game jersey, United red',   price: 55, sizes: ['YM','YL','YXL','AS','AM','AL','AXL','AXXL'] },
+    { id: 'jerseyWhite', name: 'Game Jersey — White', desc: 'Sublimated game jersey, white',        price: 55, sizes: ['YM','YL','YXL','AS','AM','AL','AXL','AXXL'] },
+    { id: 'hat',         name: 'Game Hat',            desc: 'Official CBU red game hat',            price: 30, sizes: ['S/M Fitted','L/XL Fitted'] },
+    { id: 'beltSocks',   name: 'Belt & Sock Set',     desc: 'Navy belt and game socks',             price: 25, sizes: ['S','M','L'] }
+  ]
+};
+
+/* ================= STATE ================= */
+var state = {
+  step: 1,
+  maxStepReached: 1,
+  jersey: null,          /* null = no selection yet, true/false */
+  extraPackage: false,   /* second full jersey package */
+  practice: false,
+  payType: null,         /* 'full' | 'plan' | 'offline' */
+  sizes: {},             /* '1:itemId' / '2:itemId' -> chosen size */
+  extras: {},            /* itemId -> chosen size ('' = added, unsized) for extra single pieces */
+  sizingStatus: 'none'   /* 'none' | 'done' | 'skipped' | 'na' */
+};
+
+function money(n){
+  return '$' + n.toLocaleString('en-US', {minimumFractionDigits: (n % 1 ? 2 : 0), maximumFractionDigits: 2});
+}
+function itemById(id){
+  for(var i = 0; i < PACKAGE.items.length; i++){
+    if(PACKAGE.items[i].id === id) return PACKAGE.items[i];
+  }
+  return null;
+}
+function extrasTotal(){
+  var t = 0;
+  Object.keys(state.extras).forEach(function(id){ t += itemById(id).price; });
+  return t;
+}
+function apparelTotal(){
+  return (state.jersey ? PACKAGE.price : 0)
+       + (state.extraPackage ? PACKAGE.price : 0)
+       + extrasTotal()
+       + (state.practice ? 60 : 0);
+}
+function grandTotal(){
+  return SEASON.fee + apparelTotal();
+}
+
+/* ================= TOAST ================= */
+function toast(msg){
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._h);
+  t._h = setTimeout(function(){ t.classList.remove('show'); }, 2400);
+}
+
+/* ================= STEP NAV ================= */
+function goStep(n){
+  if(n > state.maxStepReached) return;
+  state.step = n;
+  renderSteps();
+  if(n === 4) renderSizing();
+  if(n === 5) renderPayment();
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+function advanceTo(n){
+  state.step = n;
+  if(n > state.maxStepReached) state.maxStepReached = n;
+  renderSteps();
+  if(n === 4) renderSizing();
+  if(n === 5) renderPayment();
+  if(n === 6) renderConfirmation();
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+function renderSteps(){
+  var chevs = document.querySelectorAll('.step-chev');
+  chevs.forEach(function(c){
+    var s = parseInt(c.getAttribute('data-step'), 10);
+    c.classList.remove('active','done');
+    if(c.classList.contains('skipped')){
+      /* skipped / not-needed chevrons keep their muted state */
+    } else if(s === state.step){
+      c.classList.add('active');
+    } else if(s < state.step){
+      c.classList.add('done');
+    }
+  });
+  for(var i = 1; i <= 6; i++){
+    document.getElementById('panel' + i).classList.toggle('active', i === state.step);
+  }
+}
+document.querySelectorAll('.step-chev').forEach(function(c){
+  c.addEventListener('click', function(){
+    if(state.step >= 6) return; /* locked once registration is complete */
+    var s = parseInt(c.getAttribute('data-step'), 10);
+    if(s < state.step && !c.classList.contains('skipped')) goStep(s);
+  });
+});
+
+/* ================= VALIDATION HELPERS ================= */
+function markField(id, bad){
+  var el = document.getElementById(id);
+  var err = document.getElementById('err-' + id);
+  if(el) el.classList.toggle('err', bad);
+  if(err) err.classList.toggle('show', bad);
+}
+function requireFilled(ids){
+  var ok = true;
+  ids.forEach(function(id){
+    var el = document.getElementById(id);
+    var bad = !el.value.trim();
+    markField(id, bad);
+    if(bad) ok = false;
+  });
+  return ok;
+}
+
+/* ==== DEMO ONLY HELPERS (safe to keep; strip for production along with their buttons) ==== */
+function simulateInfo(){
+  var fill = {
+    pFirst: 'Jackson', pLast: 'Rivera', pDob: '2010-04-16',
+    g1First: 'Marcus', g1Last: 'Rivera', g1Phone: '(813) 555-0142', g1Email: 'marcus.rivera@email.com'
+  };
+  Object.keys(fill).forEach(function(id){
+    var el = document.getElementById(id);
+    el.value = fill[id];
+    markField(id, false);
+  });
+  toast('Demo info filled — Jackson Rivera.');
+}
+function simulateCard(){
+  var name = (document.getElementById('g1First').value.trim() + ' ' + document.getElementById('g1Last').value.trim()).trim() || 'Marcus Rivera';
+  var fill = { ccName: name, ccNum: '4242 4242 4242 4242', ccExp: '12 / 27', ccCvc: '123', ccZip: '33602' };
+  Object.keys(fill).forEach(function(id){
+    var el = document.getElementById(id);
+    el.value = fill[id];
+    markField(id, false);
+  });
+  toast('Demo card filled — test card 4242.');
+}
+/* ==== /DEMO ONLY HELPERS ==== */
+
+/* ================= STEP 1 ================= */
+function showParent2(){
+  document.getElementById('g2Block').style.display = 'block';
+  document.getElementById('addG2Btn').style.display = 'none';
+}
+function hideParent2(){
+  document.getElementById('g2Block').style.display = 'none';
+  document.getElementById('addG2Btn').style.display = 'inline-flex';
+  ['g2First','g2Last','g2Phone','g2Email'].forEach(function(id){
+    document.getElementById(id).value = '';
+  });
+}
+function submitStep1(){
+  var ok = requireFilled(['pFirst','pLast','pDob','g1First','g1Last','g1Phone','g1Email']);
+  var email = document.getElementById('g1Email').value.trim();
+  if(email && email.indexOf('@') === -1){
+    markField('g1Email', true);
+    ok = false;
+  }
+  if(!ok){
+    toast('Please complete the highlighted fields.');
+    return;
+  }
+  advanceTo(2);
+}
+
+/* ================= STEP 2 ================= */
+function waiverChanged(){
+  var both = document.getElementById('waiver1').checked && document.getElementById('waiver2').checked;
+  if(both) document.getElementById('err-waivers').classList.remove('show');
+}
+function submitStep2(){
+  var both = document.getElementById('waiver1').checked && document.getElementById('waiver2').checked;
+  if(!both){
+    document.getElementById('err-waivers').classList.add('show');
+    toast('Both waivers must be agreed to before continuing.');
+    return;
+  }
+  advanceTo(3);
+}
+
+/* ================= STEP 3 ================= */
+function setJersey(val){
+  state.jersey = val;
+  var card = document.getElementById('optJersey');
+  var pill = document.getElementById('jerseyState');
+  card.classList.toggle('selected', val === true);
+  card.classList.toggle('declined', val === false);
+  document.getElementById('extraPkgRow').style.display = val ? 'flex' : 'none';
+  if(!val && state.extraPackage){
+    state.extraPackage = false;
+    document.getElementById('extraToggle').classList.remove('on');
+    document.getElementById('extraPkgRow').classList.remove('on');
+  }
+  updateJerseyPill();
+  document.getElementById('err-jersey').classList.remove('show');
+  document.getElementById('step3Btn').textContent = val ? 'Continue To Jersey Sizing →' : 'Continue To Payment →';
+}
+function toggleExtraPackage(){
+  state.extraPackage = !state.extraPackage;
+  document.getElementById('extraToggle').classList.toggle('on', state.extraPackage);
+  document.getElementById('extraPkgRow').classList.toggle('on', state.extraPackage);
+  updateJerseyPill();
+  toast(state.extraPackage ? 'Second jersey package added — laundry, defeated.' : 'Second jersey package removed.');
+}
+function updateJerseyPill(){
+  var pill = document.getElementById('jerseyState');
+  if(state.jersey === true){
+    pill.className = 'pill pill-green';
+    pill.textContent = state.extraPackage ? 'Added ×2 — ' + money(PACKAGE.price * 2) : 'Added — ' + money(PACKAGE.price);
+  } else if(state.jersey === false){
+    pill.className = 'pill pill-navy';
+    pill.textContent = 'Declined';
+  } else {
+    pill.className = 'pill pill-navy';
+    pill.textContent = 'No Selection Yet';
+  }
+}
+function togglePractice(){
+  state.practice = !state.practice;
+  var card = document.getElementById('optPractice');
+  var btn = document.getElementById('practiceBtn');
+  card.classList.toggle('selected', state.practice);
+  btn.textContent = state.practice ? 'Remove Practice Pack' : 'Add Practice Pack';
+}
+function submitStep3(){
+  if(state.jersey === null){
+    document.getElementById('err-jersey').classList.add('show');
+    toast('Make a jersey package selection to continue.');
+    return;
+  }
+  if(state.jersey){
+    advanceTo(4);
+  } else {
+    /* No package purchased — sizing step doesn't apply */
+    var chev4 = document.querySelector('[data-step="4"]');
+    chev4.classList.add('skipped');
+    document.getElementById('chev4Name').textContent = 'Not Needed';
+    state.sizingStatus = 'na';
+    advanceTo(5);
+  }
+}
+
+/* ================= STEP 4 — JERSEY SIZING ================= */
+function renderSizing(){
+  /* Coming back with the package re-added? Clear any not-needed state on the chevron */
+  var chev4 = document.querySelector('[data-step="4"]');
+  chev4.classList.remove('skipped');
+  document.getElementById('chev4Name').textContent = 'Jersey Sizing';
+  document.getElementById('skipWarn').style.display = 'none';
+  document.getElementById('deadlineLine').innerHTML = 'Sizes are due by <strong>' + SEASON.sizingDeadline + '</strong> to make the first uniform order.';
+
+  document.getElementById('sizingPick').style.display = 'block';
+  document.getElementById('sizingReview').style.display = 'none';
+
+  var html = '';
+  var groups = state.extraPackage ? [1, 2] : [1];
+  groups.forEach(function(g){
+    if(state.extraPackage){
+      html += '<div class="group-label"><span>Jersey Package ' + g + (g === 2 ? ' (Second Package)' : '') + '</span>';
+      if(g === 2) html += '<button class="btn btn-outline-dark btn-sm" onclick="copyPackage1()">Copy Package 1 Sizes</button>';
+      html += '</div>';
+    }
+    PACKAGE.items.forEach(function(item){
+      var key = g + ':' + item.id;
+      var chosen = state.sizes[key];
+      html += '<div class="size-card' + (chosen ? ' chosen' : '') + '" id="size-' + g + '-' + item.id + '">';
+      html += '<div class="opt-head"><div><div class="opt-title">' + item.name + '</div><div class="opt-desc">' + item.desc + '</div></div>';
+      html += '<span class="pill ' + (chosen ? 'pill-green' : 'pill-navy') + '" id="pill-' + g + '-' + item.id + '">' + (chosen ? chosen : 'Choose Size') + '</span></div>';
+      html += '<div class="chip-row">';
+      item.sizes.forEach(function(sz){
+        html += '<button class="chip' + (chosen === sz ? ' active' : '') + '" onclick="pickSize(' + g + ',\'' + item.id + '\',\'' + sz.replace(/'/g, "\\'") + '\', this)">' + sz + '</button>';
+      });
+      html += '</div>';
+
+      /* Extra single pieces are offered once (under Package 1 items) */
+      if(g === 1){
+        var hasExtra = Object.prototype.hasOwnProperty.call(state.extras, item.id);
+        html += '<div class="extra-piece">';
+        if(!hasExtra){
+          html += '<button class="btn btn-ghost-red btn-sm" onclick="addExtra(\'' + item.id + '\')">+ Add An Extra ' + item.name.split(' — ')[0] + ' — ' + money(item.price) + '</button>';
+          html += '<span class="note-line" style="margin-left:.6rem">Spares are added to your total and charged with your first payment.</span>';
+        } else {
+          html += '<div class="opt-head"><div class="opt-title" style="font-size:.82rem">Extra ' + item.name + ' <span class="pill pill-red" style="margin-left:.4rem">+' + money(item.price) + '</span></div>';
+          html += '<button class="link-red" onclick="removeExtra(\'' + item.id + '\')">Remove</button></div>';
+          html += '<div class="chip-row">';
+          item.sizes.forEach(function(sz){
+            html += '<button class="chip' + (state.extras[item.id] === sz ? ' active' : '') + '" onclick="pickExtraSize(\'' + item.id + '\',\'' + sz.replace(/'/g, "\\'") + '\', this)">' + sz + '</button>';
+          });
+          html += '</div>';
+        }
+        html += '</div>';
+      }
+      html += '</div>';
+    });
+  });
+  document.getElementById('sizingItems').innerHTML = html;
+}
+function pickSize(g, itemId, sz, btn){
+  state.sizes[g + ':' + itemId] = sz;
+  var card = document.getElementById('size-' + g + '-' + itemId);
+  card.classList.add('chosen');
+  card.classList.remove('needs');
+  card.querySelectorAll(':scope > .chip-row .chip').forEach(function(c){ c.classList.remove('active'); });
+  btn.classList.add('active');
+  var pill = document.getElementById('pill-' + g + '-' + itemId);
+  pill.className = 'pill pill-green';
+  pill.textContent = sz;
+  document.getElementById('err-sizing').classList.remove('show');
+}
+function addExtra(itemId){
+  state.extras[itemId] = '';
+  renderSizing();
+  toast('Extra added — choose its size.');
+}
+function removeExtra(itemId){
+  delete state.extras[itemId];
+  renderSizing();
+}
+function pickExtraSize(itemId, sz, btn){
+  state.extras[itemId] = sz;
+  var row = btn.parentElement;
+  row.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('active'); });
+  btn.classList.add('active');
+  document.getElementById('err-sizing').classList.remove('show');
+}
+function copyPackage1(){
+  var missing = false;
+  PACKAGE.items.forEach(function(item){
+    if(state.sizes['1:' + item.id]){
+      state.sizes['2:' + item.id] = state.sizes['1:' + item.id];
+    } else {
+      missing = true;
+    }
+  });
+  renderSizing();
+  toast(missing ? 'Copied what was chosen — finish Package 1 sizes first for the rest.' : 'Package 1 sizes copied to Package 2.');
+}
+function reviewSizes(){
+  var missing = false;
+  var groups = state.extraPackage ? [1, 2] : [1];
+  groups.forEach(function(g){
+    PACKAGE.items.forEach(function(item){
+      var card = document.getElementById('size-' + g + '-' + item.id);
+      if(!state.sizes[g + ':' + item.id]){
+        card.classList.add('needs');
+        missing = true;
+      } else {
+        card.classList.remove('needs');
+      }
+    });
+  });
+  /* Extras that were added must be sized too */
+  Object.keys(state.extras).forEach(function(id){
+    if(!state.extras[id]){
+      document.getElementById('size-1-' + id).classList.add('needs');
+      missing = true;
+    }
+  });
+  if(missing){
+    document.getElementById('err-sizing').classList.add('show');
+    toast('A few items still need a size.');
+    return;
+  }
+  var rows = '';
+  var groups2 = state.extraPackage ? [1, 2] : [1];
+  groups2.forEach(function(g){
+    PACKAGE.items.forEach(function(item){
+      var label = (state.extraPackage ? 'Pkg ' + g + ' — ' : '') + item.name;
+      rows += '<div class="sum-row"><span class="sr-l">' + label + '</span><span class="sr-r">' + state.sizes[g + ':' + item.id] + '</span></div>';
+    });
+  });
+  Object.keys(state.extras).forEach(function(id){
+    var item = itemById(id);
+    rows += '<div class="sum-row"><span class="sr-l">Extra — ' + item.name + ' (+' + money(item.price) + ')</span><span class="sr-r">' + state.extras[id] + '</span></div>';
+  });
+  document.getElementById('reviewRows').innerHTML = rows;
+  document.getElementById('sizesConfirm').checked = false;
+  document.getElementById('err-sizesConfirm').classList.remove('show');
+  document.getElementById('sizingPick').style.display = 'none';
+  document.getElementById('sizingReview').style.display = 'block';
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+function backToPick(){
+  document.getElementById('sizingReview').style.display = 'none';
+  document.getElementById('sizingPick').style.display = 'block';
+}
+function confirmSizes(){
+  if(!document.getElementById('sizesConfirm').checked){
+    document.getElementById('err-sizesConfirm').classList.add('show');
+    toast('Please confirm you have triple-checked your sizes.');
+    return;
+  }
+  state.sizingStatus = 'done';
+  advanceTo(5);
+  toast('Sizes locked in — on to payment.');
+}
+function skipSizing(){
+  /* Extras are purchased on this step — warn before removing them, inline (never confirm()) */
+  var extraIds = Object.keys(state.extras);
+  if(extraIds.length){
+    var names = extraIds.map(function(id){ return itemById(id).name; }).join(', ');
+    document.getElementById('skipWarnItems').textContent = names;
+    document.getElementById('skipWarn').style.display = 'block';
+    window.scrollTo({top: 0, behavior: 'smooth'});
+    return;
+  }
+  doSkip();
+}
+function confirmSkip(){
+  state.extras = {};
+  doSkip();
+}
+function cancelSkip(){
+  document.getElementById('skipWarn').style.display = 'none';
+}
+function doSkip(){
+  state.sizingStatus = 'skipped';
+  var chev4 = document.querySelector('[data-step="4"]');
+  chev4.classList.add('skipped');
+  document.getElementById('chev4Name').textContent = 'Sizing Skipped';
+  advanceTo(5);
+  toast('No problem — complete sizing anytime from your player profile.');
+}
+
+/* ================= STEP 5 — PAYMENT ================= */
+function backFromPayment(){
+  if(state.jersey && state.sizingStatus !== 'skipped'){
+    goStep(4);
+  } else {
+    goStep(3);
+  }
+}
+function renderPayment(){
+  var rows = '';
+  rows += '<div class="sum-row"><span class="sr-l">Season Fee — ' + SEASON.team + ' (' + SEASON.ticket + ')</span><span class="sr-r">' + money(SEASON.fee) + '</span></div>';
+  if(state.jersey) rows += '<div class="sum-row"><span class="sr-l">' + PACKAGE.name + '</span><span class="sr-r">' + money(PACKAGE.price) + '</span></div>';
+  if(state.extraPackage) rows += '<div class="sum-row"><span class="sr-l">Second Jersey Package</span><span class="sr-r">' + money(PACKAGE.price) + '</span></div>';
+  Object.keys(state.extras).forEach(function(id){
+    var item = itemById(id);
+    rows += '<div class="sum-row"><span class="sr-l">Extra — ' + item.name + ' (' + state.extras[id] + ')</span><span class="sr-r">' + money(item.price) + '</span></div>';
+  });
+  if(state.practice) rows += '<div class="sum-row"><span class="sr-l">Practice Pack</span><span class="sr-r">' + money(60) + '</span></div>';
+  rows += '<div class="sum-row total"><span class="sr-l">Season Total</span><span class="sr-r">' + money(grandTotal()) + '</span></div>';
+  document.getElementById('orderSummary').innerHTML = rows;
+
+  document.getElementById('fullAmt').textContent = money(grandTotal());
+  document.getElementById('planAmt').textContent = money(downToday()) + ' today';
+  document.getElementById('planSub').textContent = money(SEASON.plan.downPayment) + ' down payment today — all jersey and apparel purchases are charged with the down payment — then ' + SEASON.plan.dates.length + ' payments on the schedule below.';
+  document.getElementById('offlineSub').innerHTML = '<strong>Paid in full</strong> — ' + money(grandTotal()) + ' due to CBU by check or cash, no payment plan. Your spot is held as <strong>Payment Pending</strong> until the organization records your payment.';
+
+  refreshPayUI();
+}
+function downToday(){
+  /* Down payment + ALL apparel purchases are due today on the plan */
+  return SEASON.plan.downPayment + apparelTotal();
+}
+function perInstallment(){
+  return Math.round(((SEASON.fee - SEASON.plan.downPayment) / SEASON.plan.dates.length) * 100) / 100;
+}
+function setPayType(t){
+  state.payType = t;
+  document.getElementById('err-paytype').classList.remove('show');
+  refreshPayUI();
+}
+function refreshPayUI(){
+  ['payFull','payPlan','payOffline'].forEach(function(id){
+    document.getElementById(id).classList.remove('selected');
+  });
+  var sched = document.getElementById('planSchedule');
+  var cardBlock = document.getElementById('cardBlock');
+  var payBtn = document.getElementById('payBtn');
+
+  if(state.payType === 'full'){
+    document.getElementById('payFull').classList.add('selected');
+    sched.style.display = 'none';
+    cardBlock.style.display = 'block';
+    payBtn.textContent = 'Pay ' + money(grandTotal()) + ' Now';
+  } else if(state.payType === 'plan'){
+    document.getElementById('payPlan').classList.add('selected');
+    var s = '';
+    s += '<div class="sched-row"><span class="sched-when">Down Payment — Today' + (apparelTotal() ? ' (' + money(SEASON.plan.downPayment) + ' down + ' + money(apparelTotal()) + ' apparel)' : '') + '</span><span class="sched-amt">' + money(downToday()) + '</span></div>';
+    SEASON.plan.dates.forEach(function(d, i){
+      s += '<div class="sched-row"><span class="sched-when">Payment ' + (i + 2) + ' — ' + d + '</span><span class="sched-amt">' + money(perInstallment()) + '</span></div>';
+    });
+    document.getElementById('schedRows').innerHTML = s;
+    sched.style.display = 'block';
+    cardBlock.style.display = 'block';
+    payBtn.textContent = 'Pay ' + money(downToday()) + ' Today';
+  } else if(state.payType === 'offline'){
+    document.getElementById('payOffline').classList.add('selected');
+    sched.style.display = 'none';
+    cardBlock.style.display = 'none';
+    document.getElementById('offlineHowText').textContent = SEASON.offlineInstructions;
+    document.getElementById('offlineHowBox').style.display = 'block';
+    payBtn.textContent = 'Complete Registration — ' + money(grandTotal()) + ' Due Offline';
+  } else {
+    sched.style.display = 'none';
+    cardBlock.style.display = 'block';
+    payBtn.textContent = 'Choose A Payment Option';
+  }
+  if(state.payType !== 'offline'){
+    document.getElementById('offlineHowBox').style.display = 'none';
+  }
+}
+function submitStep5(){
+  if(!state.payType){
+    document.getElementById('err-paytype').classList.add('show');
+    toast('Choose how you would like to pay.');
+    return;
+  }
+  if(state.payType !== 'offline'){
+    var ok = requireFilled(['ccName','ccNum','ccExp','ccCvc','ccZip']);
+    if(!ok){
+      toast('Please complete the highlighted card fields.');
+      return;
+    }
+  }
+  toast(state.payType === 'offline' ? 'Registration received — payment pending.' : 'Payment successful. Welcome to the team!');
+  advanceTo(6);
+}
+
+/* ================= STEP 6 — CONFIRMATION ================= */
+function renderConfirmation(){
+  var pName = (document.getElementById('pFirst').value.trim() + ' ' + document.getElementById('pLast').value.trim()).trim() || 'your player';
+  document.getElementById('confirmPlayerName').textContent = pName;
+
+  var ring = document.getElementById('confirmRing');
+  var title = document.getElementById('confirmTitle');
+  var sub = document.getElementById('confirmSub');
+
+  if(state.payType === 'offline'){
+    ring.classList.add('pending');
+    ring.textContent = '!';
+    title.textContent = 'Registration Received';
+    sub.textContent = pName + ' is registered for ' + SEASON.team + ' with payment pending. Your roster spot is held — please arrange your offline payment with CBU to complete the season fee.';
+  } else {
+    ring.classList.remove('pending');
+    ring.textContent = '✓';
+    title.textContent = "You're Registered!";
+    sub.textContent = pName + ' is officially registered for ' + SEASON.team + ' — ' + SEASON.season + '. A confirmation email is on its way.';
+  }
+
+  var payLabel = state.payType === 'full' ? 'Paid in full — ' + money(grandTotal())
+    : state.payType === 'plan' ? money(downToday()) + ' paid today (down payment' + (apparelTotal() ? ' + apparel' : '') + '), ' + SEASON.plan.dates.length + ' payments of ' + money(perInstallment()) + ' remaining'
+    : 'Pay offline — paid in full, ' + money(grandTotal()) + ' due to CBU';
+
+  var jerseyLabel = !state.jersey ? 'Declined'
+    : (state.extraPackage ? 'Added ×2' : 'Added') + (state.sizingStatus === 'done' ? ' — sizes submitted' : ' — sizing pending');
+
+  var rows = '';
+  rows += '<div class="sum-row"><span class="sr-l">Player</span><span class="sr-r">' + pName + '</span></div>';
+  rows += '<div class="sum-row"><span class="sr-l">Team / Season</span><span class="sr-r">' + SEASON.team + ' · ' + SEASON.season + '</span></div>';
+  rows += '<div class="sum-row"><span class="sr-l">Registered As</span><span class="sr-r">' + SEASON.ticket + '</span></div>';
+  rows += '<div class="sum-row"><span class="sr-l">Jersey Package</span><span class="sr-r">' + jerseyLabel + '</span></div>';
+  Object.keys(state.extras).forEach(function(id){
+    var item = itemById(id);
+    rows += '<div class="sum-row"><span class="sr-l">Extra — ' + item.name + '</span><span class="sr-r">' + state.extras[id] + '</span></div>';
+  });
+  if(state.practice) rows += '<div class="sum-row"><span class="sr-l">Practice Pack</span><span class="sr-r">Added</span></div>';
+  rows += '<div class="sum-row"><span class="sr-l">Payment</span><span class="sr-r" style="white-space:normal;text-align:right">' + payLabel + '</span></div>';
+  document.getElementById('confirmSummary').innerHTML = rows;
+
+  /* Offline instructions on the confirmation */
+  var offBlock = document.getElementById('confirmOfflineBlock');
+  if(state.payType === 'offline'){
+    document.getElementById('confirmOfflineText').textContent = SEASON.offlineInstructions;
+    offBlock.style.display = 'block';
+  } else {
+    offBlock.style.display = 'none';
+  }
+
+  /* Post-registration message — body from the admin, title automatic per team */
+  var msgBlock = document.getElementById('postRegMsgBlock');
+  if(SEASON.postRegMessage){
+    document.getElementById('postRegTitle').textContent = 'A Message From ' + SEASON.team;
+    document.getElementById('postRegBody').innerHTML = SEASON.postRegMessage;
+    msgBlock.style.display = 'block';
+  } else {
+    msgBlock.style.display = 'none';
+  }
+  document.getElementById('fanGearLink').href = SEASON.fanGearUrl;
+
+  /* Jersey sizes on the confirmation page */
+  var sizesBlock = document.getElementById('confirmSizesBlock');
+  var pendingBlock = document.getElementById('confirmSizesPending');
+  sizesBlock.style.display = 'none';
+  pendingBlock.style.display = 'none';
+  if(state.jersey && state.sizingStatus === 'done'){
+    var srows = '';
+    var groups = state.extraPackage ? [1, 2] : [1];
+    groups.forEach(function(g){
+      PACKAGE.items.forEach(function(item){
+        var label = (state.extraPackage ? 'Pkg ' + g + ' — ' : '') + item.name;
+        srows += '<div class="sum-row"><span class="sr-l">' + label + '</span><span class="sr-r">' + state.sizes[g + ':' + item.id] + '</span></div>';
+      });
+    });
+    Object.keys(state.extras).forEach(function(id){
+      var item = itemById(id);
+      srows += '<div class="sum-row"><span class="sr-l">Extra — ' + item.name + '</span><span class="sr-r">' + state.extras[id] + '</span></div>';
+    });
+    document.getElementById('confirmSizesRows').innerHTML = srows;
+    sizesBlock.style.display = 'block';
+  } else if(state.jersey && state.sizingStatus === 'skipped'){
+    document.getElementById('pendDeadline').textContent = SEASON.sizingDeadline;
+    pendingBlock.style.display = 'block';
+  }
+}
+
+/* ================= RESET ================= */
+function resetDemo(){
+  window.location.reload();
+}
+</script>
+</body>
+</html>

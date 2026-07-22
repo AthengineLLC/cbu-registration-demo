@@ -124,6 +124,11 @@ tbody tr:last-child td{border-bottom:none}
 .pill-red{background:#f8e3e6;color:var(--red)}
 .pill-blue{background:#e2eef7;color:#2d6f96}
 .pill-navy{background:#e8ebf4;color:var(--navy-deep)}
+.pill-amber{background:#fdf1e0;color:#a5670e}
+.pay-bar{width:110px;height:8px;background:var(--line);border-radius:999px;overflow:hidden;display:inline-block;vertical-align:middle}
+.pay-fill{height:100%;background:var(--green)}
+.pay-fill.warn{background:#d98a12}
+.pay-fill.bad{background:var(--red)}
 button.pill{border:none;cursor:pointer;font-family:'Oswald',Arial,sans-serif}
 button.pill:hover{filter:brightness(.9);box-shadow:0 0 0 2px rgba(22,32,60,.12)}
 .link-red{color:var(--red);font-weight:600;font-size:.8rem;text-decoration:none;cursor:pointer;background:none;border:none;font-family:inherit}
@@ -162,6 +167,8 @@ button.pill:hover{filter:brightness(.9);box-shadow:0 0 0 2px rgba(22,32,60,.12)}
 .choice-card .c-tag{margin-bottom:.6rem}
 .reveal{margin-top:1.3rem;display:none}
 .reveal.open{display:block}
+input.err,textarea.err{border-color:var(--red)!important;background:#fff7f8}
+.err-inline{color:var(--red);font-size:.75rem;font-weight:600;margin-top:.35rem}
 .field-label{display:block;font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.14em;font-size:.68rem;font-weight:600;color:var(--muted);margin-bottom:.4rem}
 input[type=text],input[type=date],select,textarea{
   width:100%;max-width:420px;padding:.65rem .8rem;border:1.5px solid #c9cfdd;border-radius:8px;
@@ -387,11 +394,31 @@ textarea{
         <div class="eyebrow">Organization Dashboard</div>
         <h1 class="page-title display">Registration Management</h1>
         <div class="title-rule"></div>
-        <p class="page-title-sub">Create tryout registrations, manage the fields you collect, and share signup links with players and parents.</p>
+        <p class="page-title-sub">Create tryout and season registrations, manage the fields you collect, and share signup links with players and parents.</p>
       </div>
       <div style="display:flex;gap:.8rem;flex-wrap:wrap">
         <button class="btn btn-outline" onclick="openFieldsManager()">Registration Form Fields</button>
-        <button class="btn btn-primary" onclick="startWizard()">+ Create New Tryout</button>
+        <button class="btn btn-primary" onclick="toggleNewRegChooser()">+ New Registration</button>
+      </div>
+    </div>
+
+    <!-- New Registration type chooser -->
+    <div id="new-reg-chooser" style="display:none">
+      <div class="card card-pad" style="margin-bottom:1.4rem">
+        <div class="step-q" style="font-size:1.1rem">What are you creating?</div>
+        <div class="choice-grid">
+          <button class="choice-card" onclick="closeNewRegChooser();startWizard()">
+            <div class="c-tag"><span class="pill pill-red">High School</span> <span class="pill pill-blue">Youth</span></div>
+            <div class="c-title">Tryout Registration</div>
+            <div class="c-desc">A public signup link for a tryout — tickets, tryout pricing, and your registration form template.</div>
+          </button>
+          <button class="choice-card" onclick="closeNewRegChooser();startSeasonWizard()">
+            <div class="c-tag"><span class="pill pill-navy">Season</span></div>
+            <div class="c-title">Season Registration</div>
+            <div class="c-desc">Invite-based registration for a season's teams — season pricing from Team Management, payment plans, jersey packages, and waivers. Create your season and teams in Team Management first, even bare-bones, so this registration has something to tag.</div>
+          </button>
+        </div>
+        <div style="margin-top:1rem"><button class="link-red" onclick="closeNewRegChooser()">Cancel</button></div>
       </div>
     </div>
 
@@ -434,7 +461,7 @@ textarea{
     <div class="card">
       <div class="table-wrap">
         <table>
-          <thead>
+          <thead id="registrants-thead">
             <tr><th>#</th><th>Player</th><th>Ticket</th><th>Parent/Guardian 1</th><th>Primary Pos.</th><th>Secondary Pos.</th></tr>
           </thead>
           <tbody id="registrants-body"></tbody>
@@ -516,6 +543,29 @@ textarea{
   </div>
 </div>
 
+<!-- ============ VIEW: SEASON WIZARD ============ -->
+<div class="view" id="view-swizard">
+  <div class="page">
+    <button class="link-red" onclick="confirmExitSWizard()" style="color:#e58a95">&larr; Back to Registration Management</button>
+    <div class="page-head" style="margin-top:.8rem;margin-bottom:0">
+      <div>
+        <div class="eyebrow" id="swizard-eyebrow">Create Season Registration</div>
+        <h1 class="page-title display" style="font-size:2.1rem" id="swizard-title">New Season Registration</h1>
+      </div>
+    </div>
+
+    <div class="steps" id="sstep-banner"></div>
+
+    <div class="card">
+      <div class="step-panel" id="sstep-panel"></div>
+      <div class="wizard-nav">
+        <button class="btn btn-outline-dark" id="sbtn-back" onclick="sWizardBack()">&larr; Back</button>
+        <button class="btn btn-primary" id="sbtn-next" onclick="sWizardNext()">Continue &rarr;</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ============ VIEW: CONFIRMATION ============ -->
 <div class="view" id="view-confirm">
   <div class="page" style="max-width:820px">
@@ -525,10 +575,12 @@ textarea{
         <div class="eyebrow" style="color:var(--green)">Registration Created</div>
         <h1 class="step-q display" style="font-size:1.8rem;margin-top:.5rem" id="confirm-title">Your registration is live</h1>
         <p class="step-help" style="margin:0.7rem auto 0" id="confirm-sub"></p>
-        <div class="link-box">
+        <div class="link-box" id="confirm-link-box">
           <code id="confirm-link">https://cbuapp.app/register/</code>
           <button class="btn btn-ghost-red btn-sm" onclick="copyLink()">Copy Link</button>
         </div>
+        <!-- Season registrations generate one link per team -->
+        <div id="confirm-team-links" style="display:none;text-align:left;margin-top:1.2rem"></div>
         <div class="mt-3">
           <button class="btn btn-primary" onclick="finishToLanding()">Back to Registration Management</button>
         </div>
@@ -743,8 +795,10 @@ let fieldLibrary = [
 
 /* High School template exists; Youth starts empty so the demo shows both paths. */
 let templates = {
-  hs: null,
-  youth: null
+  hs: null,          /* High School Registration Template (tryouts) */
+  youth: null,       /* Youth Registration Template (tryouts) */
+  seasonHs: null,    /* High School Season Template */
+  seasonYouth: null  /* Youth Season Template */
 };
 
 function f(name,type,req,opts,tip){ return {name:name, type:type, req:req, options:opts, tip:tip}; }
@@ -776,6 +830,37 @@ function mandatorySections(){
     ]}
   ];
 }
+
+/* Season templates start from a lighter baseline — registration stays simple,
+   player details live on the player profile. No post-tryout contact section. */
+function seasonMandatorySections(){
+  return [
+    { name:'Player Information', locked:true, fields:[
+      fl('First Name','Text',true), fl('Last Name','Text',true), fl('Birthdate','Date',true)
+    ]},
+    { name:'Parent/Guardian Contact', locked:true,
+      note:'On the family-facing form, only Parent/Guardian 1 shows at first — a button asks "Do you want another parent added with their contact information?" to reveal the Parent 2 fields.',
+      fields:[
+      fl('Parent/Guardian 1 First Name','Text',true),
+      fl('Parent/Guardian 1 Last Name','Text',true),
+      fl('Parent/Guardian 1 Phone','Text',true),
+      fl('Parent/Guardian 1 Email','Text',true),
+      fl('Parent/Guardian 2 First Name','Text',false),
+      fl('Parent/Guardian 2 Last Name','Text',false),
+      fl('Parent/Guardian 2 Phone','Text',false),
+      fl('Parent/Guardian 2 Email','Text',false)
+    ]}
+  ];
+}
+
+/* One meta map for all four templates — tryout registration + season, HS + Youth. */
+const TPL_META = {
+  hs:          { label:'High School Tryout Template', short:'High School', kind:'Tryout', pill:'pill-red',  accent:'hs',    baseline:mandatorySections },
+  youth:       { label:'Youth Tryout Template',       short:'Youth',       kind:'Tryout', pill:'pill-blue', accent:'youth', baseline:mandatorySections },
+  seasonHs:    { label:'High School Season Template',       short:'High School', kind:'Season', pill:'pill-red',  accent:'hs',    baseline:seasonMandatorySections },
+  seasonYouth: { label:'Youth Season Template',             short:'Youth',       kind:'Season', pill:'pill-blue', accent:'youth', baseline:seasonMandatorySections }
+};
+function tplMeta(key){ return TPL_META[key] || TPL_META.hs; }
 
 function needsOptions(type){ return type === 'Dropdown' || type === 'Check Box'; }
 function optionsMarkup(prefix){
@@ -928,18 +1013,16 @@ let showArchive = false;
 let waiversDeclined = false;
 function renderTemplateCta(){
   const el = document.getElementById('template-cta');
-  const missing = [];
-  if(!templates.hs) missing.push('hs');
-  if(!templates.youth) missing.push('youth');
+  const missing = ['hs','youth','seasonHs','seasonYouth'].filter(function(k){ return !templates[k]; });
   const needWaiver = waiverLibrary.length === 0 && !waiversDeclined;
   if(missing.length === 0 && !needWaiver){ el.innerHTML = ''; return; }
   const title = missing.length ? 'Set Up Your Templates First' : 'Set Up Your Waivers';
   let text = '';
-  if(missing.length) text += 'We recommend creating your templates before beginning the registration process. Every tryout\'s registration form is built from its template — build them once and every registration starts ready. ';
+  if(missing.length) text += 'We recommend creating your templates before beginning the registration process. Tryouts use the Tryout Templates and seasons use the Season Templates — build them once and every registration starts ready. ';
   if(needWaiver) text += 'Waivers must be agreed to before payment — create yours once and include it on any registration.';
   let buttons = missing.map(function(key){
-    const m = TYPE_META[key];
-    return '<button class="btn '+(key==='hs'?'btn-pulse-hs':'btn-pulse-youth')+'" onclick="openBuilder(\''+key+'\',\'landing\')">Create Your '+m.label+' Template</button>';
+    const tm = tplMeta(key);
+    return '<button class="btn '+(tm.accent==='hs'?'btn-pulse-hs':'btn-pulse-youth')+'" onclick="openBuilder(\''+key+'\',\'landing\')">Create Your '+tm.label+'</button>';
   }).join('');
   if(needWaiver){
     buttons += '<button class="btn btn-pulse-navy" onclick="createWaiverFromLanding()">Create Your Waiver</button>';
@@ -984,7 +1067,7 @@ function renderRegTable(){
   }
   body.innerHTML = rows.map(function(x){
     const r = x.r, i = x.i;
-    const m = TYPE_META[r.type];
+    const m = r.kind === 'season' ? { label:'Season', pill:'pill-navy' } : TYPE_META[r.type];
     const closed = r.status === 'Unpublished';
     let actions;
     if(showArchive){
@@ -1103,6 +1186,14 @@ function sendComms(){
 }
 let regView = { idx:null, ticket:null };
 function viewRegistrants(i){
+  if(registrations[i].kind === 'season'){
+    sregView = { idx:i, team:null };
+    renderSeasonRegistrants();
+    showView('view-registrants');
+    return;
+  }
+  document.getElementById('registrants-thead').innerHTML =
+    '<tr><th>#</th><th>Player</th><th>Ticket</th><th>Parent/Guardian 1</th><th>Primary Pos.</th><th>Secondary Pos.</th></tr>';
   regView = { idx:i, ticket:null };
   renderRegistrantsPage();
   showView('view-registrants');
@@ -1933,6 +2024,7 @@ function fmtDate(iso){
 }
 function editRegistration(i){
   const r = registrations[i];
+  if(r.kind === 'season'){ editSeasonRegistration(i); return; }
   if(!r.wiz){ toast('This registration has no saved settings to edit'); return; }
   wiz = JSON.parse(JSON.stringify(r.wiz));
   wiz.step = 0;
@@ -1947,6 +2039,8 @@ function editRegistration(i){
   showView('view-wizard');
 }
 function completeRegistration(){
+  document.getElementById('confirm-link-box').style.display = '';
+  document.getElementById('confirm-team-links').style.display = 'none';
   const opensDisp = wiz.opensMode==='live' ? 'Live now' : fmtDate(wiz.opensDate);
   const closesDisp = wiz.closesMode==='indefinite' ? 'Indefinite' : fmtDate(wiz.closesDate);
   const snapshot = JSON.parse(JSON.stringify(wiz));
@@ -2196,47 +2290,54 @@ function saveAdminWaiver(){
 }
 function renderTemplateCards(){
   const el = document.getElementById('tmpl-cards');
-  el.innerHTML = ['hs','youth'].map(function(key){
-    const m = TYPE_META[key];
+  function card(key){
+    const tm = tplMeta(key);
     const t = templates[key];
+    const use = tm.kind==='Tryout' ? 'tryout registration' : 'season registration';
     if(t){
       return '<div class="tmpl-card">' +
-        '<span class="pill '+m.pill+'">'+m.label+'</span>' +
+        '<span class="pill '+tm.pill+'">'+tm.short+'</span> <span class="pill pill-navy">'+tm.kind+'</span>' +
         '<div class="c-title mt-1">'+esc(t.name)+'</div>' +
         '<div class="stat">'+t.sections.length+' sections · '+countFields(t)+' fields</div>' +
         '<div class="mt-2"><button class="btn btn-ghost-red btn-sm" onclick="openBuilder(\''+key+'\',\'fields\')">Edit Template</button></div>' +
       '</div>';
     }
     return '<div class="tmpl-card" style="border-style:dashed">' +
-      '<span class="pill '+m.pill+'">'+m.label+'</span>' +
-      '<div class="c-title mt-1">'+m.label+' Template</div>' +
-      '<div class="stat">Not created yet. Build it once and every '+m.label.toLowerCase()+' tryout starts from it.</div>' +
-      '<div class="mt-2"><button class="btn btn-primary btn-sm" onclick="openBuilder(\''+key+'\',\'fields\')">Make a '+m.label+' Template</button></div>' +
+      '<span class="pill '+tm.pill+'">'+tm.short+'</span> <span class="pill pill-navy">'+tm.kind+'</span>' +
+      '<div class="c-title mt-1">'+tm.label+'</div>' +
+      '<div class="stat">Not created yet. Build it once and every '+use+' starts from it.</div>' +
+      '<div class="mt-2"><button class="btn btn-primary btn-sm" onclick="openBuilder(\''+key+'\',\'fields\')">Create Template</button></div>' +
     '</div>';
-  }).join('');
+  }
+  el.innerHTML =
+    '<div class="field-label" style="grid-column:1/-1;margin:0">Tryout Templates</div>' +
+    card('hs') + card('youth') +
+    '<div class="field-label" style="grid-column:1/-1;margin:.6rem 0 0">Season Templates</div>' +
+    card('seasonHs') + card('seasonYouth');
 }
 
 /* =====================================================
    TEMPLATE BUILDER
 ===================================================== */
 function openBuilder(typeKey, returnTo){
-  const m = TYPE_META[typeKey];
-  setAccent(typeKey);
+  const m = tplMeta(typeKey);
+  setAccent(m.accent);
   const existing = templates[typeKey];
   builder = {
     typeKey: typeKey,
     returnTo: returnTo,
     renamingSi: null,
     removePendingSi: null,
-    name: existing ? existing.name : m.label+' Template',
+    name: existing ? existing.name : m.label,
     sections: existing
       ? JSON.parse(JSON.stringify(existing.sections))
-      : mandatorySections()
+      : m.baseline()
   };
   document.getElementById('builder-title').textContent = builder.name;
-  document.getElementById('builder-eyebrow').textContent = m.label+' · Template Builder';
+  document.getElementById('builder-eyebrow').textContent = m.short+' '+m.kind+' · Template Builder';
   document.getElementById('builder-backlink').innerHTML =
     '&larr; ' + (returnTo==='wizard' ? 'Back to Create New Tryout'
+               : returnTo==='swizard' ? 'Back to Season Registration'
                : returnTo==='landing' ? 'Back to Registration Management'
                : 'Back to Registration Form Fields');
   renderBuilder();
@@ -2245,6 +2346,7 @@ function openBuilder(typeKey, returnTo){
 }
 function builderExit(){
   if(builder.returnTo === 'wizard'){ renderWizard(); showView('view-wizard'); }
+  else if(builder.returnTo === 'swizard'){ setAccent('hs'); renderSWizard(); showView('view-swizard'); }
   else if(builder.returnTo === 'landing'){ setAccent('hs'); renderRegTable(); showView('view-landing'); }
   else { openFieldsManager(); switchTab('templates'); }
 }
@@ -2505,6 +2607,902 @@ function moveField(fromSi, fromFi, toSi, toFi){
   dragSrc = null;
   renderBuilder();
 }
+
+/* =====================================================
+   SEASON REGISTRATION WIZARD
+   Invite-based registration for a season's teams.
+   Pricing and team structure come from Team Management;
+   this wizard configures payments, waivers, the jersey
+   package, and the post-registration message.
+===================================================== */
+
+/* Mock Team Management data — in the live app these seasons,
+   divisions, teams, and ticket prices are read from the Team
+   Management section, not entered here. */
+const TM_SEASONS = [
+  { id:'summer26', name:'Summer 2026',
+    divisions:[
+      { name:'2027', teams:['CBU United 2027'] },
+      { name:'2028', teams:['CBU United 2028','CBU Scout 2028'] },
+      { name:'2029', teams:['CBU United 2029'] },
+      { name:'2030', teams:['CBU United 2030'] }
+    ],
+    pricing:[
+      { ticket:'Position Player', price:1800 },
+      { ticket:'Pitcher Only', price:1400 },
+      { ticket:'Position Player & Pitcher', price:1950 }
+    ]},
+  { id:'fall26', name:'Fall 2026',
+    divisions:[
+      { name:'2028', teams:['CBU United 2028'] },
+      { name:'2029', teams:['CBU United 2029'] },
+      { name:'2030', teams:['CBU United 2030'] },
+      { name:'2031', teams:['CBU United 2031'] }
+    ],
+    pricing:[
+      { ticket:'Position Player', price:950 },
+      { ticket:'Pitcher Only', price:750 },
+      { ticket:'Position Player & Pitcher', price:1050 }
+    ]}
+];
+function tmSeason(id){
+  for(let i=0;i<TM_SEASONS.length;i++){ if(TM_SEASONS[i].id===id) return TM_SEASONS[i]; }
+  return null;
+}
+function isYouthDivision(name){ return /\d+U$/i.test(String(name).trim()); }
+function seasonTplNeeds(){
+  const s = tmSeason(swiz.seasonId);
+  if(!s) return [];
+  const need = [];
+  s.divisions.forEach(function(d){
+    const k = isYouthDivision(d.name) ? 'seasonYouth' : 'seasonHs';
+    if(need.indexOf(k) === -1) need.push(k);
+  });
+  return need;
+}
+
+/* Org-level settings — shared across every registration. */
+let ORG_SETTINGS = { fanGearUrl:'https://cbubaseball.com/fan-gear' };
+
+/* The CBU standard package — one-click starting point in the wizard. */
+const STANDARD_PKG = {
+  name:'2026 United Jersey Package', price:'150',
+  items:[
+    { name:'Game Jersey — Red',   desc:'Sublimated game jersey, United red', price:'55', sizes:'YM, YL, YXL, AS, AM, AL, AXL, AXXL' },
+    { name:'Game Jersey — White', desc:'Sublimated game jersey, white',      price:'55', sizes:'YM, YL, YXL, AS, AM, AL, AXL, AXXL' },
+    { name:'Game Hat',            desc:'Official CBU red game hat',          price:'30', sizes:'S/M Fitted, L/XL Fitted' },
+    { name:'Belt & Sock Set',     desc:'Navy belt and game socks',           price:'25', sizes:'S, M, L' }
+  ],
+  addons:[ { name:'Practice Pack', desc:'Two practice tees and a practice hat', price:'60' } ]
+};
+
+const S_STEPS = ['Name','Season Link','Payments','Waivers','Jersey Package','Message','Review'];
+let swiz = null;
+
+function toggleNewRegChooser(){
+  const el = document.getElementById('new-reg-chooser');
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+function closeNewRegChooser(){
+  document.getElementById('new-reg-chooser').style.display = 'none';
+}
+
+function startSeasonWizard(){
+  swiz = { step:0, regName:'', seasonId:null,
+    plan:{ planOn:true, down:'300', mode:'monthly', payments:'3', firstDate:'', customDates:[] },
+    offlineOn:true, offlineHow:'',
+    errs:{},
+    waivers:null, waiverOpen:{}, addingWaiver:false,
+    pkg:{ offer:true, name:'', price:'', allowSecond:true, deadline:'', items:[], addons:[], addingItem:false, addingAddon:false },
+    postMessage:'',
+    isEdit:false, editIdx:null };
+  setAccent('hs');
+  renderSWizard();
+  showView('view-swizard');
+}
+
+function confirmExitSWizard(){
+  setAccent('hs');
+  showView('view-landing');
+}
+function editSeasonRegistration(i){
+  const r = registrations[i];
+  if(!r.swiz){ toast('This registration has no saved settings to edit'); return; }
+  swiz = JSON.parse(JSON.stringify(r.swiz));
+  swiz.step = 0;
+  swiz.isEdit = true;
+  swiz.editIdx = i;
+  swiz.addingWaiver = false;
+  swiz.waiverOpen = {};
+  swiz.pkg.addingItem = false;
+  swiz.pkg.addingAddon = false;
+  swiz.errs = {};
+  if(!swiz.plan.mode) swiz.plan.mode = 'monthly';
+  if(!swiz.plan.customDates) swiz.plan.customDates = [];
+  if(swiz.offlineHow === undefined) swiz.offlineHow = '';
+  setAccent('hs');
+  renderSWizard();
+  showView('view-swizard');
+}
+
+function renderSWizard(){
+  document.getElementById('swizard-title').textContent =
+    swiz.regName.trim() ? swiz.regName.trim() : 'New Season Registration';
+  document.getElementById('swizard-eyebrow').textContent =
+    swiz.isEdit ? 'Edit Season Registration' : 'Create Season Registration';
+  renderSStepBanner();
+  renderSStepPanel();
+  const back = document.getElementById('sbtn-back');
+  const next = document.getElementById('sbtn-next');
+  back.style.visibility = swiz.step === 0 ? 'hidden' : 'visible';
+  next.textContent = swiz.step === S_STEPS.length-1
+    ? (swiz.isEdit ? 'Save Changes' : 'Complete Registration')
+    : 'Continue →';
+}
+function renderSStepBanner(){
+  const el = document.getElementById('sstep-banner');
+  el.innerHTML = S_STEPS.map(function(s,i){
+    let cls = 'step-chev';
+    const clickable = i < swiz.step || (swiz.isEdit && i !== swiz.step);
+    if(clickable) cls += ' done';
+    if(i === swiz.step) cls += ' active';
+    const click = clickable ? ' onclick="sGoToStep('+i+')" role="button" tabindex="0" title="Go to '+s+'" onkeydown="if(event.key===\x27Enter\x27)sGoToStep('+i+')"' : '';
+    return '<div class="'+cls+'"'+click+'><div class="step-num">Step '+(i+1)+'</div><div class="step-name">'+s+'</div></div>';
+  }).join('');
+}
+function sGoToStep(i){
+  if(i === swiz.step) return;
+  if(!swiz.isEdit && i >= swiz.step) return;
+  swiz.step = i;
+  renderSWizard();
+}
+function sWizardBack(){
+  if(swiz.step > 0){ swiz.step--; renderSWizard(); }
+}
+function sWizardNext(){
+  if(!validateSStep()) return;
+  swiz.errs = {};
+  if(swiz.step === S_STEPS.length-1){ completeSeasonRegistration(); return; }
+  swiz.step++;
+  renderSWizard();
+}
+function validateSStep(){
+  switch(swiz.step){
+    case 0:
+      if(!swiz.regName.trim()){ toast('Name this registration to continue'); return false; }
+      swiz.regName = swiz.regName.trim();
+      return true;
+    case 1: {
+      if(!swiz.seasonId){ toast('Choose the season this registration belongs to'); return false; }
+      const need = seasonTplNeeds();
+      for(let i=0;i<need.length;i++){
+        if(!templates[need[i]]){
+          toast('Create your '+tplMeta(need[i]).label+' below to continue');
+          renderSStepPanel();
+          return false;
+        }
+      }
+      return true;
+    }
+    case 2: {
+      swiz.errs = {};
+      const pl = swiz.plan;
+      if(pl.planOn){
+        if(!pl.down || isNaN(parseFloat(pl.down))) swiz.errs.down = true;
+        if(pl.mode === 'custom'){
+          for(let i=0;i<planCount();i++){ if(!pl.customDates[i]) swiz.errs['cd'+i] = true; }
+        } else {
+          if(!pl.firstDate) swiz.errs.firstDate = true;
+        }
+      }
+      if(swiz.offlineOn && !(swiz.offlineHow||'').trim()) swiz.errs.offlineHow = true;
+      if(Object.keys(swiz.errs).length){
+        renderSStepPanel();
+        toast('Fix the highlighted fields to continue');
+        return false;
+      }
+      return true;
+    }
+    case 4:
+      if(swiz.pkg.offer){
+        if(!swiz.pkg.name.trim()){ toast('Name the jersey package'); return false; }
+        if(!swiz.pkg.price || isNaN(parseFloat(swiz.pkg.price))){ toast('Enter the package price'); return false; }
+        if(swiz.pkg.items.length === 0){ toast('Add at least one item to the package'); return false; }
+        for(let i=0;i<swiz.pkg.items.length;i++){
+          if(pkgSizes(swiz.pkg.items[i]).length === 0){ toast('"'+swiz.pkg.items[i].name+'" needs size options'); return false; }
+        }
+        if(!swiz.pkg.deadline){ toast('Set the sizing deadline — it drives the parent-side reminders'); return false; }
+      }
+      return true;
+  }
+  return true;
+}
+
+function renderSStepPanel(){
+  const p = document.getElementById('sstep-panel');
+  switch(swiz.step){
+    case 0: p.innerHTML = sStepName(); break;
+    case 1: p.innerHTML = sStepSeason(); break;
+    case 2: p.innerHTML = sStepPayments(); break;
+    case 3: p.innerHTML = sStepWaivers(); break;
+    case 4: p.innerHTML = sStepPkg(); break;
+    case 5: p.innerHTML = sStepMessage(); break;
+    case 6: p.innerHTML = sStepReview(); break;
+  }
+}
+
+/* ---- Season step 1: name ---- */
+function sStepName(){
+  return '' +
+  '<div class="step-q display">Name this season registration</div>' +
+  '<p class="step-help">This is what families see when they open their team\x27s registration link, and how it appears in your Registration Management list.</p>' +
+  '<div class="mt-2" style="max-width:480px">' +
+    '<label class="field-label" for="swname">Registration Name</label>' +
+    '<input type="text" id="swname" placeholder="e.g. Summer 2026 Season Registration" value="'+escAttr(swiz.regName)+'" ' +
+      'oninput="swiz.regName=this.value" onkeydown="if(event.key===\x27Enter\x27)sWizardNext()" style="max-width:100%">' +
+  '</div>';
+}
+
+/* ---- Season step 2: link to Team Management season ---- */
+function sStepSeason(){
+  let html = '' +
+  '<div class="step-q display">Which season is this for?</div>' +
+  '<p class="step-help">Season registrations are tied to Team Management, so <strong>create your season and teams there first</strong> — even a bare-bones one — so this registration has something to tag. Every team gets its own registration link, teams you add to the season later automatically get links too, and this registration never locks: edit it anytime.</p>' +
+  '<div class="choice-grid">' +
+    TM_SEASONS.map(function(s){
+      const sel = swiz.seasonId === s.id ? ' selected' : '';
+      const teamCount = s.divisions.reduce(function(n,d){ return n + d.teams.length; }, 0);
+      return '<button class="choice-card'+sel+'" onclick="sPickSeason(\x27'+s.id+'\x27)">' +
+        '<div class="c-tag"><span class="pill pill-navy">Team Management</span></div>' +
+        '<div class="c-title">'+esc(s.name)+'</div>' +
+        '<div class="c-desc">'+s.divisions.length+' divisions · '+teamCount+' teams</div>' +
+      '</button>';
+    }).join('') +
+  '</div>';
+  const s = tmSeason(swiz.seasonId);
+  if(s){
+    html += '<div class="preview-section" style="margin-top:1.6rem"><div class="preview-section-head">Teams Getting Registration Links</div>';
+    s.divisions.forEach(function(d){
+      html += '<div class="preview-field"><span class="cell-strong">'+esc(d.name)+'</span><span style="color:var(--muted);font-size:.82rem">'+esc(d.teams.join(' · '))+'</span></div>';
+    });
+    html += '</div>';
+    html += '<div class="preview-section" style="margin-top:1rem"><div class="preview-section-head">Season Pricing — From Team Management</div>';
+    s.pricing.forEach(function(pr){
+      html += '<div class="preview-field"><span class="cell-strong">'+esc(pr.ticket)+'</span><span class="cell-strong">$'+pr.price.toLocaleString()+'</span></div>';
+    });
+    html += '<div class="preview-field" style="justify-content:flex-start;color:var(--muted);font-size:.78rem;font-style:italic">Each player registers at the price of the ticket they were invited on. To change these prices, edit the season in Team Management — division and team overrides apply automatically.</div>';
+    html += '</div>';
+
+    /* Season registration form — which season templates this season uses */
+    const need = seasonTplNeeds();
+    html += '<div class="preview-section" style="margin-top:1rem"><div class="preview-section-head">Season Registration Form</div>';
+    need.forEach(function(k){
+      const tm = tplMeta(k);
+      const t = templates[k];
+      html += '<div class="preview-field"><div><span class="cell-strong">'+tm.label+'</span>' +
+        '<div class="cell-sub">'+(t ? esc(t.name)+' · '+t.sections.length+' sections · '+countFields(t)+' fields' : 'Not created yet — required before this registration can go live')+'</div></div>' +
+        '<button class="btn '+(t?'btn-outline-dark':'btn-primary')+' btn-sm" onclick="openBuilder(\''+k+'\',\'swizard\')">'+(t?'Edit':'Create')+' Template</button></div>';
+    });
+    html += '<div class="preview-field" style="justify-content:flex-start;color:var(--muted);font-size:.78rem;font-style:italic">Applied automatically by division — grad-year divisions use the High School Season Template, age divisions (9U, 10U...) use the Youth Season Template.</div>';
+    html += '</div>';
+  }
+  return html;
+}
+function sPickSeason(id){
+  swiz.seasonId = id;
+  if(!swiz.regName.trim()) swiz.regName = tmSeason(id).name + ' Season Registration';
+  renderSWizard();
+}
+
+/* ---- Season step 3: payments ---- */
+function planCount(){
+  return Math.max(1, parseInt(swiz.plan.payments, 10) || 0);
+}
+function planDates(){
+  const pl = swiz.plan;
+  const n = planCount();
+  const out = [];
+  if(pl.mode === 'custom'){
+    for(let i=0;i<n;i++) out.push(pl.customDates[i] || '');
+    return out;
+  }
+  if(!pl.firstDate) return out;
+  const start = new Date(pl.firstDate + 'T12:00:00');
+  for(let i=0;i<n;i++){
+    const d = new Date(start.getTime());
+    if(pl.mode === 'biweekly'){ d.setDate(d.getDate() + 14*i); }
+    else { d.setMonth(d.getMonth() + i); }
+    out.push(d.toISOString().slice(0,10));
+  }
+  return out;
+}
+function errCls(key){ return swiz.errs && swiz.errs[key] ? ' class="err"' : ''; }
+function errLine(key, msg){ return swiz.errs && swiz.errs[key] ? '<div class="err-inline">'+msg+'</div>' : ''; }
+function sStepPayments(){
+  const pl = swiz.plan;
+  const modeBtn = function(m, label){
+    return '<button class="chip filter-chip'+(pl.mode===m?' active':'')+'" onclick="sSetPlanMode(\''+m+'\')">'+label+'</button>';
+  };
+  let html = '' +
+  '<div class="step-q display">How can families pay?</div>' +
+  '<p class="step-help">Pay in full is always available. Turn on a payment plan and offline payment if you want to offer them for this season.</p>' +
+
+  '<div class="waiver-item" style="padding:1rem 1.1rem">' +
+    '<div style="display:flex;align-items:center;gap:.8rem">' +
+      '<button class="toggle on" disabled style="opacity:.55;cursor:not-allowed"></button>' +
+      '<div><div class="cell-strong">Pay In Full</div>' +
+      '<div class="cell-sub">One payment at registration. Always on.</div></div>' +
+    '</div>' +
+  '</div>' +
+
+  '<div class="waiver-item" style="padding:1rem 1.1rem">' +
+    '<div style="display:flex;align-items:center;gap:.8rem">' +
+      '<button class="toggle'+(pl.planOn?' on':'')+'" onclick="sTogglePlan()" aria-label="Offer a payment plan"></button>' +
+      '<div><div class="cell-strong">Payment Plan</div>' +
+      '<div class="cell-sub">A down payment at checkout, then scheduled payments. The down payment comes off the season fee, and <strong>every jersey and apparel purchase is charged with the down payment</strong> — apparel is never spread across installments.</div></div>' +
+    '</div>' +
+    '<div class="reveal'+(pl.planOn?' open':'')+'" style="margin-top:1rem">' +
+      '<label class="field-label">Payment Schedule</label>' +
+      '<div class="chip-row" style="margin-top:.2rem;margin-bottom:1rem">' +
+        modeBtn('monthly','Monthly') + modeBtn('biweekly','Biweekly') + modeBtn('custom','Custom Dates') +
+      '</div>' +
+      '<div style="display:flex;gap:1.2rem;flex-wrap:wrap">' +
+        '<div><label class="field-label" for="sp-down">Down Payment ($)</label>' +
+          '<input type="text" id="sp-down"'+errCls('down')+' inputmode="decimal" value="'+escAttr(pl.down)+'" oninput="swiz.plan.down=this.value" onchange="renderSStepPanel()" style="max-width:140px">' +
+          errLine('down','Enter the down payment amount.') + '</div>' +
+        '<div><label class="field-label" for="sp-count">Number of Payments</label>' +
+          '<select id="sp-count" onchange="sSetPlanCount(this.value)" style="max-width:120px">' +
+            [2,3,4,5,6,7,8].map(function(n){ return '<option value="'+n+'"'+(String(pl.payments)===String(n)?' selected':'')+'>'+n+'</option>'; }).join('') +
+          '</select></div>' +
+        (pl.mode!=='custom'
+          ? '<div><label class="field-label" for="sp-first">First Payment Date</label>' +
+            '<input type="date" id="sp-first"'+errCls('firstDate')+' value="'+pl.firstDate+'" onchange="swiz.plan.firstDate=this.value;renderSStepPanel()" style="max-width:180px">' +
+            errLine('firstDate','Pick the first payment date.') + '</div>'
+          : '') +
+      '</div>';
+  if(pl.mode==='custom'){
+    html += '<div class="mt-2"><label class="field-label">Payment Dates — pick each one</label>' +
+      '<div style="display:flex;gap:1rem;flex-wrap:wrap">';
+    for(let i=0;i<planCount();i++){
+      html += '<div><div class="field-label" style="letter-spacing:.08em;font-size:.62rem">Payment '+(i+1)+'</div>' +
+        '<input type="date"'+errCls('cd'+i)+' value="'+(pl.customDates[i]||'')+'" onchange="sSetCustomDate('+i+', this.value)" style="max-width:180px">' +
+        errLine('cd'+i,'Pick this date.') + '</div>';
+    }
+    html += '</div>' +
+      '<p class="step-help" style="font-size:.78rem;margin-top:.6rem">Custom schedules can land however you need — first of month one, first of month two, then the first and the fourteenth of month three.</p></div>';
+  }
+  /* Payment audit — visualize every payment before completing */
+  const dates = planDates();
+  const hasDates = dates.length && dates.every(function(d){ return !!d; });
+  html += '<div class="preview-section" style="margin-top:1.2rem"><div class="preview-section-head">Payment Audit — What Comes Out, When</div>';
+  html += '<div class="preview-field"><div><span class="cell-strong">Down Payment — at checkout</span>' +
+    '<div class="cell-sub">$'+esc(pl.down||'0')+' off the season fee, plus every jersey package, extra piece, and add-on they purchase</div></div>' +
+    '<span class="pill pill-red">Checkout</span></div>';
+  if(hasDates){
+    dates.forEach(function(d, i){
+      html += '<div class="preview-field"><span class="cell-strong">Payment '+(i+1)+'</span><span>'+fmtDate(d)+'</span></div>';
+    });
+  } else {
+    html += '<div class="preview-field" style="justify-content:center;color:var(--muted)">Pick your dates above to see every payment laid out here.</div>';
+  }
+  const s = tmSeason(swiz.seasonId);
+  const dn = parseFloat(pl.down);
+  if(s && hasDates && !isNaN(dn)){
+    html += '<div class="preview-field" style="justify-content:flex-start;color:var(--muted);font-size:.78rem">' +
+      'Per-payment amounts by ticket: ' + s.pricing.map(function(pr){
+        const per = (pr.price - dn) / dates.length;
+        return esc(pr.ticket)+' <strong>$'+(Math.round(per*100)/100).toLocaleString()+'</strong>';
+      }).join(' · ') + '</div>';
+  }
+  html += '</div>';
+  html += '</div>' +
+
+  '<div class="waiver-item" style="padding:1rem 1.1rem">' +
+    '<div style="display:flex;align-items:center;gap:.8rem">' +
+      '<button class="toggle'+(swiz.offlineOn?' on':'')+'" onclick="sToggleOffline()" aria-label="Allow offline payment"></button>' +
+      '<div><div class="cell-strong">Pay Offline</div>' +
+      '<div class="cell-sub"><strong>Offline is paid in full — the full season total, no payment plan.</strong> Families register now and pay CBU directly; their spot is held as Payment Pending until you record the payment with Apply Payment.</div></div>' +
+    '</div>' +
+    '<div class="reveal'+(swiz.offlineOn?' open':'')+'" style="margin-top:1rem">' +
+      '<label class="field-label" for="sp-offhow">How To Pay Offline — shown to families in its own section on the registration</label>' +
+      '<textarea id="sp-offhow"'+errCls('offlineHow')+' placeholder="e.g. Bring a check made out to CBU Baseball to the front desk at the CBU training facility, or hand it to your head coach at the first workout. Include your player\'s name and team in the memo line." oninput="swiz.offlineHow=this.value">'+esc(swiz.offlineHow||'')+'</textarea>' +
+      errLine('offlineHow','Tell families how to pay offline — this shows on their registration.') +
+    '</div>' +
+  '</div>';
+  return html;
+}
+function sSetPlanMode(m){
+  swiz.plan.mode = m;
+  renderSStepPanel();
+}
+function sSetPlanCount(v){
+  swiz.plan.payments = v;
+  const n = planCount();
+  while(swiz.plan.customDates.length < n) swiz.plan.customDates.push('');
+  swiz.plan.customDates.length = n;
+  renderSStepPanel();
+}
+function sSetCustomDate(i, v){
+  swiz.plan.customDates[i] = v;
+  renderSStepPanel();
+}
+function sTogglePlan(){
+  swiz.plan.planOn = !swiz.plan.planOn;
+  renderSStepPanel();
+}
+function sToggleOffline(){
+  swiz.offlineOn = !swiz.offlineOn;
+  renderSStepPanel();
+}
+
+/* ---- Season step 4: waivers (same waiver library as tryouts) ---- */
+function sStepWaivers(){
+  const active = waiverLibrary.filter(function(wv){ return wv.on !== false; });
+  if(swiz.waivers === null){
+    swiz.waivers = active.map(function(wv){ return wv.title; });
+  }
+  let html = '<div class="step-q display">Waivers</div>' +
+  '<p class="step-help">Families must read and agree to each waiver below <strong>before they can pay</strong>. Check the waivers to include in this season registration — same waiver library as your tryouts.</p>';
+  if(active.length === 0){
+    html += '<div class="empty-state">' +
+      '<div class="e-title">No waivers yet</div>' +
+      '<div class="e-sub">'+(waiversDeclined
+        ? 'You chose not to use waivers — click Continue to skip this step, or create one below if you\x27ve changed your mind.'
+        : 'Create your first waiver — it\x27s saved to your waiver library so every future registration can use it.')+'</div>' +
+      (swiz.addingWaiver ? '' : '<button class="btn btn-primary" onclick="swiz.addingWaiver=true;renderSStepPanel()">+ Create New Waiver</button>') +
+    '</div>';
+  } else {
+    html += active.map(function(wv){
+      const sel = swiz.waivers.indexOf(wv.title) !== -1;
+      const open = !!swiz.waiverOpen[wv.title];
+      return '<div class="waiver-item">' +
+        '<div class="waiver-head">' +
+          '<input type="checkbox" '+(sel?'checked':'')+' onchange="sToggleWizWaiver(\x27'+escAttr(wv.title)+'\x27, this)" aria-label="Include '+escAttr(wv.title)+'">' +
+          '<span class="waiver-title">'+esc(wv.title)+'</span>' +
+          '<button class="link-red" onclick="sToggleWaiverView(\x27'+escAttr(wv.title)+'\x27)">'+(open?'Hide':'View')+'</button>' +
+        '</div>' +
+        (open ? '<div class="waiver-body">'+esc(wv.body)+'</div>' : '') +
+      '</div>';
+    }).join('');
+    if(!swiz.addingWaiver){
+      html += '<div class="mt-2"><button class="btn btn-outline-dark btn-sm" onclick="swiz.addingWaiver=true;renderSStepPanel()">+ Create New Waiver</button></div>';
+    }
+  }
+  if(swiz.addingWaiver){
+    html += '<div style="background:var(--row-alt);border:1.5px solid var(--line);border-radius:12px;padding:1.2rem 1.3rem;margin-top:1.2rem">' +
+      '<div style="margin-bottom:.9rem"><label class="field-label" for="sww-title">Waiver Title</label>' +
+        '<input type="text" id="sww-title" placeholder="e.g. Season Travel Consent" style="max-width:100%"></div>' +
+      '<div><label class="field-label" for="sww-body">Waiver Text — what the parent agrees to</label>' +
+        '<textarea id="sww-body" placeholder="Type the full waiver language here..."></textarea></div>' +
+      '<div style="display:flex;gap:.7rem;margin-top:.9rem">' +
+        '<button class="btn btn-primary btn-sm" onclick="sAddWizWaiver()">Save Waiver</button>' +
+        '<button class="btn btn-outline-dark btn-sm" onclick="swiz.addingWaiver=false;renderSStepPanel()">Cancel</button>' +
+      '</div>' +
+    '</div>';
+  }
+  return html;
+}
+function sToggleWizWaiver(title, el){
+  const i = swiz.waivers.indexOf(title);
+  if(el.checked && i === -1) swiz.waivers.push(title);
+  if(!el.checked && i !== -1) swiz.waivers.splice(i,1);
+}
+function sToggleWaiverView(title){
+  swiz.waiverOpen[title] = !swiz.waiverOpen[title];
+  renderSStepPanel();
+}
+function sAddWizWaiver(){
+  const title = document.getElementById('sww-title').value.trim();
+  const body = document.getElementById('sww-body').value.trim();
+  if(!title){ toast('Give the waiver a title'); return; }
+  if(!body){ toast('Enter the waiver text parents will agree to'); return; }
+  if(waiverLibrary.some(function(wv){ return wv.title.toLowerCase() === title.toLowerCase(); })){
+    toast('A waiver with that title already exists'); return;
+  }
+  waiverLibrary.push({ title:title, body:body, on:true });
+  swiz.waivers.push(title);
+  swiz.addingWaiver = false;
+  toast('"'+title+'" added — and saved to your waiver library');
+  renderSStepPanel();
+}
+
+/* ---- Season step 5: jersey package ---- */
+function pkgSizes(item){
+  return item.sizes.split(',').map(function(s){ return s.trim(); }).filter(function(s){ return s; });
+}
+function sStepPkg(){
+  const pk = swiz.pkg;
+  let html = '' +
+  '<div class="step-q display">Jersey Package</div>' +
+  '<p class="step-help">Everything you set here powers the family side: the package they can add, the sizing questions they answer after choosing it, and the per-item prices used when they buy extra pieces. All of it is charged with their first payment.</p>' +
+
+  '<div class="waiver-item" style="padding:1rem 1.1rem">' +
+    '<div style="display:flex;align-items:center;gap:.8rem">' +
+      '<button class="toggle'+(pk.offer?' on':'')+'" onclick="swiz.pkg.offer=!swiz.pkg.offer;renderSStepPanel()" aria-label="Offer a jersey package"></button>' +
+      '<div><div class="cell-strong">Offer a Jersey Package</div>' +
+      '<div class="cell-sub">Turn off only if this season has no uniform purchase.</div></div>' +
+    '</div>' +
+  '</div>';
+
+  if(!pk.offer) return html;
+
+  html += '<div class="mt-2" style="display:flex;gap:1.2rem;flex-wrap:wrap;align-items:flex-end">' +
+    '<div style="flex:1;min-width:240px"><label class="field-label" for="spk-name">Package Name</label>' +
+      '<input type="text" id="spk-name" placeholder="e.g. 2026 United Jersey Package" value="'+escAttr(pk.name)+'" oninput="swiz.pkg.name=this.value" style="max-width:100%"></div>' +
+    '<div><label class="field-label" for="spk-price">Package Price ($)</label>' +
+      '<input type="text" id="spk-price" inputmode="decimal" value="'+escAttr(pk.price)+'" oninput="swiz.pkg.price=this.value" style="max-width:130px"></div>' +
+    '<div><label class="field-label" for="spk-deadline">Sizing Deadline</label>' +
+      '<input type="date" id="spk-deadline" value="'+pk.deadline+'" onchange="swiz.pkg.deadline=this.value" style="max-width:180px"></div>' +
+    (pk.items.length === 0 ? '<button class="btn btn-outline-dark btn-sm" onclick="sLoadStandardPkg()" style="margin-bottom:2px">Load CBU Standard Package</button>' : '') +
+  '</div>' +
+  '<p class="step-help" style="font-size:.78rem;margin-top:.6rem">The sizing deadline drives the family-side reminders — sizes due by this date to make the first uniform order.</p>';
+
+  html += '<div class="waiver-item" style="padding:1rem 1.1rem;margin-top:1.2rem">' +
+    '<div style="display:flex;align-items:center;gap:.8rem">' +
+      '<button class="toggle'+(pk.allowSecond?' on':'')+'" onclick="swiz.pkg.allowSecond=!swiz.pkg.allowSecond;renderSStepPanel()" aria-label="Allow a second package"></button>' +
+      '<div><div class="cell-strong">Allow a Second Package</div>' +
+      '<div class="cell-sub">Shows the "I hate laundry" toggle so families can buy two full packages at '+(pk.price?('$'+esc(pk.price)+' '):'')+'each. Rare, but some families swear by it.</div></div>' +
+    '</div>' +
+  '</div>';
+
+  html += '<div class="preview-section" style="margin-top:1.2rem"><div class="preview-section-head">What\x27s In The Package</div>';
+  if(pk.items.length === 0){
+    html += '<div class="preview-field" style="justify-content:center;color:var(--muted)">No items yet — add each piece families will size, or load the CBU standard package above.</div>';
+  } else {
+    pk.items.forEach(function(it, i){
+      html += '<div class="preview-field"><div>' +
+        '<span class="cell-strong">'+esc(it.name)+'</span>' +
+        '<div class="cell-sub">'+esc(it.desc || '')+(it.desc?' · ':'')+'Sizes: '+esc(pkgSizes(it).join(' · '))+'</div></div>' +
+        '<div style="white-space:nowrap"><span class="pill pill-red" style="margin-right:.6rem">Extra: $'+esc(it.price)+'</span>' +
+        '<button class="link-red" onclick="sRemovePkgItem('+i+')">Remove</button></div></div>';
+    });
+  }
+  html += '</div>';
+  if(pk.addingItem){
+    html += '<div style="background:var(--row-alt);border:1.5px solid var(--line);border-radius:12px;padding:1.2rem 1.3rem;margin-top:1rem">' +
+      '<div style="display:flex;gap:1.2rem;flex-wrap:wrap">' +
+        '<div style="flex:1;min-width:200px"><label class="field-label" for="spi-name">Item Name</label>' +
+          '<input type="text" id="spi-name" placeholder="e.g. Game Jersey — Red" style="max-width:100%"></div>' +
+        '<div><label class="field-label" for="spi-price">Extra-Piece Price ($)</label>' +
+          '<input type="text" id="spi-price" inputmode="decimal" placeholder="55" style="max-width:130px"></div>' +
+      '</div>' +
+      '<div class="mt-2"><label class="field-label" for="spi-desc">Description (optional)</label>' +
+        '<input type="text" id="spi-desc" placeholder="e.g. Sublimated game jersey, United red" style="max-width:100%"></div>' +
+      '<div class="mt-2"><label class="field-label" for="spi-sizes">Size Options — comma separated</label>' +
+        '<input type="text" id="spi-sizes" placeholder="e.g. YM, YL, YXL, AS, AM, AL, AXL, AXXL" style="max-width:100%"></div>' +
+      '<div style="display:flex;gap:.7rem;margin-top:.9rem">' +
+        '<button class="btn btn-primary btn-sm" onclick="sSavePkgItem()">Add Item</button>' +
+        '<button class="btn btn-outline-dark btn-sm" onclick="swiz.pkg.addingItem=false;renderSStepPanel()">Cancel</button>' +
+      '</div>' +
+    '</div>';
+  } else {
+    html += '<div class="mt-2"><button class="btn btn-outline-dark btn-sm" onclick="swiz.pkg.addingItem=true;renderSStepPanel()">+ Add Package Item</button>' +
+      '<span class="step-help" style="display:inline-block;margin-left:.8rem;font-size:.78rem">Families size every item here, and the extra-piece price is what a spare costs.</span></div>';
+  }
+
+  html += '<div class="preview-section" style="margin-top:1.4rem"><div class="preview-section-head">Season Add-Ons (Optional)</div>';
+  if(pk.addons.length === 0){
+    html += '<div class="preview-field" style="justify-content:center;color:var(--muted)">No add-ons — optional extras like a practice pack, offered alongside the package.</div>';
+  } else {
+    pk.addons.forEach(function(a, i){
+      html += '<div class="preview-field"><div><span class="cell-strong">'+esc(a.name)+'</span>' +
+        (a.desc?'<div class="cell-sub">'+esc(a.desc)+'</div>':'')+'</div>' +
+        '<div style="white-space:nowrap"><span class="pill pill-red" style="margin-right:.6rem">$'+esc(a.price)+'</span>' +
+        '<button class="link-red" onclick="sRemoveAddon('+i+')">Remove</button></div></div>';
+    });
+  }
+  html += '</div>';
+  if(pk.addingAddon){
+    html += '<div style="background:var(--row-alt);border:1.5px solid var(--line);border-radius:12px;padding:1.2rem 1.3rem;margin-top:1rem">' +
+      '<div style="display:flex;gap:1.2rem;flex-wrap:wrap">' +
+        '<div style="flex:1;min-width:200px"><label class="field-label" for="spa-name">Add-On Name</label>' +
+          '<input type="text" id="spa-name" placeholder="e.g. Practice Pack" style="max-width:100%"></div>' +
+        '<div><label class="field-label" for="spa-price">Price ($)</label>' +
+          '<input type="text" id="spa-price" inputmode="decimal" placeholder="60" style="max-width:130px"></div>' +
+      '</div>' +
+      '<div class="mt-2"><label class="field-label" for="spa-desc">Description (optional)</label>' +
+        '<input type="text" id="spa-desc" placeholder="e.g. Two practice tees and a practice hat" style="max-width:100%"></div>' +
+      '<div style="display:flex;gap:.7rem;margin-top:.9rem">' +
+        '<button class="btn btn-primary btn-sm" onclick="sSaveAddon()">Add Add-On</button>' +
+        '<button class="btn btn-outline-dark btn-sm" onclick="swiz.pkg.addingAddon=false;renderSStepPanel()">Cancel</button>' +
+      '</div>' +
+    '</div>';
+  } else {
+    html += '<div class="mt-2"><button class="btn btn-outline-dark btn-sm" onclick="swiz.pkg.addingAddon=true;renderSStepPanel()">+ Add Season Add-On</button></div>';
+  }
+  return html;
+}
+function sLoadStandardPkg(){
+  const std = JSON.parse(JSON.stringify(STANDARD_PKG));
+  swiz.pkg.name = std.name;
+  swiz.pkg.price = std.price;
+  swiz.pkg.items = std.items;
+  swiz.pkg.addons = std.addons;
+  renderSStepPanel();
+  toast('CBU standard package loaded — edit anything you need.');
+}
+function sSavePkgItem(){
+  const name = document.getElementById('spi-name').value.trim();
+  const price = document.getElementById('spi-price').value.trim();
+  const desc = document.getElementById('spi-desc').value.trim();
+  const sizes = document.getElementById('spi-sizes').value.trim();
+  if(!name){ toast('Give the item a name'); return; }
+  if(!price || isNaN(parseFloat(price))){ toast('Enter the extra-piece price'); return; }
+  if(!sizes){ toast('Enter the size options families will choose from'); return; }
+  swiz.pkg.items.push({ name:name, desc:desc, price:price, sizes:sizes });
+  swiz.pkg.addingItem = false;
+  renderSStepPanel();
+}
+function sRemovePkgItem(i){
+  swiz.pkg.items.splice(i,1);
+  renderSStepPanel();
+}
+function sSaveAddon(){
+  const name = document.getElementById('spa-name').value.trim();
+  const price = document.getElementById('spa-price').value.trim();
+  const desc = document.getElementById('spa-desc').value.trim();
+  if(!name){ toast('Give the add-on a name'); return; }
+  if(!price || isNaN(parseFloat(price))){ toast('Enter the add-on price'); return; }
+  swiz.pkg.addons.push({ name:name, desc:desc, price:price });
+  swiz.pkg.addingAddon = false;
+  renderSStepPanel();
+}
+function sRemoveAddon(i){
+  swiz.pkg.addons.splice(i,1);
+  renderSStepPanel();
+}
+
+/* ---- Season step 6: post-registration message + org fan gear setting ---- */
+function sStepMessage(){
+  return '' +
+  '<div class="step-q display">Post-Registration Message</div>' +
+  '<p class="step-help">Shown to the family on their confirmation screen right after they finish. The title is automatic — <strong>"A Message From [Team Name]"</strong>, using whichever team the family registered with — so all you write is the message itself: welcome them, first workout, who\'s reaching out. Leave it blank to use the standard confirmation.</p>' +
+  '<div class="mt-2" style="max-width:680px">' +
+    '<label class="field-label" for="spm-input">Your Message (optional)</label>' +
+    '<textarea id="spm-input" style="min-height:150px" placeholder="e.g. Welcome to the team! Our first team workout is Saturday, August 8 at 9:00 AM at the CBU training facility. Your coaching staff will reach out this week with the full summer calendar. #RedHatNation" oninput="swiz.postMessage=this.value">'+esc(swiz.postMessage)+'</textarea>' +
+  '</div>' +
+  '<div class="preview-section" style="margin-top:1.6rem;max-width:680px"><div class="preview-section-head">Organization Setting — Fan Gear Store</div>' +
+    '<div style="padding:1rem 1.1rem">' +
+      '<label class="field-label" for="s-fangear">Fan Gear Store Link</label>' +
+      '<input type="text" id="s-fangear" value="'+escAttr(ORG_SETTINGS.fanGearUrl)+'" oninput="ORG_SETTINGS.fanGearUrl=this.value" style="max-width:100%">' +
+      '<p class="step-help" style="font-size:.78rem;margin-top:.6rem">Org-level — this same link shows at the bottom of every registration\'s confirmation page, so changing it here changes it everywhere.</p>' +
+    '</div>' +
+  '</div>';
+}
+
+/* ---- Season step 7: review ---- */
+function sSeasonSlug(){
+  const s = tmSeason(swiz.seasonId);
+  return s ? s.name.toLowerCase().replace(/[^a-z0-9]+/g,'-') : 'season';
+}
+function teamSlug(t){
+  return t.toLowerCase().replace(/[^a-z0-9]+/g,'-');
+}
+function sStepReview(){
+  const s = tmSeason(swiz.seasonId);
+  const pl = swiz.plan;
+  const pk = swiz.pkg;
+  const payLines = ['Pay in full'];
+  if(pl.planOn){
+    const modeLabel = pl.mode==='biweekly' ? 'biweekly' : pl.mode==='custom' ? 'custom-date' : 'monthly';
+    const dts = planDates().filter(function(d){ return !!d; }).map(fmtDate);
+    payLines.push('Payment plan — $'+esc(pl.down)+' down at checkout (plus all apparel) + '+dts.length+' '+modeLabel+' payments: '+dts.join(' · '));
+  }
+  if(swiz.offlineOn) payLines.push('Pay offline — paid in full; your how-to-pay instructions show on the registration');
+  return '' +
+  '<div class="step-q display">Review &amp; Complete</div>' +
+  '<p class="step-help">Check everything below, then complete the registration to generate a link for every team in the season.</p>' +
+  '<dl class="review-grid">' +
+    '<dt>Registration Name</dt><dd class="cell-strong">'+esc(swiz.regName)+'</dd>' +
+    '<dt>Type</dt><dd><span class="pill pill-navy">Season</span></dd>' +
+    '<dt>Season</dt><dd>'+(s ? esc(s.name)+' · '+s.divisions.length+' divisions · '+s.divisions.reduce(function(n,d){return n+d.teams.length;},0)+' team links<div class="cell-sub">Teams added to this season later automatically get links — this registration never locks; edit it anytime</div>' : '')+'</dd>' +
+    '<dt>Pricing</dt><dd>'+(s ? s.pricing.map(function(pr){ return '<div style="margin:.2rem 0">'+esc(pr.ticket)+': <strong>$'+pr.price.toLocaleString()+'</strong></div>'; }).join('') + '<div class="cell-sub">From Team Management — invited ticket sets each player\x27s price</div>' : '')+'</dd>' +
+    '<dt>Payments</dt><dd>'+payLines.map(function(l){ return '<div style="margin:.2rem 0">'+l+'</div>'; }).join('')+'</dd>' +
+    '<dt>Waivers</dt><dd>'+((swiz.waivers && swiz.waivers.length)
+      ? swiz.waivers.map(function(t){ return '<span class="pill pill-navy" style="margin-right:.35rem">'+esc(t)+'</span>'; }).join('') +
+        '<div class="cell-sub" style="margin-top:.35rem">Must be agreed to before payment</div>'
+      : '<span style="color:var(--muted)">None</span>')+'</dd>' +
+    '<dt>Jersey Package</dt><dd>'+(pk.offer
+      ? '<span class="cell-strong">'+esc(pk.name)+'</span> — $'+esc(pk.price)+' · '+pk.items.length+' items' +
+        (pk.allowSecond ? ' · second package allowed' : '') +
+        '<div class="cell-sub">Sizing deadline '+fmtDate(pk.deadline)+(pk.addons.length? ' · Add-ons: '+pk.addons.map(function(a){return esc(a.name)+' ($'+esc(a.price)+')';}).join(', ') : '')+'</div>'
+      : '<span style="color:var(--muted)">Not offered</span>')+'</dd>' +
+    '<dt>Post-Reg. Message</dt><dd>'+(swiz.postMessage.trim()
+      ? '<span style="font-size:.85rem"><strong>A Message From [Team Name]</strong> — '+esc(swiz.postMessage.trim())+'</span><div class="cell-sub">Title is automatic per team</div>'
+      : '<span style="color:var(--muted)">Standard confirmation</span>')+'</dd>' +
+    '<dt>Fan Gear Link</dt><dd><span style="font-size:.85rem">'+esc(ORG_SETTINGS.fanGearUrl)+'</span><div class="cell-sub">Org-level — shown on every confirmation page</div></dd>' +
+  '</dl>';
+}
+
+function completeSeasonRegistration(){
+  const s = tmSeason(swiz.seasonId);
+  const snapshot = JSON.parse(JSON.stringify(swiz));
+  snapshot.step = 0; snapshot.isEdit = false; snapshot.editIdx = null;
+  if(swiz.isEdit){
+    const r = registrations[swiz.editIdx];
+    r.name = swiz.regName;
+    r.swiz = snapshot;
+    renderRegTable();
+    document.getElementById('confirm-title').textContent = 'Your season registration is updated';
+    document.getElementById('confirm-sub').textContent =
+      'Changes to "'+swiz.regName+'" are saved. Team registration links are unchanged.';
+    renderSeasonConfirmLinks(s);
+    showView('view-confirm');
+    return;
+  }
+  const link = 'cbuapp.app/season/'+sSeasonSlug();
+  registrations.unshift({
+    name: swiz.regName,
+    kind: 'season',
+    type: 'hs',
+    opens: 'Live now',
+    closes: 'With season',
+    signups: '0',
+    registrants: [],
+    status: 'Published',
+    link: link,
+    swiz: snapshot
+  });
+  renderRegTable();
+  document.getElementById('confirm-title').textContent = 'Your season registration is live';
+  document.getElementById('confirm-sub').textContent =
+    'Every team in '+(s?s.name:'the season')+' now has its own registration link. Adding a player to a team\x27s roster sends their welcome email with that team\x27s link — and teams you add to the season later automatically get links too. This registration stays editable anytime.';
+  renderSeasonConfirmLinks(s);
+  showView('view-confirm');
+}
+function renderSeasonConfirmLinks(s){
+  document.getElementById('confirm-link-box').style.display = 'none';
+  const el = document.getElementById('confirm-team-links');
+  let html = '<div class="preview-section"><div class="preview-section-head">Team Registration Links</div>';
+  (s ? s.divisions : []).forEach(function(d){
+    d.teams.forEach(function(t){
+      const url = 'https://cbuapp.app/season/'+sSeasonSlug()+'/'+teamSlug(t);
+      html += '<div class="preview-field"><div><span class="cell-strong">'+esc(t)+'</span>' +
+        '<div class="cell-sub" style="word-break:break-all">'+esc(url)+'</div></div>' +
+        '<button class="link-red" onclick="copyText(\x27'+url.replace('https://','')+'\x27)">Copy link</button></div>';
+    });
+  });
+  html += '</div>';
+  el.innerHTML = html;
+  el.style.display = 'block';
+}
+
+/* =====================================================
+   SEASON REGISTRANTS — payment dashboard
+   Lightweight view of who's registered and where their
+   money stands. The deep tools — transaction logs, Apply
+   Payment, refunds — live on the Team Management payment
+   pages.
+===================================================== */
+let sregView = { idx:null, team:null };
+function moneyFmt(n){
+  return '$' + Number(n).toLocaleString('en-US');
+}
+function setSRegFilter(t){
+  sregView.team = t === '__all__' ? null : t;
+  renderSeasonRegistrants();
+}
+function payStatusPill(st){
+  if(st === 'Paid in Full') return '<span class="pill pill-green">Paid in Full</span>';
+  if(st === 'On Plan') return '<span class="pill pill-blue">On Plan</span>';
+  if(st === 'Payment Pending') return '<span class="pill pill-amber">Payment Pending</span>';
+  return '<span class="pill pill-red">Payment Failed</span>';
+}
+function pkgLabel(p){
+  if(p === 'sized') return '<span class="pill pill-green">Sizes In</span>';
+  if(p === 'pending') return '<span class="pill pill-amber">Sizing Pending</span>';
+  return '<span class="pill pill-navy">Declined</span>';
+}
+function renderSeasonRegistrants(){
+  const r = registrations[sregView.idx];
+  const all = r.registrants || [];
+  const list = sregView.team ? all.filter(function(p){ return p.team === sregView.team; }) : all;
+
+  document.getElementById('registrants-title').textContent = r.name;
+  document.getElementById('registrants-sub').textContent =
+    'Who\x27s registered and where their money stands. Transaction logs, Apply Payment, and refunds live on the Team Management payment pages.';
+
+  /* Team filter chips */
+  const teams = [];
+  all.forEach(function(p){ if(teams.indexOf(p.team) === -1) teams.push(p.team); });
+  const fEl = document.getElementById('registrants-filter');
+  fEl.innerHTML = '<button class="chip filter-chip'+(sregView.team?'':' active')+'" onclick="setSRegFilter(\x27__all__\x27)">All Teams ('+all.length+')</button>' +
+    teams.map(function(t){
+      const n = all.filter(function(p){ return p.team === t; }).length;
+      return '<button class="chip filter-chip'+(sregView.team===t?' active':'')+'" onclick="setSRegFilter(\x27'+escAttr(t)+'\x27)">'+esc(t)+' ('+n+')</button>';
+    }).join('');
+
+  /* Stats */
+  const collected = list.reduce(function(s,p){ return s + p.paid; }, 0);
+  const totalFees = list.reduce(function(s,p){ return s + p.total; }, 0);
+  const fullN = list.filter(function(p){ return p.status === 'Paid in Full'; }).length;
+  const planN = list.filter(function(p){ return p.status === 'On Plan'; }).length;
+  const pendN = list.filter(function(p){ return p.status === 'Payment Pending'; }).length;
+  const failN = list.filter(function(p){ return p.status === 'Payment Failed'; }).length;
+  const sizedN = list.filter(function(p){ return p.pkg === 'sized'; }).length;
+  const pkgPendN = list.filter(function(p){ return p.pkg === 'pending'; }).length;
+  const declN = list.filter(function(p){ return p.pkg === 'declined'; }).length;
+
+  const statusRows =
+    '<div class="break-row"><span class="break-name">Paid in Full</span><span class="break-count">'+fullN+'</span></div>' +
+    '<div class="break-row"><span class="break-name">On Payment Plan</span><span class="break-count">'+planN+'</span></div>' +
+    '<div class="break-row"><span class="break-name">Payment Pending (Offline)</span><span class="break-count">'+pendN+'</span></div>' +
+    '<div class="break-row"><span class="break-name" style="color:var(--red)">Payment Failed</span><span class="break-count" style="color:var(--red)">'+failN+'</span></div>';
+  const pkgRows =
+    '<div class="break-row"><span class="break-name">Sizes In</span><span class="break-count">'+sizedN+'</span></div>' +
+    '<div class="break-row"><span class="break-name">Sizing Pending</span><span class="break-count">'+pkgPendN+'</span></div>' +
+    '<div class="break-row"><span class="break-name">Declined Package</span><span class="break-count">'+declN+'</span></div>';
+
+  document.getElementById('registrants-stats').innerHTML =
+    '<div class="stat-tiles">' +
+      '<div class="stat-tile"><div class="st-num">'+list.length+'</div><div class="st-label">'+(sregView.team?esc(sregView.team)+' Registered':'Players Registered')+'</div></div>' +
+      '<div class="stat-tile accent-red"><div class="st-num">'+moneyFmt(collected)+'</div><div class="st-label">Collected of '+moneyFmt(totalFees)+' Total</div></div>' +
+      '<div class="stat-tile'+((pendN+failN)?' accent-red':'')+'"><div class="st-num">'+(pendN+failN)+'</div><div class="st-label">Need Attention</div></div>' +
+    '</div>' +
+    '<div class="stat-cards">' +
+      '<div class="preview-section" style="margin-top:0;background:#fff"><div class="preview-section-head">Payment Status</div>'+statusRows+'</div>' +
+      '<div class="preview-section" style="margin-top:0;background:#fff"><div class="preview-section-head">Jersey Packages</div>'+pkgRows+'</div>' +
+    '</div>';
+
+  /* Table */
+  document.getElementById('registrants-thead').innerHTML =
+    '<tr><th>#</th><th>Player</th><th>Team</th><th>Ticket</th><th>Jersey Pkg</th><th>Payment</th><th>Progress</th><th>Status</th></tr>';
+  const body = document.getElementById('registrants-body');
+  if(list.length === 0){
+    body.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:1.6rem">No registrants yet.</td></tr>';
+    return;
+  }
+  body.innerHTML = list.map(function(p, i){
+    const pct = p.total ? Math.round((p.paid / p.total) * 100) : 0;
+    const fillCls = p.status === 'Payment Failed' ? ' bad' : pct < 100 ? ' warn' : '';
+    const payDesc = p.pay === 'full' ? 'Paid in full'
+      : p.pay === 'offline' ? 'Offline'
+      : 'Plan — ' + p.planNote;
+    return '<tr>' +
+      '<td>'+(i+1)+'</td>' +
+      '<td><div class="cell-strong">'+esc(p.player)+'</div>' + (p.note ? '<div class="cell-sub" style="color:var(--red)">'+esc(p.note)+'</div>' : '') + '</td>' +
+      '<td>'+esc(p.team)+'</td>' +
+      '<td>'+esc(p.ticket)+'</td>' +
+      '<td>'+pkgLabel(p.pkg)+'</td>' +
+      '<td>'+esc(payDesc)+'</td>' +
+      '<td><span class="pay-bar"><span class="pay-fill'+fillCls+'" style="width:'+pct+'%;display:block"></span></span>' +
+        '<div class="cell-sub">'+moneyFmt(p.paid)+' of '+moneyFmt(p.total)+' · '+pct+'%</div></td>' +
+      '<td>'+payStatusPill(p.status)+'</td>' +
+    '</tr>';
+  }).join('');
+}
+
+/* Seeded demo season registration so the landing shows one from the start */
+registrations.push({
+  name:'Summer 2026 Season Registration', kind:'season', type:'hs',
+  opens:'Live now', closes:'With season', signups:'12',
+  registrants:[
+    {player:'Jaxon Rivera',   team:'CBU United 2027', ticket:'Position Player & Pitcher', total:2100, paid:2100, pay:'full',    pkg:'sized',    status:'Paid in Full'},
+    {player:'Cole Whitfield', team:'CBU United 2027', ticket:'Pitcher Only',              total:1400, paid:667,  pay:'plan',    planNote:'1 of 3 payments made', pkg:'declined', status:'On Plan'},
+    {player:'Miles Carter',   team:'CBU United 2028', ticket:'Position Player & Pitcher', total:2160, paid:1060, pay:'plan',    planNote:'1 of 3 payments made', pkg:'sized',    status:'On Plan'},
+    {player:'Hudson Blake',   team:'CBU United 2028', ticket:'Pitcher Only',              total:1550, paid:1550, pay:'full',    pkg:'sized',    status:'Paid in Full'},
+    {player:'Ryder Simmons',  team:'CBU United 2028', ticket:'Position Player',           total:1800, paid:0,    pay:'offline', pkg:'declined', status:'Payment Pending'},
+    {player:'Xavier Boone',   team:'CBU Scout 2028',  ticket:'Position Player & Pitcher', total:2100, paid:1550, pay:'plan',    planNote:'2 of 3 payments made', pkg:'sized',    status:'On Plan'},
+    {player:'Nolan Petrucci', team:'CBU Scout 2028',  ticket:'Position Player',           total:1950, paid:450,  pay:'plan',    planNote:'0 of 3 payments made', pkg:'sized',    status:'Payment Failed', note:'Card declined — Payment 1 (Aug 20)'},
+    {player:'Brooks Hamilton',team:'CBU United 2029', ticket:'Position Player',           total:1950, paid:1950, pay:'full',    pkg:'sized',    status:'Paid in Full'},
+    {player:'Eli Vasquez',    team:'CBU United 2029', ticket:'Pitcher Only',              total:1550, paid:450,  pay:'plan',    planNote:'0 of 3 payments made', pkg:'pending',  status:'On Plan'},
+    {player:'Tanner Reyes',   team:'CBU United 2029', ticket:'Pitcher Only',              total:1550, paid:0,    pay:'offline', pkg:'sized',    status:'Payment Pending'},
+    {player:'Grant Osborne',  team:'CBU United 2030', ticket:'Position Player & Pitcher', total:2100, paid:2100, pay:'full',    pkg:'sized',    status:'Paid in Full'},
+    {player:'Beckett Lowry',  team:'CBU United 2030', ticket:'Position Player',           total:1800, paid:1300, pay:'plan',    planNote:'2 of 3 payments made', pkg:'declined', status:'On Plan'}
+  ],
+  status:'Published', link:'cbuapp.app/season/summer-2026',
+  swiz:{ step:0, regName:'Summer 2026 Season Registration', seasonId:'summer26',
+    plan:{ planOn:true, down:'300', mode:'monthly', payments:'3', firstDate:'2026-08-20', customDates:[] },
+    offlineOn:true,
+    offlineHow:'Bring a check made out to CBU Baseball to the front desk at the CBU training facility, or hand it to your head coach at the first workout. Include your player\'s name and team in the memo line.',
+    errs:{},
+    waivers:[], waiverOpen:{}, addingWaiver:false,
+    pkg:{ offer:true, name:STANDARD_PKG.name, price:STANDARD_PKG.price, allowSecond:true, deadline:'2026-08-01',
+      items:JSON.parse(JSON.stringify(STANDARD_PKG.items)), addons:JSON.parse(JSON.stringify(STANDARD_PKG.addons)),
+      addingItem:false, addingAddon:false },
+    postMessage:'Welcome to the team! Our first team workout is Saturday, August 8 at 9:00 AM at the CBU training facility. Your coaching staff will reach out this week with the full summer calendar. #RedHatNation',
+    isEdit:false, editIdx:null }
+});
 
 /* =====================================================
    INIT
