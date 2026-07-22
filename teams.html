@@ -1,0 +1,2723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CBU App — Team Management</title>
+<!--
+  ============================================================
+  CBU APP — TEAM MANAGEMENT (clickable demo, mock data)
+  ============================================================
+  Built from the CBU App Design Standard starter template.
+  - Seasons contain divisions; divisions contain teams.
+  - Fee types are defined per season with default prices;
+    divisions can override, and individual teams can override
+    their division. Resolution: team → division → default.
+  - Starts EMPTY (create-your-first-season state). Use the
+    demo controls at the bottom of the page to load sample
+    data or reset.
+  - No prompt()/confirm() — all confirmations are inline.
+  ============================================================
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============ TOKENS ============ */
+:root{
+  --navy-bg:#0c1327;
+  --navy-bg-2:#141d3a;
+  --navy-deep:#0e1730;
+  --card:#ffffff;
+  --row-alt:#f5f6fa;
+  --red:#b91e2d;
+  --red-dark:#8f1622;
+  --powder:#6daed4;
+  --powder-dark:#4d8fb6;
+  --ink:#16203c;
+  --muted:#6b7590;
+  --line:#e3e6ee;
+  --green:#1e7a44;
+  --green-bg:#e2f2e8;
+  --accent:var(--red);
+  --accent-dark:var(--red-dark);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;overflow-x:hidden}
+body{
+  font-family:'Inter',-apple-system,'Segoe UI',Arial,sans-serif;
+  background:
+    radial-gradient(1200px 600px at 70% -10%, rgba(185,30,45,.12), transparent 60%),
+    linear-gradient(160deg,var(--navy-bg) 0%,var(--navy-bg-2) 100%);
+  background-attachment:fixed;
+  color:#eef1f8;min-height:100vh;overflow-x:hidden;max-width:100vw;
+}
+.display{font-family:'Oswald','Arial Narrow',Arial,sans-serif;text-transform:uppercase;letter-spacing:.02em}
+.eyebrow{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.28em;font-size:.72rem;font-weight:600;color:var(--powder)}
+
+/* ============ TOP NAV ============ */
+.topnav{
+  position:sticky;top:0;z-index:50;background:var(--navy-deep);
+  border-bottom:1px solid rgba(255,255,255,.07);
+  display:flex;align-items:center;justify-content:space-between;padding:.85rem 2rem;
+}
+.brand{display:flex;align-items:center;gap:.9rem}
+.brand-logo{font-family:'Oswald',Arial,sans-serif;font-weight:700;font-size:1.55rem;color:#fff;line-height:1}
+.brand-logo b{color:var(--red)}
+.brand-divider{width:1px;height:26px;background:rgba(255,255,255,.18)}
+.brand-label{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.2em;font-size:.78rem;color:#c6cde0;font-weight:600}
+
+/* ============ LAYOUT ============ */
+.page{max-width:1120px;margin:0 auto;padding:2.4rem 2rem 5rem}
+.page-title{font-size:2.5rem;font-weight:700;color:#fff;line-height:1.05}
+.page-title-sub{color:#aab3cc;font-size:.92rem;margin-top:.5rem;max-width:560px}
+.title-rule{width:64px;height:4px;background:var(--red);margin-top:.85rem;border-radius:2px}
+
+/* ============ BUTTONS ============ */
+.btn{
+  display:inline-flex;align-items:center;gap:.5rem;justify-content:center;
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.09em;
+  font-weight:600;font-size:.85rem;border-radius:8px;cursor:pointer;
+  padding:.72rem 1.35rem;border:2px solid transparent;transition:all .15s ease;
+  text-decoration:none;user-select:none;
+}
+.btn:focus-visible{outline:3px solid var(--powder);outline-offset:2px}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent-dark)}
+.btn-outline{background:transparent;color:#fff;border-color:rgba(255,255,255,.35)}
+.btn-outline:hover{border-color:#fff}
+.btn-outline-dark{background:transparent;color:var(--ink);border-color:#c6ccdb}
+.btn-outline-dark:hover{border-color:var(--ink)}
+.btn-ghost-red{background:transparent;color:var(--accent);border-color:var(--accent)}
+.btn-ghost-red:hover{background:var(--accent);color:#fff}
+.btn-sm{padding:.45rem .9rem;font-size:.74rem}
+.btn[disabled]{opacity:.4;cursor:not-allowed;pointer-events:none}
+.link-red{color:var(--red);font-weight:600;font-size:.8rem;text-decoration:none;cursor:pointer;background:none;border:none;font-family:inherit}
+.link-red:hover{text-decoration:underline}
+.link-muted{color:var(--muted);font-weight:600;font-size:.8rem;text-decoration:none;cursor:pointer;background:none;border:none;font-family:inherit}
+.link-muted:hover{text-decoration:underline}
+
+/* ============ CARDS & TABLES ============ */
+.card{background:var(--card);border-radius:12px;color:var(--ink);box-shadow:0 18px 40px rgba(3,7,20,.45);overflow:hidden}
+.card-pad{padding:1.8rem 2rem}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+thead th{
+  background:var(--navy-deep);color:#fff;text-align:left;
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.12em;
+  font-size:.7rem;font-weight:600;padding:.85rem 1.1rem;white-space:nowrap;
+}
+tbody td{padding:.9rem 1.1rem;border-bottom:1px solid var(--line);vertical-align:middle}
+tbody tr:nth-child(even){background:var(--row-alt)}
+tbody tr:last-child td{border-bottom:none}
+.cell-strong{font-weight:600;color:var(--ink)}
+.cell-sub{font-size:.76rem;color:var(--muted);margin-top:.15rem}
+
+/* ============ PILLS ============ */
+.pill{
+  display:inline-block;font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;
+  letter-spacing:.1em;font-size:.66rem;font-weight:600;
+  padding:.28rem .65rem;border-radius:999px;white-space:nowrap;
+}
+.pill-green{background:var(--green-bg);color:var(--green)}
+.pill-red{background:#f8e3e6;color:var(--red)}
+.pill-blue{background:#e2eef7;color:#2d6f96}
+.pill-navy{background:#e8ebf4;color:var(--navy-deep)}
+.pill-gold{background:#fdf3dc;color:#9a6b0f}
+button.pill{border:none;cursor:pointer;font-family:'Oswald',Arial,sans-serif}
+button.pill:hover{filter:brightness(.9);box-shadow:0 0 0 2px rgba(22,32,60,.12)}
+
+/* ============ CHEVRON STEP BANNER ============ */
+.steps{display:flex;gap:6px;margin:2rem 0 1.6rem;flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px}
+.step-chev{
+  flex:1;min-width:88px;position:relative;
+  clip-path:polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%, 14px 50%);
+  background:#1b2444;color:#91a1c4;padding:.7rem 1.4rem .7rem 1.5rem;
+}
+.step-chev:first-child{clip-path:polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%)}
+.step-num{font-family:'Oswald',Arial,sans-serif;font-size:.62rem;letter-spacing:.22em;font-weight:600;opacity:.75}
+.step-name{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;font-weight:600;font-size:.82rem;letter-spacing:.06em;margin-top:.1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.step-chev.done{background:#232f57;color:#c3cdea;cursor:pointer}
+.step-chev.done:hover{background:#2c3a6b;color:#fff}
+.step-chev.active{background:var(--accent);color:#fff;box-shadow:0 8px 22px rgba(0,0,0,.35)}
+.step-chev.done .step-num::after{content:" ✓"}
+
+/* ============ CHIPS ============ */
+.chip-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.8rem}
+.chip{
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.08em;font-size:.72rem;font-weight:600;
+  border:1.5px solid #c9cfdd;background:#fff;color:var(--ink);border-radius:999px;padding:.4rem .85rem;cursor:pointer;
+}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.chip[disabled]{opacity:.35;pointer-events:none}
+.chip.selected{background:var(--navy-deep);color:#fff;border-color:var(--navy-deep)}
+.chip.selected:hover{border-color:var(--navy-deep);color:#fff;filter:brightness(1.2)}
+.chip.chip-youth.selected{background:var(--powder-dark);border-color:var(--powder-dark)}
+
+.chip.selected.chip-youth:hover,.chip.chip-youth.selected{background:var(--powder-dark);border-color:var(--powder-dark)}
+.chip.active{background:var(--red);color:#fff;border-color:var(--red)}
+.chip.active:hover{background:var(--red-dark);border-color:var(--red-dark);color:#fff}
+
+/* ============ FORMS ============ */
+.field-label{display:block;font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.14em;font-size:.68rem;font-weight:600;color:var(--muted);margin-bottom:.4rem}
+input[type=text],input[type=number],input[type=date],input[type=email],input[type=tel],select{
+  width:100%;max-width:420px;padding:.65rem .8rem;border:1.5px solid #c9cfdd;border-radius:8px;
+  font-family:'Inter',Arial,sans-serif;font-size:.9rem;color:var(--ink);background:#fff;
+}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--powder);border-color:var(--powder)}
+textarea{
+  width:100%;min-height:260px;padding:.8rem .9rem;border:1.5px solid #c9cfdd;border-radius:8px;
+  font-family:'Inter',Arial,sans-serif;font-size:.92rem;color:var(--ink);background:#fff;
+  resize:vertical;line-height:1.5;
+}
+input[disabled]{background:var(--row-alt);color:var(--muted)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem 1.4rem}
+.form-grid .full{grid-column:1 / -1}
+.money-wrap{position:relative;display:inline-block;width:110px}
+.money-wrap::before{content:"$";position:absolute;left:.7rem;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.88rem;pointer-events:none}
+.money-wrap input{padding-left:1.5rem;max-width:110px;text-align:right}
+.money-wrap input.overridden{border-color:var(--red);background:#fdf6f7}
+
+/* ============ STAT TILES ============ */
+.stat-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.2rem}
+.stat-tile{background:var(--card);border-radius:12px;padding:1.2rem 1.4rem;color:var(--ink);box-shadow:0 12px 28px rgba(3,7,20,.35)}
+.stat-tile .st-num{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-weight:700;font-size:2.2rem;line-height:1;color:var(--navy-deep)}
+.stat-tile .st-label{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.16em;font-size:.66rem;font-weight:600;color:var(--muted);margin-top:.4rem}
+.stat-tile.accent-red .st-num{color:var(--red)}
+.stat-tile.accent-blue .st-num{color:var(--powder-dark)}
+
+/* ============ SECTION HEADERS ============ */
+.section-head{
+  background:var(--navy-deep);color:#fff;padding:.6rem 1rem;border-radius:8px 8px 0 0;
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.12em;font-size:.74rem;font-weight:600;margin-top:1.5rem;
+}
+.section-head.red{background:var(--red)}
+.section-body{border:1.5px solid var(--line);border-top:none;border-radius:0 0 8px 8px;padding:1.1rem}
+
+/* ============ TOAST ============ */
+.toast{
+  position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--navy-deep);color:#fff;padding:.8rem 1.4rem;border-radius:10px;font-size:.88rem;
+  opacity:0;pointer-events:none;transition:all .25s ease;z-index:99;border:1px solid rgba(255,255,255,.15);max-width:90vw;text-align:center;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ============ PAGE-SPECIFIC: TEAM MANAGEMENT ============ */
+
+/* Empty state hero */
+.empty-hero{max-width:640px;margin:3.2rem auto 0;text-align:center}
+.empty-hero .card{padding:3rem 2.4rem}
+.empty-hero h2{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;font-size:1.7rem;color:var(--navy-deep);letter-spacing:.03em}
+.empty-hero p{color:var(--muted);font-size:.92rem;margin:.8rem auto 1.6rem;max-width:440px;line-height:1.55}
+@keyframes pulseBtn{
+  0%,100%{box-shadow:0 0 0 0 rgba(185,30,45,.45)}
+  50%{box-shadow:0 0 0 12px rgba(185,30,45,0)}
+}
+.btn-pulse{animation:pulseBtn 1.8s ease-in-out infinite}
+
+/* Season toolbar */
+.season-bar{display:flex;align-items:flex-end;gap:1rem;flex-wrap:wrap;margin:1.8rem 0 1.4rem}
+.season-bar .grow{flex:1;min-width:220px}
+.season-bar select{max-width:320px;background:#fff}
+.season-actions{display:flex;gap:.6rem;flex-wrap:wrap}
+.archived-note{
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16);border-radius:10px;
+  padding:.8rem 1.1rem;color:#c6cde0;font-size:.85rem;margin-bottom:1.2rem;
+  display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;
+}
+
+/* Division blocks (inside one white container card, like the wizard) */
+.div-block{margin-top:1.6rem}
+.div-block:first-child{margin-top:0}
+.div-head{
+  background:var(--navy-deep);color:#fff;padding:.85rem 1.1rem;
+  display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;
+  border-radius:8px 8px 0 0;border-bottom:3px solid #fff;
+}
+.div-head.youth{background:var(--navy-deep)}
+.div-block.youth thead th{background:var(--navy-deep)}
+.div-body{border:1.5px solid var(--line);border-top:none;border-radius:0 0 8px 8px;overflow:hidden}
+.div-title{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;font-weight:600;font-size:1.02rem;letter-spacing:.06em}
+.div-fees{display:flex;gap:.45rem;flex-wrap:wrap;margin-left:auto;align-items:center}
+.fee-chip{
+  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);color:#fff;
+  border-radius:999px;padding:.24rem .7rem;font-size:.7rem;font-weight:600;white-space:nowrap;
+}
+.fee-chip b{font-weight:700}
+.div-head .btn-add-team{
+  background:transparent;border:1.5px solid rgba(255,255,255,.4);color:#fff;
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.08em;
+  font-size:.7rem;font-weight:600;border-radius:999px;padding:.32rem .8rem;cursor:pointer;
+}
+.div-head .btn-add-team:hover{border-color:#fff;background:rgba(255,255,255,.1)}
+
+/* Inline editors (add-team row, price override row) */
+.inline-editor{background:#f2f4f9;border-bottom:1px solid var(--line);padding:1rem 1.1rem}
+.inline-editor .field-label{margin-bottom:.3rem}
+.editor-row{display:flex;gap:.8rem;flex-wrap:wrap;align-items:flex-end}
+.editor-row > div{min-width:0}
+.editor-actions{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
+
+/* Wizard: division select chips + team builders */
+.picked-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1rem}
+.picked{
+  display:inline-flex;align-items:center;gap:.5rem;
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.08em;font-size:.74rem;font-weight:600;
+  background:var(--navy-deep);color:#fff;border-radius:999px;padding:.42rem .5rem .42rem .95rem;
+}
+.picked.youth{background:var(--powder-dark)}
+.picked .x{
+  background:rgba(255,255,255,.18);border:none;color:#fff;width:20px;height:20px;border-radius:50%;
+  cursor:pointer;font-size:.72rem;line-height:1;display:inline-flex;align-items:center;justify-content:center;font-family:'Inter',Arial,sans-serif;
+}
+.picked .x:hover{background:rgba(255,255,255,.35)}
+.team-list{list-style:none;margin-top:.6rem}
+.team-list li{
+  display:flex;align-items:center;gap:.8rem;padding:.55rem .2rem;border-bottom:1px solid var(--line);
+  font-size:.88rem;flex-wrap:wrap;
+}
+.team-list li:last-child{border-bottom:none}
+.team-list .t-name{font-weight:600;color:var(--ink)}
+.team-list .t-coach{color:var(--muted);font-size:.8rem}
+.team-list .rm{margin-left:auto}
+.hint{font-size:.8rem;color:var(--muted);line-height:1.5}
+.hint-dark{font-size:.82rem;color:#aab3cc;line-height:1.5}
+
+/* Wizard: pricing matrix */
+.fee-type-row{display:flex;gap:.9rem;align-items:flex-end;flex-wrap:wrap;padding:.7rem 0;border-bottom:1px solid var(--line)}
+.fee-type-row:last-of-type{border-bottom:none}
+.price-matrix td .money-wrap{width:110px}
+.override-flag{display:inline-block;margin-left:.45rem}
+.tp-toggle{display:inline-block;margin-top:.35rem}
+.tp-row td{background:#eef1f7!important;border-bottom:1px solid var(--line)}
+.tp-row td:first-child{padding-left:2rem}
+.tp-name{font-weight:600;color:var(--ink);font-size:.84rem}
+.tp-sub{font-size:.72rem;color:var(--muted);margin-top:.15rem}
+
+/* Wizard footer */
+.wiz-footer{display:flex;gap:.8rem;justify-content:space-between;align-items:center;margin-top:1.8rem;flex-wrap:wrap}
+.wiz-footer .right{display:flex;gap:.8rem;margin-left:auto;flex-wrap:wrap}
+
+/* Review summary */
+.review-block{margin-top:1rem}
+.review-block .rv-line{display:flex;gap:.6rem;padding:.5rem 0;border-bottom:1px solid var(--line);font-size:.88rem;flex-wrap:wrap}
+.review-block .rv-line:last-child{border-bottom:none}
+.rv-key{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.1em;font-size:.7rem;font-weight:600;color:var(--muted);min-width:130px;padding-top:.15rem}
+.rv-val{font-weight:600;color:var(--ink)}
+
+/* Demo controls */
+.demo-controls{
+  margin-top:3rem;border-top:1px dashed rgba(255,255,255,.18);padding-top:1rem;
+  display:flex;gap:1.2rem;align-items:center;flex-wrap:wrap;
+  font-size:.76rem;color:#7d88a8;
+}
+.demo-controls button{background:none;border:1px solid rgba(255,255,255,.25);color:#aab3cc;border-radius:6px;padding:.35rem .7rem;cursor:pointer;font-size:.72rem;font-family:'Inter',Arial,sans-serif}
+.demo-controls button:hover{border-color:#fff;color:#fff}
+
+/* ============ PAGE-SPECIFIC: TEAM DETAIL ============ */
+.back-link{
+  display:inline-flex;align-items:center;gap:.45rem;background:none;border:none;cursor:pointer;
+  color:var(--powder);font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;
+  letter-spacing:.14em;font-size:.74rem;font-weight:600;margin-bottom:1.1rem;padding:0;
+}
+.back-link:hover{color:#fff}
+.team-head{display:flex;justify-content:space-between;gap:1.2rem;flex-wrap:wrap;align-items:flex-start}
+.team-name{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;font-size:1.9rem;font-weight:700;color:var(--navy-deep);line-height:1.05}
+.team-sub{color:var(--muted);font-size:.86rem;margin-top:.45rem;display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
+.team-actions{display:flex;gap:.6rem;flex-wrap:wrap;justify-content:flex-end}
+.reg-link{
+  display:inline-flex;gap:.6rem;align-items:center;flex-wrap:wrap;
+  background:var(--row-alt);border:1.5px dashed #c9cfdd;border-radius:8px;
+  padding:.5rem .8rem;font-size:.8rem;color:var(--muted);margin-top:.9rem;max-width:100%;
+}
+.reg-link code{font-family:'Inter',monospace;color:var(--ink);font-weight:600;overflow-wrap:anywhere}
+.stat-tiles.four{grid-template-columns:repeat(4,1fr)}
+.stat-tiles.five{grid-template-columns:repeat(5,1fr)}
+.st-sub{font-size:.72rem;color:var(--muted);margin-top:.35rem}
+.progress{height:8px;background:#e3e6ee;border-radius:99px;overflow:hidden;margin-top:.5rem}
+.progress > span{display:block;height:100%;background:var(--green);border-radius:99px}
+.tab-row{margin:1.6rem 0 1.1rem}
+.pool-row{display:flex;align-items:center;gap:.8rem;padding:.55rem .2rem;border-bottom:1px solid var(--line);font-size:.86rem;flex-wrap:wrap}
+.pool-row:last-child{border-bottom:none}
+.pool-row input[type=checkbox]{width:17px;height:17px;accent-color:var(--red);flex:none}
+.pool-name{font-weight:600;color:var(--ink)}
+.pool-sub{color:var(--muted);font-size:.76rem}
+.pool-row .tag{margin-left:auto}
+.comms-hist{list-style:none;margin-top:.4rem}
+.comms-grid{display:flex;gap:1.8rem;flex-wrap:wrap;align-items:flex-start}
+.comms-left{flex:1.7;min-width:300px}
+.comms-left input[type=text]{max-width:100%}
+.comms-right{flex:1;min-width:240px;border:1.5px solid var(--line);border-radius:8px;padding:.9rem;max-height:420px;overflow:auto}
+.recip-row{display:flex;align-items:center;gap:.6rem;padding:.4rem 0;border-bottom:1px solid var(--line);font-size:.85rem}
+.recip-row:last-child{border-bottom:none}
+.recip-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--red);flex:none}
+.recip-row label{cursor:pointer;font-weight:600;color:var(--ink)}
+.recip-row .recip-sub{margin-left:auto}
+.event-row{display:flex;gap:.9rem;padding:.8rem .2rem;border-bottom:1px solid var(--line);flex-wrap:wrap;align-items:baseline}
+.event-row:last-child{border-bottom:none}
+.event-org{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.08em;font-size:.7rem;font-weight:600;color:var(--red);min-width:120px}
+.event-main{flex:1;min-width:200px}
+.event-name{font-weight:700;color:var(--ink)}
+.event-sub{font-size:.78rem;color:var(--muted);margin-top:.2rem}
+.event-links{display:flex;gap:.9rem;align-items:center}
+.comms-hist li{padding:.6rem .2rem;border-bottom:1px solid var(--line);font-size:.85rem;display:flex;gap:.7rem;flex-wrap:wrap;align-items:baseline}
+.comms-hist li:last-child{border-bottom:none}
+.comms-when{color:var(--muted);font-size:.74rem}
+.totals-row td{font-weight:700;background:#eef1f7!important;border-top:2px solid var(--navy-deep)}
+.pay-ring{
+  width:36px;height:36px;border-radius:50%;flex:none;display:inline-grid;place-items:center;
+  background:conic-gradient(var(--green) calc(var(--p)*1%), #e3e6ee 0);
+}
+.pay-ring.failed{background:conic-gradient(var(--red) calc(var(--p)*1%), #f3d2d6 0)}
+.pay-ring::before{
+  content:attr(data-pct);width:27px;height:27px;border-radius:50%;background:#fff;
+  display:grid;place-items:center;font-size:.56rem;font-weight:700;color:var(--ink);
+}
+.pay-cell{display:inline-flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+.pay-row{cursor:pointer}
+.pay-row:hover td{background:#eef2fa}
+.txn-wrap{background:#f4f6fb;border-bottom:1px solid var(--line);padding:1rem 1.3rem}
+.txn-head{display:flex;gap:1rem;align-items:baseline;flex-wrap:wrap;margin-bottom:.4rem}
+.txn-title{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.14em;font-size:.68rem;font-weight:600;color:var(--muted)}
+.txn-sum{font-size:.8rem;color:var(--muted);margin-left:auto}
+.txn-line{display:flex;gap:.8rem;align-items:center;padding:.6rem 0;border-bottom:1px solid var(--line);font-size:.84rem;flex-wrap:wrap}
+.txn-line:last-of-type{border-bottom:none}
+.txn-label{font-weight:600;color:var(--ink);min-width:130px}
+.txn-date{color:var(--muted);font-size:.78rem;min-width:78px}
+.txn-meta{font-family:'SFMono-Regular',Consolas,monospace;font-size:.7rem;color:var(--muted);overflow-wrap:anywhere}
+.txn-amt{margin-left:auto;font-weight:700;color:var(--ink);white-space:nowrap}
+.txn-line .link-red,.txn-line .link-muted{white-space:nowrap}
+
+/* ============ MOBILE ============ */
+@media (max-width:760px){
+  .page{padding:1.6rem 1rem 4rem}
+  .page-title{font-size:1.9rem}
+  .form-grid{grid-template-columns:1fr}
+  .stat-tiles{grid-template-columns:1fr 1fr}
+  .stat-tiles.four{grid-template-columns:1fr 1fr}
+  .stat-tiles.five{grid-template-columns:1fr 1fr}
+  .team-actions{justify-content:flex-start}
+  .team-name{font-size:1.5rem}
+  .topnav{padding:.7rem .9rem}
+  .brand{gap:.55rem}
+  .brand-logo{font-size:1.25rem}
+  .brand-label{font-size:.58rem;letter-spacing:.12em}
+  .steps{flex-wrap:wrap;overflow-x:visible;gap:5px;padding-bottom:0}
+  .step-chev{flex:0 0 calc(33.333% - 4px);min-width:0;padding:.5rem .95rem .5rem 1.05rem}
+  .step-num{font-size:.52rem}
+  .step-name{font-size:.66rem;letter-spacing:.03em}
+  .div-fees{margin-left:0;width:100%}
+  .season-bar .grow{min-width:100%}
+  .card-pad{padding:1.3rem 1.1rem}
+}
+/* Team tables collapse to stacked cards on small screens */
+@media (max-width:640px){
+  .team-table thead{display:none}
+  .team-table,.team-table tbody,.team-table tr,.team-table td{display:block;width:100%}
+  .team-table tr{border-bottom:1px solid var(--line);padding:.5rem 0}
+  .team-table tr:last-child{border-bottom:none}
+  .team-table td{border-bottom:none;padding:.3rem 1rem}
+  .team-table td::before{
+    content:attr(data-label);display:block;
+    font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.14em;
+    font-size:.6rem;font-weight:600;color:var(--muted);margin-bottom:.15rem;
+  }
+  .team-table td.no-label::before{display:none}
+  .price-matrix thead{display:table-header-group}
+  .price-matrix,.price-matrix tbody,.price-matrix tr,.price-matrix td{display:revert;width:auto}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+  .btn-pulse{animation:none!important}
+}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="brand">
+    <div class="brand-logo">CB<b>U</b></div>
+    <div class="brand-divider"></div>
+    <div class="brand-label">Team Management</div>
+  </div>
+  <span class="pill pill-navy" id="navSeasonPill" style="display:none"></span>
+</nav>
+
+<div class="page">
+  <div class="eyebrow">Organization Admin</div>
+  <h1 class="page-title display">Team Management</h1>
+  <div class="title-rule"></div>
+  <p class="page-title-sub" id="pageSub">Create seasons, build divisions and teams, and set pricing — all in one place.</p>
+
+  <div id="app"></div>
+
+  <!-- DEMO ONLY — remove when wired to real data -->
+  <div class="demo-controls">
+    <span>DEMO CONTROLS (not part of the app):</span>
+    <button onclick="demoLoadSample()">Load sample data</button>
+    <button onclick="demoSimulateRegistration()">Simulate a registration</button>
+    <button onclick="demoSimulateFailedPayment()">Simulate a failed payment</button>
+    <button onclick="demoReset()">Reset to empty</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   STATE
+   ============================================================ */
+let seasons = [];            // [{id,name,program,status,feeTypes,divisions,teams}]
+let currentSeasonId = null;
+let wiz = null;              // wizard working copy (null = wizard closed)
+let uid = 1;
+const nid = () => uid++;
+
+const openAddTeam = {};      // divisionId -> true (inline add-team editor open)
+const openOverride = {};     // teamId -> true (inline price override editor open)
+let archiveArmed = false;    // inline archive confirmation state
+let showArchived = false;    // archived seasons hidden from dropdown until revealed
+let currentTeamId = null;    // team detail view (null = season landing)
+let teamTab = 'roster';      // roster | payments | comms
+let addPanelOpen = false;    // add-from-tryout panel
+let manualOpen = false;      // manual add-player panel
+let commsAud = 'all';        // comms audience filter ('custom' when hand-picked)
+let commsSel = null;         // playerId -> true; null = initialize from audience
+let commsDraft = { subject:'', body:'' };  // survives checkbox re-renders
+let eventFormOpen = false;   // events tab add/edit form
+let editingEventId = null;   // event being edited (null = new)
+let coachDirectory = [];     // org-wide coach system (mock): {id,name,email,phone,registered}
+let coachSearch = '';        // coaches tab type-ahead text
+let manualCoachOpen = false; // manual coach add form
+let editStaffId = null;      // staff entry whose role is being edited
+let poolFilters = null;      // tryout pool: {divs:{divId:true}, q, pitch:'all'|'pitched'|'no', showPlaced}
+let seasonPayOpen = false;   // season-wide payments page
+let seasonPayFilters = { team: 'all', status: 'all' };
+const openTxn = {};          // playerId -> true (expanded transaction log)
+let editTxnId = null;        // transaction being edited inline
+const applyOpen = {};        // playerId -> true (apply-payment form open)
+const tryoutPools = {};      // (seasonId-divisionId) -> mock tryout registrants
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function money(n){ return '$' + Number(n || 0).toLocaleString('en-US'); }
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._h);
+  t._h = setTimeout(function(){ t.classList.remove('show'); }, 2400);
+}
+function season(){ return seasons.find(s => s.id === currentSeasonId) || null; }
+function divTeams(s, divId){ return s.teams.filter(t => t.divId === divId); }
+
+/* Price resolution: team override → division price → fee-type default */
+function divPrice(s, div, ftId){
+  if (div.prices && div.prices[ftId] != null) return div.prices[ftId];
+  const ft = s.feeTypes.find(f => f.id === ftId);
+  return ft ? ft.def : 0;
+}
+function teamPrice(s, div, team, ftId){
+  if (team.overrides && team.overrides[ftId] != null) return team.overrides[ftId];
+  return divPrice(s, div, ftId);
+}
+function divHasOverride(s, div){
+  return s.feeTypes.some(ft => div.prices && div.prices[ft.id] != null && div.prices[ft.id] !== ft.def);
+}
+function teamHasOverride(team){
+  return team.overrides && Object.keys(team.overrides).length > 0;
+}
+
+/* Preserve typed-but-unsaved wizard inputs across re-renders */
+function captureWizDrafts(){
+  if (!wiz) return;
+  if (wiz.step === 1){
+    const el = document.getElementById('customDivName');
+    if (el) wiz.draftCustomDiv = el.value;
+  }
+  if (wiz.step === 2){
+    wiz.teamDrafts = wiz.teamDrafts || {};
+    wiz.divisions.forEach(d => {
+      const n = document.getElementById('wt-name-' + d.id);
+      const c = document.getElementById('wt-coach-' + d.id);
+      if (n || c) wiz.teamDrafts[d.id] = { name: n ? n.value : '', coach: c ? c.value : '' };
+    });
+  }
+}
+/* Preserve the comms subject/message across re-renders (checkbox toggles etc.) */
+function captureCommsDraft(){
+  if (wiz || currentTeamId == null || teamTab !== 'comms') return;
+  const sEl = document.getElementById('cm-subject');
+  const bEl = document.getElementById('cm-body');
+  if (sEl) commsDraft.subject = sEl.value;
+  if (bEl) commsDraft.body = bEl.value;
+}
+
+/* ============================================================
+   RENDER ROOT
+   ============================================================ */
+function render(){
+  const app = document.getElementById('app');
+  const pill = document.getElementById('navSeasonPill');
+  const sub = document.getElementById('pageSub');
+  captureCommsDraft();
+
+  if (wiz){
+    captureWizDrafts();
+    pill.style.display = 'none';
+    sub.textContent = wiz.editingId ? 'Editing season setup.' : 'Set up your new season step by step.';
+    app.innerHTML = renderWizard();
+    return;
+  }
+  if (!seasons.length){
+    pill.style.display = 'none';
+    sub.textContent = 'Create seasons, build divisions and teams, and set pricing — all in one place.';
+    app.innerHTML = renderEmpty();
+    return;
+  }
+  const s = season();
+  if (seasonPayOpen && currentTeamId == null && s){
+    pill.style.display = 'inline-block';
+    pill.textContent = s.name;
+    pill.className = 'pill ' + (s.status === 'archived' ? 'pill-gold' : 'pill-green');
+    sub.textContent = 'Season payments — every registered player across every team.';
+    app.innerHTML = renderSeasonPayments(s);
+    return;
+  }
+  if (currentTeamId != null && s){
+    const t = s.teams.find(x => x.id === currentTeamId);
+    if (t){
+      pill.style.display = 'inline-block';
+      pill.textContent = s.name;
+      pill.className = 'pill ' + (s.status === 'archived' ? 'pill-gold' : 'pill-green');
+      sub.textContent = 'Team page — roster, payments, and communication for this team.';
+      app.innerHTML = renderTeamPage(s, t);
+      return;
+    }
+    currentTeamId = null;
+  }
+  pill.style.display = 'inline-block';
+  pill.textContent = s ? s.name : '';
+  pill.className = 'pill ' + (s && s.status === 'archived' ? 'pill-gold' : 'pill-green');
+  sub.textContent = 'Viewing one season at a time — switch seasons with the dropdown below.';
+  app.innerHTML = renderLanding();
+}
+
+/* ============================================================
+   EMPTY STATE
+   ============================================================ */
+function renderEmpty(){
+  return `
+  <div class="empty-hero">
+    <div class="card">
+      <div class="eyebrow" style="margin-bottom:.6rem">Let's Get Started</div>
+      <h2>Create Your First Season</h2>
+      <p>Seasons keep everything organized — like <b>Summer 2026</b> or <b>Fall 2026</b>. You'll name the season, build its divisions, add teams, and set pricing in one guided setup.</p>
+      <button class="btn btn-primary btn-pulse" onclick="startWizard()">+ Create Your First Season</button>
+    </div>
+  </div>`;
+}
+
+/* ============================================================
+   WIZARD
+   ============================================================ */
+const STEPS = ['Season Basics','Divisions','Teams','Pricing','Review'];
+
+function startWizard(editId){
+  archiveArmed = false;
+  if (editId != null){
+    const s = seasons.find(x => x.id === editId);
+    wiz = JSON.parse(JSON.stringify(s));
+    wiz.editingId = editId;
+  } else {
+    wiz = {
+      editingId: null,
+      name: '', program: 'hs', status: 'active',
+      feeTypes: [{ id: nid(), name: 'Position Player', def: 0 }],
+      divisions: [], teams: []
+    };
+  }
+  wiz.step = 0;
+  render();
+  window.scrollTo({top:0});
+}
+function cancelWizard(){
+  wiz = null;
+  render();
+  toast('Season setup canceled — nothing was saved.');
+}
+function gotoStep(i){
+  if (i <= wiz.step){ wiz.step = i; render(); window.scrollTo({top:0}); }
+}
+function nextStep(){
+  if (wiz.step === 0){
+    const v = document.getElementById('wizName').value.trim();
+    if (!v){ toast('Give your season a name first — e.g. "Summer 2026".'); return; }
+    wiz.name = v;
+  }
+  if (wiz.step === 1 && !wiz.divisions.length){
+    toast('Add at least one division before continuing.');
+    return;
+  }
+  wiz.step++;
+  render();
+  window.scrollTo({top:0});
+}
+function prevStep(){ wiz.step--; render(); window.scrollTo({top:0}); }
+
+function renderWizard(){
+  const stepsHtml = STEPS.map((name, i) => {
+    const cls = i === wiz.step ? 'active' : (i < wiz.step ? 'done' : '');
+    const click = i < wiz.step ? `onclick="gotoStep(${i})"` : '';
+    return `<div class="step-chev ${cls}" ${click}><div class="step-num">Step ${i+1}</div><div class="step-name">${name}</div></div>`;
+  }).join('');
+
+  let body = '';
+  if (wiz.step === 0) body = wizStepBasics();
+  if (wiz.step === 1) body = wizStepDivisions();
+  if (wiz.step === 2) body = wizStepTeams();
+  if (wiz.step === 3) body = wizStepPricing();
+  if (wiz.step === 4) body = wizStepReview();
+
+  const last = wiz.step === STEPS.length - 1;
+  return `
+  <div class="steps">${stepsHtml}</div>
+  <div class="card card-pad">${body}</div>
+  <div class="wiz-footer">
+    <button class="btn btn-outline" onclick="cancelWizard()">Cancel</button>
+    <div class="right">
+      ${wiz.step > 0 ? '<button class="btn btn-outline" onclick="prevStep()">Back</button>' : ''}
+      ${last
+        ? `<button class="btn btn-primary" onclick="saveSeason()">${wiz.editingId ? 'Save Changes' : 'Create Season'}</button>`
+        : '<button class="btn btn-primary" onclick="nextStep()">Continue</button>'}
+    </div>
+  </div>`;
+}
+
+/* ---------- Step 1: Basics ---------- */
+function wizStepBasics(){
+  return `
+  <div class="section-head" style="margin-top:0">Season Basics</div>
+  <div class="section-body">
+    <div class="form-grid">
+      <div class="full">
+        <label class="field-label" for="wizName">Season Name</label>
+        <input type="text" id="wizName" placeholder='e.g. "Summer 2026" or "Fall 2026"' value="${esc(wiz.name)}">
+        <p class="hint" style="margin-top:.45rem">Name it the way your organization talks about it — most seasons follow the time of year.</p>
+      </div>
+      <div class="full">
+        <label class="field-label">What programs run in this season?</label>
+        <div class="chip-row" style="margin-top:.2rem">
+          <button class="chip ${wiz.program==='hs'?'selected':''}" onclick="setProgram('hs')">High School</button>
+          <button class="chip chip-youth ${wiz.program==='youth'?'selected':''}" onclick="setProgram('youth')">Youth</button>
+          <button class="chip ${wiz.program==='both'?'selected':''}" onclick="setProgram('both')">Both</button>
+        </div>
+        <p class="hint" style="margin-top:.55rem">This sets up the right division options on the next step — graduation classes for High School, age groups for Youth. You can still mix and match.</p>
+      </div>
+    </div>
+  </div>`;
+}
+function setProgram(p){
+  wiz.name = document.getElementById('wizName').value.trim() || wiz.name;
+  wiz.program = p;
+  render();
+}
+
+/* ---------- Step 2: Divisions ---------- */
+function wizStepDivisions(){
+  wiz.divisions.forEach(d => { if(!d.prices) d.prices = {}; });
+  const gradYears = [2027,2028,2029,2030,2031];
+  const ages = ['9U','10U','11U','12U','13U','14U'];
+  const has = name => wiz.divisions.some(d => d.name.toLowerCase() === String(name).toLowerCase());
+
+  const gradChips = gradYears.map(y =>
+    `<button class="chip" ${has('Class of '+y)?'disabled':''} onclick="addDivision('Class of ${y}','hs')">+ ${y}</button>`).join('');
+  const ageChips = ages.map(a =>
+    `<button class="chip chip-youth" ${has(a)?'disabled':''} onclick="addDivision('${a}','youth')">+ ${a}</button>`).join('');
+
+  const picked = wiz.divisions.map(d =>
+    `<span class="picked ${d.kind==='youth'?'youth':''}">${esc(d.name)}<button class="x" onclick="removeDivision(${d.id})" aria-label="Remove ${esc(d.name)}">✕</button></span>`).join('');
+
+  const showHS = wiz.program !== 'youth';
+  const showY  = wiz.program !== 'hs';
+
+  return `
+  <div class="section-head" style="margin-top:0">Build Your Divisions</div>
+  <div class="section-body">
+    <p class="hint">Divisions are how teams get grouped — graduation classes for High School, age groups for Youth. Tap to add, or type your own below.</p>
+    ${showHS ? `
+      <label class="field-label" style="margin-top:1.1rem">High School — Graduation Classes</label>
+      <div class="chip-row" style="margin-top:.2rem">${gradChips}</div>` : ''}
+    ${showY ? `
+      <label class="field-label" style="margin-top:1.1rem">Youth — Age Groups</label>
+      <div class="chip-row" style="margin-top:.2rem">${ageChips}</div>` : ''}
+    <label class="field-label" style="margin-top:1.2rem">Custom Division</label>
+    <div class="editor-row">
+      <div><input type="text" id="customDivName" placeholder='e.g. "Class of 2032" or "8U"' style="max-width:260px" value="${esc(wiz.draftCustomDiv || '')}"></div>
+      ${wiz.program === 'both' ? `
+      <div>
+        <select id="customDivKind" style="max-width:150px">
+          <option value="hs">High School</option>
+          <option value="youth">Youth</option>
+        </select>
+      </div>` : ''}
+      <button class="btn btn-outline-dark btn-sm" onclick="addCustomDivision()">+ Add</button>
+    </div>
+    ${wiz.divisions.length ? `
+      <label class="field-label" style="margin-top:1.4rem">Divisions in this season (${wiz.divisions.length})</label>
+      <div class="picked-row">${picked}</div>` : ''}
+  </div>`;
+}
+function addDivision(name, kind){
+  wiz.divisions.push({ id: nid(), name: name, kind: kind, prices: {} });
+  render();
+}
+function addCustomDivision(){
+  const name = document.getElementById('customDivName').value.trim();
+  if (!name){ toast('Type a division name first.'); return; }
+  if (wiz.divisions.some(d => d.name.toLowerCase() === name.toLowerCase())){ toast('That division is already added.'); return; }
+  const kindEl = document.getElementById('customDivKind');
+  const kind = kindEl ? kindEl.value : (wiz.program === 'youth' ? 'youth' : 'hs');
+  addDivision(name, kind);              /* re-renders (capture runs inside) */
+  wiz.draftCustomDiv = '';              /* then clear the draft + field */
+  const again = document.getElementById('customDivName');
+  if (again){ again.value = ''; again.focus(); }
+}
+function removeDivision(id){
+  const teamCount = wiz.teams.filter(t => t.divId === id).length;
+  wiz.divisions = wiz.divisions.filter(d => d.id !== id);
+  wiz.teams = wiz.teams.filter(t => t.divId !== id);
+  render();
+  if (teamCount) toast('Division removed — its ' + teamCount + ' team(s) were removed too.');
+}
+
+/* ---------- Step 3: Teams ---------- */
+function wizStepTeams(){
+  const drafts = wiz.teamDrafts || {};
+  const blocks = wiz.divisions.map(d => {
+    const dr = drafts[d.id] || { name:'', coach:'' };
+    const list = wiz.teams.filter(t => t.divId === d.id).map(t => `
+      <li>
+        <span class="t-name">${esc(t.name)}</span>
+        ${t.coach ? `<span class="t-coach">Head Coach: ${esc(t.coach)}</span>` : ''}
+        <button class="link-red rm" onclick="wizRemoveTeam(${t.id})">Remove</button>
+      </li>`).join('');
+    return `
+    <div class="section-head" style="margin-top:1.2rem">${esc(d.name)} — ${wiz.teams.filter(t=>t.divId===d.id).length} team(s)</div>
+    <div class="section-body">
+      <div class="editor-row">
+        <div style="flex:1;min-width:170px">
+          <label class="field-label">Team Name</label>
+          <input type="text" id="wt-name-${d.id}" placeholder='e.g. "Olasin" or "CBU Red"' style="max-width:100%" value="${esc(dr.name)}">
+        </div>
+        <div style="flex:1;min-width:170px">
+          <label class="field-label">Head Coach <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+          <input type="text" id="wt-coach-${d.id}" placeholder="Coach name" style="max-width:100%" value="${esc(dr.coach)}">
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="wizAddTeam(${d.id})">+ Add Team</button>
+      </div>
+      ${list ? `<ul class="team-list">${list}</ul>` : ''}
+    </div>`;
+  }).join('');
+
+  return `
+  <div class="section-head" style="margin-top:0">Place Teams In Each Division</div>
+  <div class="section-body" style="border:none;padding:0 0 .2rem">
+    <p class="hint" style="padding:1rem 1.1rem .2rem">Add as many teams as you need under each division. You can also add more teams later, straight from the season page.</p>
+  </div>
+  ${blocks}`;
+}
+function wizAddTeam(divId){
+  const nameEl = document.getElementById('wt-name-' + divId);
+  const coachEl = document.getElementById('wt-coach-' + divId);
+  const name = nameEl.value.trim();
+  if (!name){ toast('Type a team name first.'); return; }
+  wiz.teams.push({ id: nid(), divId: divId, name: name, coach: coachEl.value.trim(), players: 0, overrides: {}, roster: [], comms: [], record: {w:0,l:0,t:0}, finishes: {}, events: [] });
+  render();                                   /* capture keeps every other division's typed text */
+  if (wiz.teamDrafts) delete wiz.teamDrafts[divId];
+  const n2 = document.getElementById('wt-name-' + divId);
+  const c2 = document.getElementById('wt-coach-' + divId);
+  if (n2){ n2.value = ''; n2.focus(); }
+  if (c2) c2.value = '';
+}
+function wizRemoveTeam(id){
+  wiz.teams = wiz.teams.filter(t => t.id !== id);
+  render();
+}
+
+/* ---------- Step 4: Pricing ---------- */
+function wizStepPricing(){
+  const ftRows = wiz.feeTypes.map(ft => `
+    <div class="fee-type-row">
+      <div style="flex:1;min-width:180px">
+        <label class="field-label">Fee Name</label>
+        <input type="text" value="${esc(ft.name)}" style="max-width:100%"
+          onchange="wizFeeName(${ft.id}, this.value)">
+      </div>
+      <div>
+        <label class="field-label">Default Price</label>
+        <span class="money-wrap"><input type="number" min="0" step="1" value="${ft.def || ''}" placeholder="0"
+          onchange="wizFeeDef(${ft.id}, this.value)"></span>
+      </div>
+      ${wiz.feeTypes.length > 1 ? `<button class="link-red" style="padding-bottom:.7rem" onclick="wizRemoveFee(${ft.id})">Remove</button>` : ''}
+    </div>`).join('');
+
+  const suggest = ['Position Player','Pitcher','Two-Way'].filter(n => !wiz.feeTypes.some(f => f.name.toLowerCase() === n.toLowerCase()));
+  const suggestChips = suggest.map(n => `<button class="chip" onclick="wizAddFee('${n}')">+ ${n}</button>`).join('');
+
+  const headCells = wiz.feeTypes.map(ft => `<th>${esc(ft.name)}</th>`).join('');
+  const perOpen = wiz.perTeamOpen || {};
+  const matrixRows = wiz.divisions.map(d => {
+    const teams = wiz.teams.filter(t => t.divId === d.id);
+    const cells = wiz.feeTypes.map(ft => {
+      const val = divPrice(wiz, d, ft.id);
+      const isOv = d.prices && d.prices[ft.id] != null && d.prices[ft.id] !== ft.def;
+      return `<td>
+        <span class="money-wrap"><input type="number" min="0" step="1" value="${val || ''}" placeholder="0"
+          class="${isOv ? 'overridden' : ''}"
+          onchange="wizDivPrice(${d.id}, ${ft.id}, this.value)"></span>
+        ${isOv ? '<span class="pill pill-red override-flag">Override</span>' : ''}
+      </td>`;
+    }).join('');
+    const divRow = `<tr>
+      <td class="cell-strong">${esc(d.name)} <span class="pill ${d.kind==='youth'?'pill-blue':'pill-red'}" style="margin-left:.35rem">${d.kind==='youth'?'Youth':'HS'}</span>
+        ${divHasOverride(wiz, d) ? `<div class="cell-sub"><button class="link-muted" onclick="wizResetDiv(${d.id})">Reset to defaults</button></div>` : ''}
+        ${teams.length ? `<div><button class="link-red tp-toggle" onclick="wizTogglePerTeam(${d.id})">${perOpen[d.id] ? '▾ Hide per-team pricing' : '▸ Set a different price per team? (' + teams.length + ')'}</button></div>` : ''}
+      </td>${cells}
+    </tr>`;
+    const teamRows = perOpen[d.id] ? teams.map(t => {
+      const tCells = wiz.feeTypes.map(ft => {
+        const has = t.overrides && t.overrides[ft.id] != null;
+        return `<td>
+          <span class="money-wrap"><input type="number" min="0" step="1"
+            value="${has ? t.overrides[ft.id] : ''}" placeholder="${divPrice(wiz, d, ft.id) || 0}"
+            class="${has ? 'overridden' : ''}"
+            onchange="wizTeamPrice(${t.id}, ${ft.id}, this.value)"></span>
+          ${has ? '<span class="pill pill-red override-flag">Override</span>' : ''}
+        </td>`;
+      }).join('');
+      return `<tr class="tp-row">
+        <td><div class="tp-name">${esc(t.name)}</div><div class="tp-sub">Blank = division price</div></td>
+        ${tCells}
+      </tr>`;
+    }).join('') : '';
+    return divRow + teamRows;
+  }).join('');
+
+  return `
+  <div class="section-head" style="margin-top:0">Step 1 — Set Your Fees Once</div>
+  <div class="section-body">
+    <p class="hint">Most seasons charge the same fees across every division — set them once here. Need separate pricing for pitchers? Add a second fee.</p>
+    ${ftRows}
+    ${suggestChips ? `<div class="chip-row">${suggestChips}<button class="chip" onclick="wizAddFee('')">+ Custom Fee</button></div>` : `<div class="chip-row"><button class="chip" onclick="wizAddFee('')">+ Custom Fee</button></div>`}
+    <div style="margin-top:1.2rem">
+      <button class="btn btn-primary" onclick="wizApplyAll()">Apply Defaults To All Divisions</button>
+    </div>
+  </div>
+
+  <div class="section-head">Step 2 — Fine-Tune By Division (Optional)</div>
+  <div class="section-body">
+    <p class="hint" style="margin-bottom:.8rem">Every division starts at the default price. Change any amount below to override just that division — like charging 14U more than 10U. Need one team priced differently than its division? Use "Set a different price per team" under the division name.</p>
+    <div class="table-wrap">
+      <table class="price-matrix">
+        <thead><tr><th>Division</th>${headCells}</tr></thead>
+        <tbody>${matrixRows}</tbody>
+      </table>
+    </div>
+  </div>`;
+}
+function wizFeeName(id, v){
+  const ft = wiz.feeTypes.find(f => f.id === id);
+  ft.name = v.trim() || ft.name;
+  render();
+}
+function wizFeeDef(id, v){
+  const ft = wiz.feeTypes.find(f => f.id === id);
+  ft.def = Math.max(0, Number(v) || 0);
+  render();
+}
+function wizAddFee(name){
+  wiz.feeTypes.push({ id: nid(), name: name || 'New Fee', def: 0 });
+  render();
+}
+function wizRemoveFee(id){
+  wiz.feeTypes = wiz.feeTypes.filter(f => f.id !== id);
+  wiz.divisions.forEach(d => { if (d.prices) delete d.prices[id]; });
+  wiz.teams.forEach(t => { if (t.overrides) delete t.overrides[id]; });
+  render();
+}
+function wizApplyAll(){
+  wiz.divisions.forEach(d => { d.prices = {}; });
+  render();
+  toast('Default pricing applied to all ' + wiz.divisions.length + ' divisions.');
+}
+function wizDivPrice(divId, ftId, v){
+  const d = wiz.divisions.find(x => x.id === divId);
+  const ft = wiz.feeTypes.find(f => f.id === ftId);
+  const num = Math.max(0, Number(v) || 0);
+  if (!d.prices) d.prices = {};
+  if (num === ft.def) delete d.prices[ftId];
+  else d.prices[ftId] = num;
+  render();
+}
+function wizResetDiv(divId){
+  const d = wiz.divisions.find(x => x.id === divId);
+  d.prices = {};
+  render();
+  toast(d.name + ' reset to default pricing.');
+}
+function wizTogglePerTeam(divId){
+  wiz.perTeamOpen = wiz.perTeamOpen || {};
+  if (wiz.perTeamOpen[divId]) delete wiz.perTeamOpen[divId];
+  else wiz.perTeamOpen[divId] = true;
+  render();
+}
+function wizTeamPrice(teamId, ftId, v){
+  const t = wiz.teams.find(x => x.id === teamId);
+  const d = wiz.divisions.find(x => x.id === t.divId);
+  if (!t.overrides) t.overrides = {};
+  const raw = String(v).trim();
+  if (raw === ''){
+    delete t.overrides[ftId];
+  } else {
+    const num = Math.max(0, Number(raw) || 0);
+    if (num === divPrice(wiz, d, ftId)) delete t.overrides[ftId];
+    else t.overrides[ftId] = num;
+  }
+  render();
+}
+
+/* ---------- Step 5: Review ---------- */
+function wizStepReview(){
+  const divLines = wiz.divisions.map(d => {
+    const fees = wiz.feeTypes.map(ft => `${esc(ft.name)} <b>${money(divPrice(wiz, d, ft.id))}</b>`).join(' &nbsp;·&nbsp; ');
+    return `<div class="rv-line">
+      <span class="rv-key">${esc(d.name)}</span>
+      <span style="flex:1">
+        <span class="rv-val">${wiz.teams.filter(t=>t.divId===d.id).length} team(s)</span>
+        <div class="cell-sub" style="margin-top:.25rem">${fees}${divHasOverride(wiz,d) ? ' &nbsp;<span class="pill pill-red">Override</span>' : ''}</div>
+      </span>
+    </div>`;
+  }).join('');
+
+  return `
+  <div class="section-head" style="margin-top:0">Review &amp; ${wiz.editingId ? 'Save' : 'Create'}</div>
+  <div class="section-body">
+    <div class="review-block">
+      <div class="rv-line"><span class="rv-key">Season</span><span class="rv-val">${esc(wiz.name)}</span></div>
+      <div class="rv-line"><span class="rv-key">Programs</span><span class="rv-val">${wiz.program === 'both' ? 'High School + Youth' : (wiz.program === 'youth' ? 'Youth' : 'High School')}</span></div>
+      <div class="rv-line"><span class="rv-key">Totals</span><span class="rv-val">${wiz.divisions.length} division(s) · ${wiz.teams.length} team(s) · ${wiz.feeTypes.length} fee type(s)</span></div>
+      ${divLines}
+    </div>
+    <p class="hint" style="margin-top:1rem">Everything can still be changed after ${wiz.editingId ? 'saving' : 'creating'} — add teams from the season page, edit the season anytime, and override pricing per team.</p>
+  </div>`;
+}
+
+function saveSeason(){
+  const clean = {
+    id: wiz.editingId != null ? wiz.editingId : nid(),
+    name: wiz.name, program: wiz.program, status: wiz.status || 'active',
+    feeTypes: wiz.feeTypes, divisions: wiz.divisions, teams: wiz.teams
+  };
+  if (wiz.editingId != null){
+    const i = seasons.findIndex(s => s.id === wiz.editingId);
+    seasons[i] = clean;
+    toast('Season saved — ' + clean.name + ' updated.');
+  } else {
+    seasons.push(clean);
+    toast('Season created — welcome to ' + clean.name + '!');
+  }
+  currentSeasonId = clean.id;
+  wiz = null;
+  render();
+  window.scrollTo({top:0});
+}
+
+/* ============================================================
+   LANDING (season view)
+   ============================================================ */
+function renderLanding(){
+  const s = season();
+  if (!s){ currentSeasonId = seasons[0].id; return renderLanding(); }
+
+  const active = seasons.filter(x => x.status === 'active');
+  const archived = seasons.filter(x => x.status === 'archived');
+  const revealArchived = showArchived || s.status === 'archived';
+  const opts =
+    active.map(x => `<option value="${x.id}" ${x.id===s.id?'selected':''}>${esc(x.name)}</option>`).join('') +
+    (revealArchived && archived.length ? `<optgroup label="Archived">` + archived.map(x =>
+      `<option value="${x.id}" ${x.id===s.id?'selected':''}>${esc(x.name)} (Archived)</option>`).join('') + `</optgroup>` : '');
+  const archToggle = archived.length ? `
+    <button class="link-muted" style="color:var(--powder)" onclick="toggleShowArchived()">
+      ${revealArchived ? 'Hide archived' : 'View archived seasons (' + archived.length + ')'}
+    </button>` : '';
+
+  let sRostered = 0, sRegistered = 0, sFees = 0, sCollected = 0;
+  s.teams.forEach(t => {
+    const dd = s.divisions.find(x => x.id === t.divId);
+    if (!dd) return;
+    const stt = rosterStats(s, dd, t);
+    sRostered += stt.count; sRegistered += stt.reg;
+    sFees += stt.total; sCollected += stt.paid;
+  });
+  const sPct = sFees ? Math.round(sCollected / sFees * 100) : 0;
+  const sRegColor = !sRostered ? 'var(--muted)' : (sRegistered === sRostered ? 'var(--green)' : 'var(--red)');
+
+  const archivedBanner = s.status === 'archived' ? `
+    <div class="archived-note">
+      <span class="pill pill-gold">Archived</span>
+      <span>This season is archived — it's read-only in the dropdown but nothing was deleted.</span>
+      <button class="btn btn-outline btn-sm" onclick="unarchiveSeason()">Restore Season</button>
+    </div>` : '';
+
+  const archiveBtn = s.status === 'archived' ? '' : (archiveArmed
+    ? `<button class="btn btn-primary btn-sm" onclick="archiveSeason()">Confirm Archive?</button>
+       <button class="btn btn-outline btn-sm" onclick="archiveArmed=false;render()">Keep</button>`
+    : `<button class="btn btn-outline btn-sm" onclick="archiveArmed=true;render()">Archive</button>`);
+
+  return `
+  <div class="season-bar">
+    <div class="grow">
+      <div style="display:flex;align-items:baseline;gap:.7rem;flex-wrap:wrap">
+        <label class="field-label" for="seasonSelect" style="color:#aab3cc">Viewing Season</label>
+        ${archToggle}
+      </div>
+      <select id="seasonSelect" onchange="switchSeason(this.value)">${opts}</select>
+    </div>
+    <div class="season-actions">
+      <button class="btn btn-outline btn-sm" onclick="openSeasonPayments()">Payments</button>
+      <button class="btn btn-outline btn-sm" onclick="startWizard(${s.id})">Edit Season</button>
+      ${archiveBtn}
+      <button class="btn btn-primary btn-sm" onclick="startWizard()">+ New Season</button>
+    </div>
+  </div>
+  ${archivedBanner}
+  <div class="stat-tiles five">
+    <div class="stat-tile"><div class="st-num">${s.divisions.length}</div><div class="st-label">Divisions</div></div>
+    <div class="stat-tile accent-red"><div class="st-num">${s.teams.length}</div><div class="st-label">Teams</div></div>
+    <div class="stat-tile"><div class="st-num">${sRostered} <span style="color:#c6ccdb;font-weight:500">|</span> <span style="color:${sRegColor}">${sRegistered}</span></div><div class="st-label">Rostered | Registered</div></div>
+    <div class="stat-tile"><div class="st-num">${money(sFees)}</div><div class="st-label">Total Fees</div><div class="st-sub">across the whole season</div></div>
+    <div class="stat-tile accent-red">
+      <div class="st-num">${money(sCollected)}</div>
+      <div class="st-label">Collected</div>
+      <div class="st-sub">${sPct}% of total fees</div>
+      <div class="progress"><span style="width:${sPct}%"></span></div>
+    </div>
+  </div>
+  ${s.divisions.length ? `
+  <div class="card card-pad">
+    ${s.divisions.map(d => renderDivision(s, d)).join('')}
+  </div>` : `
+    <div class="card card-pad" style="text-align:center">
+      <p style="color:var(--muted);font-size:.9rem">No divisions in this season yet.</p>
+      <button class="btn btn-primary" style="margin-top:1rem" onclick="startWizard(${s.id})">Add Divisions</button>
+    </div>`}`;
+}
+
+function renderDivision(s, d){
+  const teams = divTeams(s, d.id);
+  const fees = s.feeTypes.map(ft => {
+    const p = divPrice(s, d, ft.id);
+    const ov = d.prices && d.prices[ft.id] != null && d.prices[ft.id] !== ft.def;
+    return `<span class="fee-chip">${esc(ft.name)}: <b>${money(p)}</b>${ov ? ' *' : ''}</span>`;
+  }).join('');
+
+  const addRow = openAddTeam[d.id] ? `
+    <div class="inline-editor">
+      <div class="editor-row">
+        <div style="flex:1;min-width:160px">
+          <label class="field-label">Team Name</label>
+          <input type="text" id="at-name-${d.id}" placeholder="Team name" style="max-width:100%">
+        </div>
+        <div style="flex:1;min-width:160px">
+          <label class="field-label">Head Coach <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+          <input type="text" id="at-coach-${d.id}" placeholder="Coach name" style="max-width:100%">
+        </div>
+        <div class="editor-actions">
+          <button class="btn btn-primary btn-sm" onclick="landingAddTeam(${d.id})">Add Team</button>
+          <button class="link-muted" onclick="delete openAddTeam[${d.id}];render()">Cancel</button>
+        </div>
+      </div>
+    </div>` : '';
+
+  const rows = teams.map(t => renderTeamRow(s, d, t)).join('');
+
+  return `
+  <div class="div-block ${d.kind==='youth'?'youth':''}">
+    <div class="div-head ${d.kind==='youth'?'youth':''}">
+      <span class="div-title">${esc(d.name)}</span>
+      <span class="pill ${d.kind==='youth'?'pill-blue':'pill-red'}" style="background:rgba(255,255,255,.9)">${d.kind==='youth'?'Youth':'High School'}</span>
+      <div class="div-fees">
+        ${fees}
+        <button class="btn-add-team" onclick="toggleAddTeam(${d.id})">${openAddTeam[d.id] ? 'Close' : '+ Add Team'}</button>
+      </div>
+    </div>
+    <div class="div-body">
+      ${addRow}
+      ${teams.length ? `
+      <div class="table-wrap">
+        <table class="team-table">
+          <thead><tr><th>Team</th><th>Players | Registered</th><th>Record</th><th>Trophies</th><th></th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>` : `
+      <div style="padding:1.1rem;color:var(--muted);font-size:.86rem">No teams in this division yet — use + Add Team above.</div>`}
+    </div>
+  </div>`;
+}
+
+function recordText(t){
+  const r = t.record || { w:0, l:0, t:0 };
+  return (r.w||0) + '-' + (r.l||0) + '-' + (r.t||0);
+}
+function trophyIcons(t){
+  const f = t.finishes || {};
+  const parts = [];
+  [['first','🏆'],['second','🥈'],['third','🥉']].forEach(function(pair){
+    const n = f[pair[0]] || 0;
+    if (!n) return;
+    parts.push(n > 3 ? pair[1] + '<span style="font-size:.74rem;color:var(--muted);font-weight:600">×' + n + '</span>' : pair[1].repeat(n));
+  });
+  return parts.length ? parts.join(' ') : '<span style="color:var(--muted)">—</span>';
+}
+
+function renderTeamRow(s, d, t){
+  const hasOv = teamHasOverride(t);
+  const rCount = (t.roster || []).length;
+  const rReg = (t.roster || []).filter(p => p.registered).length;
+  const regColor = !rCount ? 'var(--muted)' : (rReg === rCount ? 'var(--green)' : 'var(--red)');
+
+  const editor = openOverride[t.id] ? `
+    <tr><td colspan="5" class="no-label" style="padding:0">
+      <div class="inline-editor">
+        <label class="field-label">Team Price Override — ${esc(t.name)}</label>
+        <p class="hint" style="margin-bottom:.7rem">Leave a field blank to keep the division price.</p>
+        <div class="editor-row">
+          ${s.feeTypes.map(ft => `
+          <div>
+            <label class="field-label">${esc(ft.name)} <span style="font-weight:400;text-transform:none;letter-spacing:0">(division: ${money(divPrice(s, d, ft.id))})</span></label>
+            <span class="money-wrap"><input type="number" min="0" step="1" id="ov-${t.id}-${ft.id}"
+              value="${t.overrides && t.overrides[ft.id] != null ? t.overrides[ft.id] : ''}" placeholder="—"></span>
+          </div>`).join('')}
+          <div class="editor-actions">
+            <button class="btn btn-primary btn-sm" onclick="saveOverride(${t.id})">Save</button>
+            ${hasOv ? `<button class="btn btn-ghost-red btn-sm" onclick="clearOverride(${t.id})">Clear Override</button>` : ''}
+            <button class="link-muted" onclick="delete openOverride[${t.id}];render()">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </td></tr>` : '';
+
+  return `
+  <tr>
+    <td data-label="Team"><button class="link-red" style="font-size:.9rem" onclick="openTeam(${t.id})">${esc(t.name)}</button></td>
+    <td data-label="Players | Registered" style="white-space:nowrap"><span class="cell-strong">${rCount}</span> <span style="color:#c6ccdb;padding:0 .15rem">|</span> <span style="font-weight:600;color:${regColor}">${rReg}</span></td>
+    <td data-label="Record"><span class="cell-strong">${recordText(t)}</span></td>
+    <td data-label="Trophies">${trophyIcons(t)}</td>
+    <td data-label="Actions" style="text-align:right;white-space:nowrap">
+      ${hasOv ? '<span class="pill pill-red" style="margin-right:.5rem">Override</span>' : ''}
+      <button class="link-red" onclick="toggleOverride(${t.id})">${openOverride[t.id] ? 'Close' : 'Set Price'}</button>
+    </td>
+  </tr>
+  ${editor}`;
+}
+
+/* ---------- Landing actions ---------- */
+function switchSeason(v){
+  currentSeasonId = Number(v);
+  archiveArmed = false;
+  currentTeamId = null;
+  seasonPayOpen = false;
+  render();
+}
+function toggleAddTeam(divId){
+  if (openAddTeam[divId]) delete openAddTeam[divId];
+  else openAddTeam[divId] = true;
+  render();
+  const el = document.getElementById('at-name-' + divId);
+  if (el) el.focus();
+}
+function landingAddTeam(divId){
+  const s = season();
+  const name = document.getElementById('at-name-' + divId).value.trim();
+  if (!name){ toast('Type a team name first.'); return; }
+  const coach = document.getElementById('at-coach-' + divId).value.trim();
+  s.teams.push({ id: nid(), divId: divId, name: name, coach: coach, players: 0, overrides: {}, roster: [], comms: [], record: {w:0,l:0,t:0}, finishes: {}, events: [] });
+  render();
+  toast(name + ' added.');
+  const el = document.getElementById('at-name-' + divId);
+  if (el) el.focus();
+}
+function toggleOverride(teamId){
+  if (openOverride[teamId]) delete openOverride[teamId];
+  else openOverride[teamId] = true;
+  render();
+}
+function saveOverride(teamId){
+  const s = season();
+  const t = s.teams.find(x => x.id === teamId);
+  const d = s.divisions.find(x => x.id === t.divId);
+  t.overrides = {};
+  s.feeTypes.forEach(ft => {
+    const el = document.getElementById('ov-' + teamId + '-' + ft.id);
+    const raw = el.value.trim();
+    if (raw !== ''){
+      const num = Math.max(0, Number(raw) || 0);
+      if (num !== divPrice(s, d, ft.id)) t.overrides[ft.id] = num;
+    }
+  });
+  delete openOverride[teamId];
+  render();
+  toast(Object.keys(t.overrides).length ? t.name + ' pricing overridden.' : t.name + ' is using division pricing.');
+}
+function clearOverride(teamId){
+  const s = season();
+  const t = s.teams.find(x => x.id === teamId);
+  t.overrides = {};
+  delete openOverride[teamId];
+  render();
+  toast(t.name + ' is back on division pricing.');
+}
+function toggleShowArchived(){
+  showArchived = !showArchived;
+  render();
+}
+function archiveSeason(){
+  const s = season();
+  s.status = 'archived';
+  archiveArmed = false;
+  const nextActive = seasons.find(x => x.status === 'active');
+  if (nextActive) currentSeasonId = nextActive.id;
+  render();
+  toast(s.name + ' archived. Use "View archived seasons" above the dropdown to get it back.');
+}
+function unarchiveSeason(){
+  const s = season();
+  s.status = 'active';
+  render();
+  toast(s.name + ' restored to active seasons.');
+}
+
+/* ============================================================
+   TEAM DETAIL PAGE
+   ============================================================ */
+const MOCK_FIRST = ['Jackson','Liam','Mason','Ethan','Carter','Owen','Luke','Gavin','Diego','Marcus','Tyler','Brady','Cole','Hunter','Austin','Nolan'];
+const MOCK_LAST  = ['Rivera','Thompson','Nguyen','Brooks','Sandoval','Perez','Whitfield','Coleman','Ortiz','Bennett','Silva','Hayes','Drummond','Castillo','McAllister','Reyes'];
+const POSITIONS  = ['RHP','LHP','1B','2B','3B','SS','C','CF','RF','LF','UTL','Switch Pitcher'];
+
+function slugify(x){ return String(x).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,''); }
+function regLink(s, t){ return 'cbu.app/register/' + slugify(s.name) + '/' + slugify(t.name); }
+function feeTypeFor(s, pos){
+  const pitcherFee = s.feeTypes.find(f => /pitcher/i.test(f.name));
+  if (pitcherFee && /^(RHP|LHP|Switch Pitcher)$/.test(pos)) return pitcherFee;
+  return s.feeTypes[0] || null;
+}
+/* The ticket a player was added under; falls back to a position-based guess for older mock data */
+function playerFeeType(s, p){
+  if (p.feeTypeId != null){
+    const ft = s.feeTypes.find(f => f.id === p.feeTypeId);
+    if (ft) return ft;
+  }
+  return feeTypeFor(s, p.pos);
+}
+function playerFee(s, d, t, p){
+  const ft = playerFeeType(s, p);
+  return ft ? teamPrice(s, d, t, ft.id) : 0;
+}
+function rosterStats(s, d, t){
+  const r = t.roster || [];
+  let total = 0, paid = 0, reg = 0;
+  r.forEach(p => {
+    const f = playerFee(s, d, t, p);
+    total += f;
+    paid += Math.min(p.paid || 0, f);
+    if (p.registered) reg++;
+  });
+  return { count: r.length, reg: reg, total: total, paid: paid };
+}
+
+/* Mock tryout registrations available to a season (stand-in for the real tryout system) */
+function ensureTryoutRegs(s){
+  if (s.tryoutRegs) return;
+  s.tryoutRegs = [
+    { id: nid(), name: s.name + ' Tryout', status: 'active' },
+    { id: nid(), name: s.name + ' Makeup Tryout', status: 'active' }
+  ];
+  s.connectedTryouts = {};
+}
+function toggleTryoutReg(regId){
+  const s = season();
+  ensureTryoutRegs(s);
+  s.connectedTryouts = s.connectedTryouts || {};
+  const reg = s.tryoutRegs.find(r => r.id === regId);
+  if (s.connectedTryouts[regId]){
+    delete s.connectedTryouts[regId];
+    toast((reg ? reg.name : 'Tryout') + ' disconnected from ' + s.name + ' — for every team.');
+  } else {
+    s.connectedTryouts[regId] = true;
+    toast((reg ? reg.name : 'Tryout') + ' connected — its players now feed every team in ' + s.name + '.');
+  }
+  render();
+}
+/* Mock registrant pool per season+division+registration */
+function ensurePoolReg(s, d, regId){
+  const key = s.id + '-' + d.id + '-' + regId;
+  if (tryoutPools[key]) return tryoutPools[key];
+  const pool = [];
+  for (let i = 0; i < 10; i++){
+    const pos = POSITIONS[(i*7 + d.id + regId) % 11];
+    let pos2 = (i % 3 !== 2) ? POSITIONS[(i*5 + d.id + regId + 4) % 11] : null;  /* ~2/3 list a secondary */
+    if (pos2 === pos) pos2 = POSITIONS[(i*5 + d.id + regId + 7) % 11];
+    if (pos2 === pos) pos2 = null;
+    let signup = 'pos';                                    /* tryout ticket they registered under */
+    if (i % 5 === 1) signup = 'pitcher';
+    else if (i % 4 === 0) signup = 'two-way';
+    const pitchesInProfile = /^(RHP|LHP)$/.test(pos) || (pos2 != null && /^(RHP|LHP)$/.test(pos2));
+    pool.push({
+      id: nid(),
+      name: MOCK_FIRST[(i*3 + d.id + regId) % 16] + ' ' + MOCK_LAST[(i*5 + s.id + regId) % 16],
+      pos: pos,
+      pos2: pos2,
+      signup: signup,
+      pitched: signup !== 'pos' || pitchesInProfile,       /* pitcher/two-way signup, or pitching in either positional field */
+      regId: regId,
+      email: 'player' + (i+1) + '@email.com',
+      phone: '(813) 555-01' + ('0' + i).slice(-2),
+      takenBy: null
+    });
+  }
+  /* a few already placed on other teams in this division, to show the accounting */
+  const others = s.teams.filter(t => t.divId === d.id && t.id !== currentTeamId);
+  others.slice(0, 3).forEach((t, idx) => { if (pool[idx*3 + 1]) pool[idx*3 + 1].takenBy = t.id; });
+  tryoutPools[key] = pool;
+  return pool;
+}
+function findPoolPlayer(s, poolId){
+  let hit = null;
+  Object.keys(tryoutPools).forEach(function(key){
+    if (key.indexOf(s.id + '-') !== 0) return;
+    const f = tryoutPools[key].find(x => x.id === poolId);
+    if (f) hit = f;
+  });
+  return hit;
+}
+function divShort(name){
+  const m = String(name).match(/(\d{4})$/);
+  return m ? m[1] : name;
+}
+function pitchLabel(p){
+  if (p.signup === 'pitcher') return 'Pitcher Only';
+  if (p.signup === 'two-way') return 'Two Way';
+  if (p.pitched) return 'Pitcher';
+  return null;
+}
+
+function openTeam(id){
+  currentTeamId = id; teamTab = 'roster';
+  seasonPayOpen = false;
+  addPanelOpen = false; manualOpen = false;
+  for (const k in openTxn) delete openTxn[k];
+  for (const k in applyOpen) delete applyOpen[k];
+  editTxnId = null;
+  commsAud = 'all'; commsSel = null; commsDraft = { subject:'', body:'' };
+  eventFormOpen = false; editingEventId = null;
+  coachSearch = ''; manualCoachOpen = false;
+  editStaffId = null;
+  poolFilters = null;
+  render(); window.scrollTo({top:0});
+}
+function closeTeam(){ currentTeamId = null; render(); window.scrollTo({top:0}); }
+function setTeamTab(tab){ teamTab = tab; eventFormOpen = false; editingEventId = null; render(); }
+function viewProfile(pid){
+  const s = season();
+  const t = s.teams.find(x => x.id === currentTeamId);
+  const p = t.roster.find(x => x.id === pid);
+  toast('Player profiles are coming — ' + (p ? p.name : 'this player') + '\u2019s full profile will open here.');
+}
+
+function renderTeamPage(s, t){
+  ensureStaff(t);
+  const d = s.divisions.find(x => x.id === t.divId);
+  const st = rosterStats(s, d, t);
+  const pct = st.total ? Math.round(st.paid / st.total * 100) : 0;
+  const hc = headCoachOf(t);
+
+  let tabBody = '';
+  if (teamTab === 'roster') tabBody = renderRosterTab(s, d, t);
+  if (teamTab === 'coaches') tabBody = renderCoachesTab(s, d, t);
+  if (teamTab === 'payments') tabBody = renderPaymentsTab(s, d, t);
+  if (teamTab === 'events') tabBody = renderEventsTab(s, d, t);
+  if (teamTab === 'comms') tabBody = renderCommsTab(s, d, t);
+
+  const fails = (t.roster || []).filter(p => p.payFailed);
+  const failStrip = fails.length ? `
+    <div class="card" style="margin-top:1rem;border-left:5px solid var(--red);padding:.85rem 1.2rem;display:flex;gap:.8rem;align-items:center;flex-wrap:wrap">
+      <span class="pill pill-red">⚠ ${fails.length} Failed Payment${fails.length > 1 ? 's' : ''}</span>
+      <span style="font-size:.87rem;color:var(--ink)">${fails.map(p => esc(p.name)).join(', ')} — the last charge didn't go through. Once Stripe is connected, failures will land here automatically.</span>
+      <button class="link-red" style="margin-left:auto" onclick="setTeamTab('payments')">Review In Payments</button>
+    </div>` : '';
+
+  return `
+  <div style="margin-top:1.6rem">
+    <button class="back-link" onclick="closeTeam()">← Back to all teams</button>
+    <div class="card card-pad">
+      <div class="team-head">
+        <div>
+          <div class="team-name">${esc(t.name)}</div>
+          <div class="team-sub">
+            <span>${esc(s.name)}</span> ·
+            <span>${esc(d.name)}</span>
+            <span class="pill ${d.kind==='youth'?'pill-blue':'pill-red'}">${d.kind==='youth'?'Youth':'High School'}</span>
+            ${hc ? `· <span>Head Coach: <button class="link-red" style="font-size:.86rem;padding:0" onclick="viewCoach(${hc.id})">${esc(hc.name)}</button></span>` : ''}
+          </div>
+          <div class="reg-link">
+            <span>Team registration link:</span>
+            <code>${regLink(s, t)}</code>
+            <button class="link-red" onclick="copyRegLink(${t.id})">Copy</button>
+          </div>
+        </div>
+        <div class="team-actions">
+          <button class="btn btn-primary btn-sm" onclick="toggleAddPanel()">${addPanelOpen ? 'Close Tryout List' : '+ Add From Tryout'}</button>
+          <button class="btn btn-outline-dark btn-sm" onclick="toggleManual()">${manualOpen ? 'Close' : '+ Add Player Manually'}</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-tiles four" style="margin-top:1.2rem">
+      <div class="stat-tile"><div class="st-num">${st.count}</div><div class="st-label">Players On Team</div></div>
+      <div class="stat-tile accent-blue"><div class="st-num">${st.reg} <span style="font-size:1.1rem;color:var(--muted)">/ ${st.count}</span></div><div class="st-label">Registered</div></div>
+      <div class="stat-tile accent-red">
+        <div class="st-num">${money(st.paid)}</div>
+        <div class="st-label">Collected</div>
+        <div class="st-sub">of ${money(st.total)} total fees (${pct}%)</div>
+        <div class="progress"><span style="width:${pct}%"></span></div>
+      </div>
+      <div class="stat-tile"><div class="st-num">${money(Math.max(0, st.total - st.paid))}</div><div class="st-label">Balance Due</div>${fails.length ? `<div class="st-sub" style="color:var(--red);font-weight:600">⚠ ${fails.length} failed payment${fails.length > 1 ? 's' : ''}</div>` : ''}</div>
+    </div>
+    ${failStrip}
+
+    <div class="chip-row tab-row">
+      <button class="chip filter-chip ${teamTab==='roster'?'active':''}" onclick="setTeamTab('roster')">Roster</button>
+      <button class="chip filter-chip ${teamTab==='coaches'?'active':''}" onclick="setTeamTab('coaches')">Coaches</button>
+      <button class="chip filter-chip ${teamTab==='payments'?'active':''}" onclick="setTeamTab('payments')">Payments</button>
+      <button class="chip filter-chip ${teamTab==='events'?'active':''}" onclick="setTeamTab('events')">Events</button>
+      <button class="chip filter-chip ${teamTab==='comms'?'active':''}" onclick="setTeamTab('comms')">Communication</button>
+    </div>
+
+    ${tabBody}
+  </div>`;
+}
+
+/* ---------- Roster tab ---------- */
+function renderRosterTab(s, d, t){
+  if (addPanelOpen){ ensureTryoutRegs(s); if (!poolFilters) initPoolFilters(); }
+  const built = addPanelOpen ? buildPoolList() : null;
+
+  const poolPanel = addPanelOpen ? `
+    <div class="section-head red" style="margin-top:0">Tryout Pool</div>
+    <div class="section-body">
+      <p class="hint" style="margin-bottom:.8rem">Players placed on a team are locked so no other team can take them — anyone left unplaced can be messaged as a group later.${s.feeTypes.length > 1 ? ' Pick the ticket each player is joining on — it sets the fee they\'ll pay when they register.' : ''}</p>
+      <label class="field-label">Active Tryout Registrations</label>
+      <p class="hint" style="margin:.15rem 0 .4rem">Connecting a tryout here connects it to <b>every team in ${esc(s.name)}</b> — connect one now or another later and every roster board updates automatically.</p>
+      ${s.tryoutRegs.filter(r => r.status === 'active').map(r => `
+      <div class="pool-row">
+        <input type="checkbox" id="reg-${r.id}" ${s.connectedTryouts && s.connectedTryouts[r.id] ? 'checked' : ''} onchange="toggleTryoutReg(${r.id})">
+        <label for="reg-${r.id}" class="pool-name" style="cursor:pointer">${esc(r.name)}</label>
+        <span class="pill pill-green">Active</span>
+        ${s.connectedTryouts && s.connectedTryouts[r.id] ? '<span class="pill pill-navy tag">Connected — All Teams</span>' : ''}
+      </div>`).join('')}
+      <label class="field-label" style="margin-top:1.1rem">Pull From Classes</label>
+      <div class="chip-row" style="margin-top:.2rem">
+        ${s.divisions.map(dd => `<button class="chip ${dd.kind==='youth'?'chip-youth':''} ${poolFilters.divs[dd.id]?'selected':''}" onclick="togglePoolDiv(${dd.id})">${esc(dd.name)}</button>`).join('')}
+      </div>
+      <div class="editor-row" style="margin-top:1rem">
+        <div style="flex:1;min-width:200px">
+          <label class="field-label">Search Players</label>
+          <input type="text" id="poolSearch" placeholder="Type a name…" value="${esc(poolFilters.q)}" oninput="updatePoolSearch(this.value)" style="max-width:100%">
+        </div>
+        <div>
+          <label class="field-label">Tryout Pitching</label>
+          <div class="chip-row" style="margin-top:.1rem">
+            <button class="chip ${poolFilters.pitch==='all'?'active':''}" onclick="setPoolPitch('all')">All</button>
+            <button class="chip ${poolFilters.pitch==='pitched'?'active':''}" onclick="setPoolPitch('pitched')">Pitched</button>
+            <button class="chip ${poolFilters.pitch==='no'?'active':''}" onclick="setPoolPitch('no')">Didn't Pitch</button>
+          </div>
+        </div>
+        <div>
+          <label class="field-label">Already Rostered</label>
+          <div class="chip-row" style="margin-top:.1rem">
+            <button class="chip ${poolFilters.showPlaced?'selected':''}" onclick="togglePoolPlaced()">${poolFilters.showPlaced ? 'Showing' : 'Hidden'}</button>
+          </div>
+        </div>
+        <div>
+          <label class="field-label">Positions</label>
+          <div class="chip-row" style="margin-top:.1rem">
+            <button class="chip ${poolFilters.posOpen || Object.keys(poolFilters.positions).length ? 'active' : ''}" onclick="togglePoolPosOpen()">${Object.keys(poolFilters.positions).length ? 'Positions (' + Object.keys(poolFilters.positions).length + ')' : 'Search Positions'}</button>
+          </div>
+        </div>
+      </div>
+      ${poolFilters.posOpen ? `
+      <div style="margin-top:.8rem">
+        <label class="field-label">Positional Types <span style="font-weight:400;text-transform:none;letter-spacing:0">(pick as many as you want)</span></label>
+        <div class="chip-row" style="margin-top:.2rem">
+          ${POSITIONS.slice(0, 11).map(ps => `<button class="chip ${poolFilters.positions[ps]?'selected':''}" onclick="togglePoolPos('${ps}')">${ps}</button>`).join('')}
+          ${Object.keys(poolFilters.positions).length ? '<button class="chip" style="border-color:var(--red);color:var(--red)" onclick="clearPoolPos()">✕ Clear</button>' : ''}
+        </div>
+      </div>` : ''}
+      <p class="hint" id="poolCount" style="margin-top:.9rem">${built.count}</p>
+      <div id="poolList">${built.rows}</div>
+      <div style="margin-top:1rem">
+        <button class="btn btn-primary btn-sm" onclick="addSelectedFromPool()">Add Selected To Team</button>
+      </div>
+    </div>` : '';
+
+  const manualPanel = manualOpen ? `
+    <div class="section-head" style="margin-top:0">Add A Player Manually</div>
+    <div class="section-body">
+      <p class="hint" style="margin-bottom:.7rem">For the occasional player who didn't come through a tryout. They'll get the welcome email with this team's registration link just like everyone else.</p>
+      <div class="form-grid">
+        <div><label class="field-label">First Name</label><input type="text" id="mp-first" placeholder="First name"></div>
+        <div><label class="field-label">Last Name</label><input type="text" id="mp-last" placeholder="Last name"></div>
+        <div><label class="field-label">Email</label><input type="email" id="mp-email" placeholder="parent@email.com"></div>
+        <div><label class="field-label">Phone</label><input type="tel" id="mp-phone" placeholder="(813) 555-0100"></div>
+        ${s.feeTypes.length > 1 ? `
+        <div class="full"><label class="field-label">Ticket</label>
+          <select id="mp-ticket">${s.feeTypes.map(ft => `<option value="${ft.id}">${esc(ft.name)} — ${money(teamPrice(s, d, t, ft.id))}</option>`).join('')}</select>
+          <p class="hint" style="margin-top:.35rem">Sets the fee this player pays when they register.</p>
+        </div>` : ''}
+      </div>
+      <div style="margin-top:1rem"><button class="btn btn-primary btn-sm" onclick="addManualPlayer()">Add Player &amp; Send Welcome Email</button></div>
+    </div>` : '';
+
+  const rows = (t.roster || []).map(p => {
+    const fee = playerFee(s, d, t, p);
+    const pft = playerFeeType(s, p);
+    const paid = Math.min(p.paid || 0, fee);
+    const payPct = fee ? Math.round(paid / fee * 100) : 0;
+    const subBits = [p.pos ? p.pos + (p.pos2 ? ' / ' + p.pos2 : '') : null, (p.registered && pft) ? pft.name : null, p.email, p.phone]
+      .filter(Boolean).map(esc).join(' · ');
+    let regPill;
+    if (p.registered && p.completion >= 100) regPill = '<span class="pill pill-green">✓ Registered</span>';
+    else if (p.registered) regPill = `<span class="pill pill-blue">Registering — ${p.completion}%</span>`;
+    else regPill = `<span class="pill pill-navy">Invited as ${pft ? esc(pft.name) : 'Player'}</span>`;
+    const ring = `<span class="pay-ring ${p.payFailed ? 'failed' : ''}" style="--p:${payPct}" data-pct="${payPct}%"></span>`;
+    let payText;
+    if (!p.registered) payText = '<span style="color:var(--muted)">—</span>';
+    else if (p.payFailed) payText = `<span class="pay-cell">${ring}<span>${money(paid)} of ${money(fee)} <span class="pill pill-red" style="margin-left:.3rem">⚠ Payment Failed</span></span></span>`;
+    else if (paid >= fee && fee > 0) payText = `<span class="pay-cell">${ring}<span class="pill pill-green">Paid ${money(fee)}</span></span>`;
+    else if (paid > 0) payText = `<span class="pay-cell">${ring}<span>${money(paid)} of ${money(fee)} <span class="pill pill-blue" style="margin-left:.3rem">Installments</span></span></span>`;
+    else payText = `<span class="pay-cell">${ring}<span class="pill pill-red">Unpaid — ${money(fee)}</span></span>`;
+    return `
+    <tr>
+      <td data-label="Player"><button class="link-red" style="font-size:.9rem;padding:0" onclick="viewProfile(${p.id})">${esc(p.name)}</button><div class="cell-sub">${subBits || '—'}</div></td>
+      <td data-label="Source"><span class="pill ${p.source==='tryout'?'pill-red':'pill-navy'}">${p.source==='tryout'?'From Tryout':'Manual'}</span></td>
+      <td data-label="Registration">${regPill}</td>
+      <td data-label="Payment">${payText}</td>
+      <td data-label="Actions" style="text-align:right"><button class="link-muted" onclick="removePlayer(${p.id})">Remove</button></td>
+    </tr>`;
+  }).join('');
+
+  return `
+  ${(addPanelOpen || manualOpen) ? `<div class="card card-pad" style="margin-bottom:1.2rem">${poolPanel}${manualPanel}</div>` : ''}
+  ${(t.roster || []).length ? `
+  <div class="card">
+    <div class="table-wrap">
+      <table class="team-table">
+        <thead><tr><th>Player</th><th>Source</th><th>Registration</th><th>Payment</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  </div>` : `
+  <div class="card card-pad" style="text-align:center;padding-top:1.6rem;padding-bottom:1.6rem">
+    <p style="color:var(--muted);font-size:.9rem">No players on this team yet.</p>
+    <p class="hint" style="margin-top:.4rem">Add players from the ${esc(d.name)} tryout pool, or add one manually — each gets a welcome email with the team registration link.</p>
+  </div>`}`;
+}
+
+function initPoolFilters(){
+  const s = season();
+  const t = s ? s.teams.find(x => x.id === currentTeamId) : null;
+  poolFilters = { divs: {}, q: '', pitch: 'all', showPlaced: false, positions: {}, posOpen: false };
+  if (t) poolFilters.divs[t.divId] = true;
+}
+function toggleAddPanel(){
+  if (teamTab !== 'roster'){ teamTab = 'roster'; addPanelOpen = true; manualOpen = false; }
+  else { addPanelOpen = !addPanelOpen; if (addPanelOpen) manualOpen = false; }
+  if (addPanelOpen) initPoolFilters();
+  render();
+}
+function toggleManual(){
+  if (teamTab !== 'roster'){ teamTab = 'roster'; manualOpen = true; addPanelOpen = false; }
+  else { manualOpen = !manualOpen; if (manualOpen) addPanelOpen = false; }
+  render();
+}
+
+/* ---------- Tryout pool filters & list ---------- */
+function togglePoolDiv(divId){
+  if (poolFilters.divs[divId]) delete poolFilters.divs[divId];
+  else poolFilters.divs[divId] = true;
+  render();
+}
+function setPoolPitch(v){ poolFilters.pitch = v; render(); }
+function togglePoolPlaced(){ poolFilters.showPlaced = !poolFilters.showPlaced; render(); }
+function togglePoolPosOpen(){ poolFilters.posOpen = !poolFilters.posOpen; render(); }
+function togglePoolPos(ps){
+  if (poolFilters.positions[ps]) delete poolFilters.positions[ps];
+  else poolFilters.positions[ps] = true;
+  render();
+}
+function clearPoolPos(){ poolFilters.positions = {}; render(); }
+/* Search updates only the list so the input keeps focus */
+function updatePoolSearch(v){
+  poolFilters.q = v;
+  const list = document.getElementById('poolList');
+  const cnt = document.getElementById('poolCount');
+  if (!list) return;
+  const built = buildPoolList();
+  list.innerHTML = built.rows;
+  if (cnt) cnt.innerHTML = built.count;
+}
+function buildPoolList(){
+  const s = season();
+  const t = s.teams.find(x => x.id === currentTeamId);
+  ensureTryoutRegs(s);
+  const connected = s.tryoutRegs.filter(r => r.status === 'active' && s.connectedTryouts && s.connectedTryouts[r.id]);
+  if (!connected.length) return { rows: '<p class="hint" style="padding:.5rem 0">No tryout registrations connected yet — check one above to load its players for every team in this season.</p>', count: '' };
+  const selDivs = s.divisions.filter(dd => poolFilters.divs[dd.id]);
+  if (!selDivs.length) return { rows: '<p class="hint" style="padding:.5rem 0">Check at least one class above to see its tryout registrants.</p>', count: '' };
+  const q = poolFilters.q.trim().toLowerCase();
+  const multiReg = connected.length > 1;
+  const pitcherFee = s.feeTypes.find(f => /pitcher/i.test(f.name));
+  const homeDiv = s.divisions.find(x => x.id === t.divId);
+  let total = 0, placed = 0, shown = 0, rows = '';
+  selDivs.forEach(function(dd){
+    const classPill = `<span class="pill ${dd.id === t.divId ? 'pill-green' : 'pill-red'}">${esc(divShort(dd.name))}</span>`;
+    connected.forEach(function(reg){
+      const pool = ensurePoolReg(s, dd, reg.id);
+      pool.forEach(function(p){
+        total++;
+        if (p.takenBy != null) placed++;
+        if (q && !p.name.toLowerCase().includes(q)) return;
+        if (poolFilters.pitch === 'pitched' && !p.pitched) return;
+        if (poolFilters.pitch === 'no' && p.pitched) return;
+        const posSel = Object.keys(poolFilters.positions || {});
+        if (posSel.length && !poolFilters.positions[p.pos] && !(p.pos2 && poolFilters.positions[p.pos2])) return;
+        if (p.takenBy != null && !poolFilters.showPlaced) return;
+        shown++;
+        const pl = pitchLabel(p);
+        const pitchTag = pl ? `<span class="pill pill-gold">${pl}</span>` : '';
+        const sub = esc(p.pos + (p.pos2 ? ' / ' + p.pos2 : '')) + ' · ' + esc(multiReg ? reg.name : p.email);
+        if (p.takenBy === t.id){
+          rows += `<div class="pool-row"><span class="pool-name">${esc(p.name)}</span>${classPill}${pitchTag}<span class="pool-sub">${sub}</span><span class="pill pill-green tag">On This Team</span></div>`;
+          return;
+        }
+        if (p.takenBy != null){
+          const other = s.teams.find(x => x.id === p.takenBy);
+          rows += `<div class="pool-row"><span class="pool-name" style="color:var(--muted)">${esc(p.name)}</span>${classPill}${pitchTag}<span class="pool-sub">${sub}</span><span class="pill pill-navy tag">Placed — ${other ? esc(other.name) : 'Other Team'}</span><button class="link-red" onclick="movePlayerHere(${p.id})">Move Here</button></div>`;
+          return;
+        }
+        const guessFt = (pitcherFee && p.pitched) ? pitcherFee : s.feeTypes[0];
+        rows += `
+          <div class="pool-row">
+            <input type="checkbox" id="tp-${p.id}">
+            <label for="tp-${p.id}" class="pool-name" style="cursor:pointer">${esc(p.name)}</label>
+            ${classPill}${pitchTag}
+            <span class="pool-sub">${sub}</span>
+            ${s.feeTypes.length > 1 ? `
+            <select id="tpft-${p.id}" style="max-width:220px;font-size:.8rem;padding:.35rem .5rem;margin-left:auto">
+              ${s.feeTypes.map(ft => `<option value="${ft.id}" ${guessFt === ft ? 'selected' : ''}>${esc(ft.name)} — ${money(teamPrice(s, homeDiv, t, ft.id))}</option>`).join('')}
+            </select>` : ''}
+          </div>`;
+      });
+    });
+  });
+  if (!rows) rows = '<p class="hint" style="padding:.5rem 0">No players match these filters.</p>';
+  const count = `Showing <b>${shown}</b> of ${total} players across ${connected.length} connected tryout${connected.length > 1 ? 's' : ''} · <b>${placed} placed</b> · <b>${total - placed} unplaced</b>`;
+  return { rows: rows, count: count };
+}
+function addSelectedFromPool(){
+  const s = season();
+  const t = s.teams.find(x => x.id === currentTeamId);
+  ensureTryoutRegs(s);
+  const connected = s.tryoutRegs.filter(r => r.status === 'active' && s.connectedTryouts && s.connectedTryouts[r.id]);
+  const picked = [];
+  s.divisions.filter(dd => poolFilters.divs[dd.id]).forEach(function(dd){
+    connected.forEach(function(reg){
+      ensurePoolReg(s, dd, reg.id).forEach(function(p){
+        const cb = document.getElementById('tp-' + p.id);
+        if (cb && cb.checked) picked.push(p);
+      });
+    });
+  });
+  if (!picked.length){ toast('Check at least one player to add.'); return; }
+  const pitcherFee = s.feeTypes.find(f => /pitcher/i.test(f.name));
+  picked.forEach(function(p){
+    p.takenBy = t.id;
+    let ftId = s.feeTypes.length === 1 ? s.feeTypes[0].id : null;
+    const sel = document.getElementById('tpft-' + p.id);
+    if (sel) ftId = Number(sel.value);
+    if (ftId == null){
+      const guess = (pitcherFee && p.pitched) ? pitcherFee : feeTypeFor(s, p.pos);
+      ftId = guess ? guess.id : null;
+    }
+    t.roster.push({ id: nid(), name: p.name, pos: p.pos, pos2: p.pos2 || null, email: p.email, phone: p.phone,
+      source: 'tryout', tryoutId: p.id, feeTypeId: ftId,
+      registered: false, completion: 0, plan: null, paid: 0 });
+  });
+  render();
+  toast(picked.length + ' player(s) added — welcome emails with the registration link sent.');
+}
+/* Player is on another team — bring them (and their registration status) here */
+function movePlayerHere(poolId){
+  const s = season();
+  const t = s.teams.find(x => x.id === currentTeamId);
+  const poolPlayer = findPoolPlayer(s, poolId);
+  if (!poolPlayer) return;
+  const fromTeam = s.teams.find(x => x.id === poolPlayer.takenBy);
+  let entry = null;
+  if (fromTeam){
+    entry = (fromTeam.roster || []).find(r => r.tryoutId === poolId);
+    if (entry) fromTeam.roster = fromTeam.roster.filter(r => r !== entry);
+  }
+  poolPlayer.takenBy = t.id;
+  if (entry) t.roster.push(entry);
+  else t.roster.push({ id: nid(), name: poolPlayer.name, pos: poolPlayer.pos, pos2: poolPlayer.pos2 || null, email: poolPlayer.email, phone: poolPlayer.phone,
+    source: 'tryout', tryoutId: poolId, feeTypeId: (s.feeTypes[0] ? s.feeTypes[0].id : null),
+    registered: false, completion: 0, plan: null, paid: 0 });
+  render();
+  toast(poolPlayer.name + ' moved to ' + t.name + (fromTeam ? ' from ' + fromTeam.name : '') + '.');
+}
+
+function addManualPlayer(){
+  const s = season();
+  const t = s.teams.find(x => x.id === currentTeamId);
+  const first = document.getElementById('mp-first').value.trim();
+  const last = document.getElementById('mp-last').value.trim();
+  const email = document.getElementById('mp-email').value.trim();
+  const phone = document.getElementById('mp-phone').value.trim();
+  if (!first || !last){ toast('First and last name are required.'); return; }
+  if (!email){ toast('An email is required — that\'s where the welcome email goes.'); return; }
+  const ticketSel = document.getElementById('mp-ticket');
+  const ftId = ticketSel ? Number(ticketSel.value) : (s.feeTypes[0] ? s.feeTypes[0].id : null);
+  t.roster.push({ id: nid(), name: first + ' ' + last, pos: '', email: email, phone: phone,
+    source: 'manual', tryoutId: null, feeTypeId: ftId,
+    registered: false, completion: 0, plan: null, paid: 0 });
+  manualOpen = false;
+  render();
+  toast(first + ' ' + last + ' added — welcome email with the registration link sent.');
+}
+
+function removePlayer(pid){
+  const s = season();
+  const t = s.teams.find(x => x.id === currentTeamId);
+  const p = t.roster.find(x => x.id === pid);
+  t.roster = t.roster.filter(x => x.id !== pid);
+  let returned = false;
+  if (p && p.tryoutId != null){
+    const src = findPoolPlayer(s, p.tryoutId);
+    if (src){ src.takenBy = null; returned = true; }
+  }
+  render();
+  toast((p ? p.name : 'Player') + ' removed' + (returned ? ' — returned to the tryout pool.' : '.'));
+}
+
+function copyRegLink(teamId){
+  const s = season();
+  const t = s.teams.find(x => x.id === teamId);
+  const link = 'https://' + regLink(s, t);
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(link).then(
+      function(){ toast('Registration link copied.'); },
+      function(){ toast('Link: ' + link); });
+  } else toast('Link: ' + link);
+}
+
+/* ---------- Payments engine (shared by team tab + season page) ---------- */
+function findPlayerById(pid){
+  const s = season();
+  if (!s) return null;
+  for (let i = 0; i < s.teams.length; i++){
+    const t = s.teams[i];
+    const p = (t.roster || []).find(x => x.id === pid);
+    if (p) return { s: s, t: t, d: s.divisions.find(x => x.id === t.divId), p: p };
+  }
+  return null;
+}
+function todayStr(){
+  const n = new Date();
+  return ('0' + (n.getMonth()+1)).slice(-2) + '/' + ('0' + n.getDate()).slice(-2) + '/' + n.getFullYear();
+}
+const PAY_METHODS = ['Visa ••4242', 'Amex ••5009', 'Mastercard ••8821'];
+function mockTxId(p, suffix){ return 'ch_' + ((p.id * 2654435761) % 1e9).toString(36) + 'x' + suffix; }
+/* Build a player's transaction log from their plan/paid state (once) */
+function ensureTxns(s, d, t, p){
+  if (p.txns) return p.txns;
+  p.txns = [];
+  if (!p.registered) return p.txns;
+  const fee = playerFee(s, d, t, p);
+  const method = PAY_METHODS[p.id % 3];
+  if (p.plan === 'full'){
+    p.txns.push({ id: nid(), status: 'paid', date: '06/' + ('0' + (10 + p.id % 15)).slice(-2) + '/2026',
+      label: 'Full Payment', method: method, txId: mockTxId(p, 'f'), amount: fee });
+  } else {
+    const per = Math.floor(fee / 3);
+    const amounts = [per, per, fee - 2*per];
+    const dates = ['06/14/2026', '07/14/2026', '08/14/2026'];
+    const paidCount = fee ? Math.max(0, Math.min(3, Math.round((p.paid || 0) / (fee / 3)))) : 0;
+    for (let i = 0; i < 3; i++){
+      const st = i < paidCount ? 'paid' : 'scheduled';
+      p.txns.push({ id: nid(), status: st, date: dates[i], label: 'Installment ' + (i+1) + ' of 3',
+        method: st === 'paid' ? method : '', txId: st === 'paid' ? mockTxId(p, i) : '', amount: amounts[i] });
+    }
+  }
+  p.paid = p.txns.filter(x => x.status === 'paid').reduce((n, x) => n + x.amount, 0);
+  return p.txns;
+}
+/* A payFailed flag set after txns exist (e.g. Stripe webhook / simulate) turns the next charge into a failure */
+function reconcileFailed(s, d, t, p){
+  if (!p.txns) return;
+  if (p.payFailed && !p.txns.some(x => x.status === 'failed')){
+    const sch = p.txns.find(x => x.status === 'scheduled');
+    if (sch){
+      sch.status = 'failed'; sch.method = PAY_METHODS[p.id % 3]; sch.txId = mockTxId(p, 'd');
+    } else {
+      const fee = playerFee(s, d, t, p);
+      p.txns.push({ id: nid(), status: 'failed', date: todayStr(), label: 'Charge Attempt',
+        method: PAY_METHODS[p.id % 3], txId: mockTxId(p, 'd'), amount: Math.max(0, fee - (p.paid || 0)) || fee });
+    }
+  }
+  if (!p.payFailed) return;
+}
+function toggleTxn(pid){
+  if (openTxn[pid]) delete openTxn[pid];
+  else openTxn[pid] = true;
+  editTxnId = null;
+  render();
+}
+function refundTxn(pid, txnId){
+  const hit = findPlayerById(pid);
+  if (!hit) return;
+  const txn = hit.p.txns.find(x => x.id === txnId);
+  txn.status = 'refunded';
+  hit.p.paid = Math.max(0, (hit.p.paid || 0) - txn.amount);
+  render();
+  toast(money(txn.amount) + ' refunded to ' + hit.p.name + '.');
+}
+function retryTxn(pid, txnId){
+  const hit = findPlayerById(pid);
+  if (!hit) return;
+  const txn = hit.p.txns.find(x => x.id === txnId);
+  txn.status = 'paid'; txn.date = todayStr(); txn.txId = mockTxId(hit.p, 'r');
+  hit.p.paid = (hit.p.paid || 0) + txn.amount;
+  hit.p.payFailed = hit.p.txns.some(x => x.status === 'failed');
+  render();
+  toast('Retry succeeded — ' + money(txn.amount) + ' collected from ' + hit.p.name + '.');
+}
+function editTxnStart(txnId){ editTxnId = txnId; render(); }
+function editTxnCancel(){ editTxnId = null; render(); }
+function editTxnSave(pid, txnId){
+  const hit = findPlayerById(pid);
+  if (!hit) return;
+  const txn = hit.p.txns.find(x => x.id === txnId);
+  const amt = Number(document.getElementById('et-amt-' + txnId).value);
+  const date = document.getElementById('et-date-' + txnId).value.trim();
+  if (!amt || amt <= 0){ toast('Enter a valid amount.'); return; }
+  txn.amount = Math.round(amt);
+  if (date) txn.date = date;
+  editTxnId = null;
+  render();
+  toast(txn.label + ' updated for ' + hit.p.name + '.');
+}
+function removeTxn(pid, txnId){
+  const hit = findPlayerById(pid);
+  if (!hit) return;
+  const txn = hit.p.txns.find(x => x.id === txnId);
+  hit.p.txns = hit.p.txns.filter(x => x.id !== txnId);
+  editTxnId = null;
+  render();
+  toast(txn.label + ' removed from ' + hit.p.name + '\u2019s schedule.');
+}
+function toggleApply(pid){
+  if (applyOpen[pid]) delete applyOpen[pid];
+  else applyOpen[pid] = true;
+  render();
+}
+function applyPayment(pid){
+  const hit = findPlayerById(pid);
+  if (!hit) return;
+  const amt = Number(document.getElementById('ap-amt-' + pid).value);
+  if (!amt || amt <= 0){ toast('Enter the payment amount first.'); return; }
+  ensureTxns(hit.s, hit.d, hit.t, hit.p);
+  hit.p.txns.push({ id: nid(), status: 'paid', date: todayStr(), label: 'Manual Payment',
+    method: 'Applied by admin', txId: '', amount: Math.round(amt) });
+  hit.p.paid = (hit.p.paid || 0) + Math.round(amt);
+  delete applyOpen[pid];
+  render();
+  toast(money(Math.round(amt)) + ' applied to ' + hit.p.name + '.');
+}
+const TXN_PILLS = { paid: 'pill-green', scheduled: 'pill-navy', failed: 'pill-red', refunded: 'pill-gold' };
+const TXN_NAMES = { paid: 'Paid', scheduled: 'Scheduled', failed: '⚠ Failed', refunded: 'Refunded' };
+function buildTxnLog(s, d, t, p, colspan){
+  const fee = playerFee(s, d, t, p);
+  const paid = Math.min(p.paid || 0, fee);
+  ensureTxns(s, d, t, p);
+  reconcileFailed(s, d, t, p);
+  const lines = p.txns.map(function(txn){
+    if (editTxnId === txn.id){
+      return `
+      <div class="txn-line">
+        <span class="pill ${TXN_PILLS[txn.status]}">${TXN_NAMES[txn.status]}</span>
+        <span class="txn-label">${esc(txn.label)}</span>
+        <span class="money-wrap"><input type="number" min="1" step="1" id="et-amt-${txn.id}" value="${txn.amount}"></span>
+        <input type="text" id="et-date-${txn.id}" value="${esc(txn.date)}" placeholder="MM/DD/YYYY" style="max-width:120px">
+        <button class="link-red" onclick="editTxnSave(${p.id}, ${txn.id})">Save</button>
+        <button class="link-muted" onclick="removeTxn(${p.id}, ${txn.id})">Remove</button>
+        <button class="link-muted" onclick="editTxnCancel()">Cancel</button>
+      </div>`;
+    }
+    let action = '';
+    if (txn.status === 'paid') action = `<button class="link-muted" onclick="refundTxn(${p.id}, ${txn.id})">Refund</button>`;
+    if (txn.status === 'scheduled') action = `<button class="link-muted" onclick="editTxnStart(${txn.id})">Edit</button>`;
+    if (txn.status === 'failed') action = `<button class="link-red" onclick="retryTxn(${p.id}, ${txn.id})">Retry Charge</button>`;
+    return `
+    <div class="txn-line">
+      <span class="pill ${TXN_PILLS[txn.status]}">${TXN_NAMES[txn.status]}</span>
+      <span class="txn-date">${esc(txn.date)}</span>
+      <span class="txn-label">${esc(txn.label)}</span>
+      ${(txn.method || txn.txId) ? `<span class="txn-meta">${esc([txn.method, txn.txId].filter(Boolean).join(' · '))}</span>` : ''}
+      <span class="txn-amt">${money(txn.amount)}</span>
+      ${action}
+    </div>`;
+  }).join('');
+  const applyForm = applyOpen[p.id] ? `
+    <div class="txn-line" style="border-top:1px solid var(--line)">
+      <span class="txn-label">Apply Payment</span>
+      <span class="money-wrap"><input type="number" min="1" step="1" id="ap-amt-${p.id}" placeholder="0"></span>
+      <span class="txn-date">${todayStr()}</span>
+      <button class="btn btn-primary btn-sm" onclick="applyPayment(${p.id})">Apply</button>
+      <button class="link-muted" onclick="toggleApply(${p.id})">Cancel</button>
+    </div>` : '';
+  return `
+  <tr><td colspan="${colspan}" class="no-label" style="padding:0">
+    <div class="txn-wrap">
+      <div class="txn-head">
+        <span class="txn-title">Transaction Log — ${esc(p.name)}</span>
+        <span class="txn-sum">Fee ${money(fee)} · Paid <b style="color:var(--green)">${money(paid)}</b> · Balance <b style="color:${fee - paid > 0 ? 'var(--red)' : 'var(--green)'}">${money(Math.max(0, fee - paid))}</b></span>
+      </div>
+      ${p.txns.length ? lines : '<p class="hint" style="padding:.4rem 0">No transactions yet.</p>'}
+      ${applyForm}
+      ${!applyOpen[p.id] ? `<div style="margin-top:.7rem"><button class="btn btn-outline-dark btn-sm" onclick="toggleApply(${p.id})">+ Apply Payment</button></div>` : ''}
+    </div>
+  </td></tr>`;
+}
+function renderPayRow(s, d, t, p, showTeam){
+  const fee = playerFee(s, d, t, p);
+  ensureTxns(s, d, t, p);
+  reconcileFailed(s, d, t, p);
+  const ft = playerFeeType(s, p);
+  const paid = Math.min(p.paid || 0, fee);
+  const bal = Math.max(0, fee - paid);
+  const payPct = fee ? Math.round(paid / fee * 100) : 0;
+  let status;
+  if (p.payFailed) status = '<span class="pill pill-red">⚠ Failed</span>';
+  else if (!p.registered) status = '<span class="pill pill-navy">Not Registered</span>';
+  else if (paid >= fee && fee > 0) status = '<span class="pill pill-green">Paid</span>';
+  else if (paid > 0) status = '<span class="pill pill-blue">Installments</span>';
+  else status = '<span class="pill pill-red">Unpaid</span>';
+  const open = openTxn[p.id];
+  const cols = showTeam ? 7 : 6;
+  return `
+  <tr class="pay-row" onclick="toggleTxn(${p.id})">
+    <td data-label="Player"><span style="color:var(--muted);margin-right:.35rem">${open ? '▾' : '▸'}</span><span class="cell-strong">${esc(p.name)}</span><div class="cell-sub" style="margin-left:1rem">${ft ? esc(ft.name) : '—'}</div></td>
+    ${showTeam ? `<td data-label="Team"><button class="link-red" style="font-size:.86rem;padding:0" onclick="event.stopPropagation();openTeam(${t.id})">${esc(t.name)}</button><div class="cell-sub">${esc(divShort(d.name))}</div></td>` : ''}
+    <td data-label="Plan">${p.plan === 'installments' ? 'Installments' : (p.plan === 'full' ? 'Paid in full' : '<span style="color:var(--muted)">—</span>')}</td>
+    <td data-label="Fee">${money(fee)}</td>
+    <td data-label="Paid">${p.registered ? `<span class="pay-cell"><span class="pay-ring ${p.payFailed ? 'failed' : ''}" style="--p:${payPct}" data-pct="${payPct}%"></span><span>${money(paid)}</span></span>` : money(paid)}</td>
+    <td data-label="Balance">${bal ? money(bal) : '<span style="color:var(--green);font-weight:600">$0</span>'}</td>
+    <td data-label="Status">${status}</td>
+  </tr>
+  ${open ? buildTxnLog(s, d, t, p, cols) : ''}`;
+}
+
+/* ---------- Payments tab (team) ---------- */
+function renderPaymentsTab(s, d, t){
+  const roster = t.roster || [];
+  if (!roster.length) return `<div class="card card-pad" style="text-align:center;color:var(--muted);font-size:.9rem">Add players to the roster to start tracking payments.</div>`;
+  const rows = roster.map(p => renderPayRow(s, d, t, p, false)).join('');
+  let totFee = 0, totPaid = 0;
+  roster.forEach(function(p){
+    const fee = playerFee(s, d, t, p);
+    totFee += fee; totPaid += Math.min(p.paid || 0, fee);
+  });
+  return `
+  <div class="card">
+    <div class="table-wrap">
+      <table class="team-table">
+        <thead><tr><th>Player</th><th>Plan</th><th>Fee</th><th>Paid</th><th>Balance</th><th>Status</th></tr></thead>
+        <tbody>
+          ${rows}
+          <tr class="totals-row">
+            <td data-label="" class="no-label">Team Total</td>
+            <td data-label="" class="no-label"></td>
+            <td data-label="Fee">${money(totFee)}</td>
+            <td data-label="Paid">${money(totPaid)}</td>
+            <td data-label="Balance">${money(Math.max(0, totFee - totPaid))}</td>
+            <td data-label="" class="no-label"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <p class="hint-dark" style="margin-top:.7rem">Click any player's row to open their full transaction log — installments, retries, refunds, and manual payments.</p>`;
+}
+
+/* ---------- Season-wide payments page ---------- */
+function openSeasonPayments(){
+  seasonPayOpen = true;
+  seasonPayFilters = { team: 'all', status: 'all' };
+  for (const k in openTxn) delete openTxn[k];
+  for (const k in applyOpen) delete applyOpen[k];
+  editTxnId = null;
+  render(); window.scrollTo({top:0});
+}
+function closeSeasonPayments(){ seasonPayOpen = false; render(); window.scrollTo({top:0}); }
+function setSeasonPayTeam(v){ seasonPayFilters.team = v; render(); }
+function setSeasonPayStatus(v){ seasonPayFilters.status = v; render(); }
+function payCategory(s, d, t, p){
+  const fee = playerFee(s, d, t, p);
+  const paid = Math.min(p.paid || 0, fee);
+  if (p.payFailed) return 'failed';
+  if (!p.registered) return 'notreg';
+  if (paid >= fee && fee > 0) return 'paid';
+  if (paid > 0) return 'inst';
+  return 'unpaid';
+}
+const SEASON_PAY_STATUSES = { all: 'All', paid: 'Paid', inst: 'Installments', unpaid: 'Unpaid', failed: '⚠ Failed', notreg: 'Not Registered' };
+function renderSeasonPayments(s){
+  let totFee = 0, totPaid = 0, failNames = [];
+  const allRows = [];
+  s.teams.forEach(function(t){
+    const d = s.divisions.find(x => x.id === t.divId);
+    if (!d) return;
+    (t.roster || []).forEach(function(p){
+      ensureTxns(s, d, t, p);
+      reconcileFailed(s, d, t, p);
+      const fee = playerFee(s, d, t, p);
+      totFee += fee; totPaid += Math.min(p.paid || 0, fee);
+      if (p.payFailed) failNames.push(p.name + ' (' + t.name + ')');
+      if (seasonPayFilters.team !== 'all' && t.id !== Number(seasonPayFilters.team)) return;
+      if (seasonPayFilters.status !== 'all' && payCategory(s, d, t, p) !== seasonPayFilters.status) return;
+      allRows.push(renderPayRow(s, d, t, p, true));
+    });
+  });
+  const pct = totFee ? Math.round(totPaid / totFee * 100) : 0;
+  const failStrip = failNames.length ? `
+    <div class="card" style="margin-top:1rem;border-left:5px solid var(--red);padding:.85rem 1.2rem;display:flex;gap:.8rem;align-items:center;flex-wrap:wrap">
+      <span class="pill pill-red">⚠ ${failNames.length} Failed Payment${failNames.length > 1 ? 's' : ''}</span>
+      <span style="font-size:.87rem;color:var(--ink)">${failNames.map(esc).join(', ')} — once Stripe is connected, failures will land here automatically.</span>
+      <button class="link-red" style="margin-left:auto" onclick="setSeasonPayStatus('failed')">Show Only Failed</button>
+    </div>` : '';
+  return `
+  <div style="margin-top:1.6rem">
+    <button class="back-link" onclick="closeSeasonPayments()">← Back to Team Management</button>
+    <div class="card card-pad">
+      <div class="team-head">
+        <div>
+          <div class="team-name">Season Payments</div>
+          <div class="team-sub"><span>${esc(s.name)}</span> · every registered player across every team</div>
+        </div>
+      </div>
+    </div>
+    <div class="stat-tiles four" style="margin-top:1.2rem">
+      <div class="stat-tile"><div class="st-num">${money(totFee)}</div><div class="st-label">Total Fees</div></div>
+      <div class="stat-tile accent-red">
+        <div class="st-num">${money(totPaid)}</div>
+        <div class="st-label">Collected</div>
+        <div class="st-sub">${pct}% of total fees</div>
+        <div class="progress"><span style="width:${pct}%"></span></div>
+      </div>
+      <div class="stat-tile"><div class="st-num">${money(Math.max(0, totFee - totPaid))}</div><div class="st-label">Balance Due</div></div>
+      <div class="stat-tile ${failNames.length ? 'accent-red' : ''}"><div class="st-num">${failNames.length}</div><div class="st-label">Failed Payments</div></div>
+    </div>
+    ${failStrip}
+    <div class="season-bar" style="margin:1.4rem 0 1rem">
+      <div>
+        <label class="field-label" style="color:#aab3cc">Team</label>
+        <select onchange="setSeasonPayTeam(this.value)" style="max-width:260px">
+          <option value="all" ${seasonPayFilters.team==='all'?'selected':''}>All Teams</option>
+          ${s.teams.map(t => `<option value="${t.id}" ${String(seasonPayFilters.team)===String(t.id)?'selected':''}>${esc(t.name)}</option>`).join('')}
+        </select>
+      </div>
+      <div>
+        <label class="field-label" style="color:#aab3cc">Status</label>
+        <div class="chip-row" style="margin-top:.2rem">
+          ${Object.keys(SEASON_PAY_STATUSES).map(k => `<button class="chip ${seasonPayFilters.status===k?'active':''}" style="background:${seasonPayFilters.status===k?'':'#fff'}" onclick="setSeasonPayStatus('${k}')">${SEASON_PAY_STATUSES[k]}</button>`).join('')}
+        </div>
+      </div>
+    </div>
+    ${allRows.length ? `
+    <div class="card">
+      <div class="table-wrap">
+        <table class="team-table">
+          <thead><tr><th>Player</th><th>Team</th><th>Plan</th><th>Fee</th><th>Paid</th><th>Balance</th><th>Status</th></tr></thead>
+          <tbody>${allRows.join('')}</tbody>
+        </table>
+      </div>
+    </div>
+    <p class="hint-dark" style="margin-top:.7rem">Click any player's row for their full transaction log. Click a team name to jump to that team's page.</p>` : `
+    <div class="card card-pad" style="text-align:center;color:var(--muted);font-size:.9rem">No players match these filters.</div>`}
+  </div>`;
+}
+
+/* ---------- Communication tab ---------- */
+const AUDIENCES = { all: 'All Players', notreg: 'Not Registered', unpaid: 'Unpaid Balance', reg: 'Registered' };
+function audienceList(s, d, t, aud){
+  const r = t.roster || [];
+  if (aud === 'notreg') return r.filter(p => !p.registered);
+  if (aud === 'reg') return r.filter(p => p.registered);
+  if (aud === 'unpaid') return r.filter(p => (p.paid || 0) < playerFee(s, d, t, p));
+  return r;
+}
+function initCommsSel(s, d, t){
+  commsSel = {};
+  audienceList(s, d, t, commsAud === 'custom' ? 'all' : commsAud).forEach(p => { commsSel[p.id] = true; });
+}
+function setCommsAud(a){
+  const s = season();
+  const t = s.teams.find(x => x.id === currentTeamId);
+  const d = s.divisions.find(x => x.id === t.divId);
+  commsAud = a;
+  commsSel = {};
+  audienceList(s, d, t, a).forEach(p => { commsSel[p.id] = true; });
+  render();
+}
+function toggleCommsPlayer(pid){
+  if (commsSel == null) return;
+  if (commsSel[pid]) delete commsSel[pid];
+  else commsSel[pid] = true;
+  commsAud = 'custom';
+  render();
+}
+function renderCommsTab(s, d, t){
+  if (commsSel == null) initCommsSel(s, d, t);
+  const roster = t.roster || [];
+  const count = roster.filter(p => commsSel[p.id]).length;
+  const recips = roster.map(p => `
+    <div class="recip-row">
+      <input type="checkbox" id="rc-${p.id}" ${commsSel[p.id] ? 'checked' : ''} onchange="toggleCommsPlayer(${p.id})">
+      <label for="rc-${p.id}">${esc(p.name)}</label>
+      <span class="recip-sub">${p.registered ? '<span class="pill pill-green">Registered</span>' : '<span class="pill pill-navy">Invited</span>'}</span>
+    </div>`).join('');
+  const hist = (t.comms || []).map(c => `
+    <li><span class="comms-when">${esc(c.when)}</span><b>${esc(c.subject)}</b><span class="pool-sub">to ${esc(AUDIENCES[c.aud] || 'Selected Players')} (${c.count})</span></li>`).join('');
+  return `
+  <div class="card card-pad">
+    <div class="section-head" style="margin-top:0">Email This Team</div>
+    <div class="section-body">
+      <div class="comms-grid">
+        <div class="comms-left">
+          <label class="field-label">Send To</label>
+          <div class="chip-row" style="margin-top:.2rem">
+            ${Object.keys(AUDIENCES).map(k => `<button class="chip filter-chip ${commsAud===k?'active':''}" onclick="setCommsAud('${k}')">${AUDIENCES[k]}</button>`).join('')}
+          </div>
+          <p class="hint" style="margin-top:.5rem"><b>${count}</b> player(s) will receive this${commsAud === 'custom' ? ' — hand-picked from the list' : ''}. Uncheck or check names on the right to fine-tune.</p>
+          <div style="margin-top:1rem"><label class="field-label">Subject</label><input type="text" id="cm-subject" placeholder="e.g. Practice schedule this week" value="${esc(commsDraft.subject)}"></div>
+          <div style="margin-top:1rem"><label class="field-label">Message</label><textarea id="cm-body" placeholder="Write your message to the team…">${esc(commsDraft.body)}</textarea></div>
+          <div style="margin-top:1rem"><button class="btn btn-primary btn-sm" onclick="sendTeamEmail()" ${count ? '' : 'disabled'}>Send Email</button></div>
+        </div>
+        <div class="comms-right">
+          <label class="field-label">Recipients (${count} of ${roster.length})</label>
+          ${roster.length ? recips : '<p class="hint">No players on the roster yet.</p>'}
+        </div>
+      </div>
+    </div>
+    ${(t.comms || []).length ? `
+    <div class="section-head">Sent Messages</div>
+    <div class="section-body"><ul class="comms-hist">${hist}</ul></div>` : ''}
+  </div>`;
+}
+function sendTeamEmail(){
+  const s = season();
+  const t = s.teams.find(x => x.id === currentTeamId);
+  const subject = document.getElementById('cm-subject').value.trim();
+  const body = document.getElementById('cm-body').value.trim();
+  if (!subject){ toast('Add a subject line first.'); return; }
+  if (!body){ toast('Write a message before sending.'); return; }
+  const count = (t.roster || []).filter(p => commsSel && commsSel[p.id]).length;
+  if (!count){ toast('Pick at least one recipient.'); return; }
+  t.comms = t.comms || [];
+  t.comms.unshift({ when: new Date().toLocaleDateString('en-US', {month:'short', day:'numeric'}) + ' · ' + new Date().toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit'}), subject: subject, aud: commsAud, count: count });
+  render();                                   /* capture runs inside render */
+  commsDraft = { subject:'', body:'' };       /* then clear draft + fields */
+  const sEl = document.getElementById('cm-subject');
+  const bEl = document.getElementById('cm-body');
+  if (sEl) sEl.value = '';
+  if (bEl) bEl.value = '';
+  toast('Email sent to ' + count + ' player(s).');
+}
+
+/* ---------- Events tab ---------- */
+const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtEventDates(ev){
+  function parse(iso){ if (!iso) return null; const p = iso.split('-'); return { y:+p[0], m:+p[1], d:+p[2] }; }
+  const a = parse(ev.start), b = parse(ev.end);
+  if (!a && !b) return 'Dates TBD';
+  if (a && !b) return MONTHS_SHORT[a.m-1] + ' ' + a.d + ', ' + a.y;
+  if (a && b) return MONTHS_SHORT[a.m-1] + ' ' + a.d + ' – ' + MONTHS_SHORT[b.m-1] + ' ' + b.d + ', ' + b.y;
+  return MONTHS_SHORT[b.m-1] + ' ' + b.d + ', ' + b.y;
+}
+function renderEventsTab(s, d, t){
+  const evs = (t.events || []).slice().sort((a,b) => (a.start || '9999') < (b.start || '9999') ? -1 : 1);
+  const editing = editingEventId != null ? (t.events || []).find(e => e.id === editingEventId) : null;
+  const ev = editing || { org:'', name:'', start:'', end:'', city:'', state:'', site:'', hotel:'' };
+
+  const form = eventFormOpen ? `
+    <div class="section-head red" style="margin-top:0">${editing ? 'Edit Event' : 'Add An Event'}</div>
+    <div class="section-body" style="margin-bottom:1.4rem">
+      <div class="form-grid">
+        <div><label class="field-label">Tournament Organization <span style="color:var(--red)">*</span></label><input type="text" id="ev-org" placeholder="e.g. Perfect Game, Prospect Select" value="${esc(ev.org)}"></div>
+        <div><label class="field-label">Tournament Name <span style="color:var(--red)">*</span></label><input type="text" id="ev-name" placeholder="e.g. PG WWBA" value="${esc(ev.name)}"></div>
+        <div><label class="field-label">Start Date</label><input type="date" id="ev-start" value="${esc(ev.start)}"></div>
+        <div><label class="field-label">End Date</label><input type="date" id="ev-end" value="${esc(ev.end)}"></div>
+        <div><label class="field-label">City</label><input type="text" id="ev-city" placeholder="City" value="${esc(ev.city)}"></div>
+        <div><label class="field-label">State</label><input type="text" id="ev-state" placeholder="e.g. FL" value="${esc(ev.state)}"></div>
+        <div><label class="field-label">Tournament Website</label><input type="text" id="ev-site" placeholder="https://…" value="${esc(ev.site)}"></div>
+        <div><label class="field-label">Hotel Link</label><input type="text" id="ev-hotel" placeholder="https://…" value="${esc(ev.hotel)}"></div>
+      </div>
+      <p class="hint" style="margin-top:.7rem">Only organization and tournament name are required — dates, location, and links can be added or changed as details firm up.</p>
+      <div style="margin-top:1rem;display:flex;gap:.7rem;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm" onclick="saveEvent()">${editing ? 'Save Changes' : 'Add Event'}</button>
+        <button class="link-muted" onclick="eventFormOpen=false;editingEventId=null;render()">Cancel</button>
+      </div>
+    </div>` : '';
+
+  const list = evs.map(e => `
+    <div class="event-row">
+      <span class="event-org">${esc(e.org)}</span>
+      <div class="event-main">
+        <div class="event-name">${esc(e.name)}</div>
+        <div class="event-sub">${fmtEventDates(e)}${e.city ? ' · ' + esc(e.city) + (e.state ? ', ' + esc(e.state) : '') : (e.state ? ' · ' + esc(e.state) : '')}</div>
+      </div>
+      <div class="event-links">
+        ${e.site ? `<a class="link-red" href="${esc(e.site)}" target="_blank" rel="noopener">Website</a>` : ''}
+        ${e.hotel ? `<a class="link-red" href="${esc(e.hotel)}" target="_blank" rel="noopener">Hotel</a>` : ''}
+        <button class="link-muted" onclick="editEvent(${e.id})">Edit</button>
+      </div>
+    </div>`).join('');
+
+  return `
+  <div class="card card-pad">
+    ${form}
+    <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:.6rem">
+      <span class="field-label" style="margin:0">Season Events (${evs.length})</span>
+      ${eventFormOpen ? '' : '<button class="btn btn-primary btn-sm" onclick="openEventForm()">+ Add Event</button>'}
+    </div>
+    ${evs.length ? list : '<p class="hint" style="padding:.6rem 0">No events yet — coaches add the summer\u2019s tournaments here so the whole team schedule lives in one place.</p>'}
+  </div>`;
+}
+function openEventForm(){ eventFormOpen = true; editingEventId = null; render(); }
+function editEvent(id){ eventFormOpen = true; editingEventId = id; render(); window.scrollTo({top:0}); }
+function saveEvent(){
+  const s = season();
+  const t = s.teams.find(x => x.id === currentTeamId);
+  const org = document.getElementById('ev-org').value.trim();
+  const name = document.getElementById('ev-name').value.trim();
+  if (!org){ toast('Tournament organization is required.'); return; }
+  if (!name){ toast('Tournament name is required.'); return; }
+  const data = {
+    org: org, name: name,
+    start: document.getElementById('ev-start').value,
+    end: document.getElementById('ev-end').value,
+    city: document.getElementById('ev-city').value.trim(),
+    state: document.getElementById('ev-state').value.trim(),
+    site: document.getElementById('ev-site').value.trim(),
+    hotel: document.getElementById('ev-hotel').value.trim()
+  };
+  t.events = t.events || [];
+  if (editingEventId != null){
+    const ex = t.events.find(e => e.id === editingEventId);
+    Object.assign(ex, data);
+    toast(name + ' updated.');
+  } else {
+    data.id = nid();
+    t.events.push(data);
+    toast(name + ' added to the schedule.');
+  }
+  eventFormOpen = false; editingEventId = null;
+  render();
+}
+
+/* ---------- Coaches tab ---------- */
+const COACH_ROLES = { head: 'Head Coach', assistant: 'Assistant Coach' };
+/* Migrate wizard-created teams: coach text field becomes a staff connection */
+function ensureStaff(t){
+  if (t.staff) return;
+  t.staff = [];
+  if (t.coach){
+    let c = coachDirectory.find(x => x.name.toLowerCase() === t.coach.toLowerCase());
+    if (!c){
+      c = { id: nid(), name: t.coach, email: '', phone: '', registered: false };
+      coachDirectory.push(c);
+    }
+    t.staff.push({ id: nid(), coachId: c.id, role: 'head' });
+  }
+}
+function headCoachOf(t){
+  const entry = (t.staff || []).find(x => x.role === 'head');
+  if (!entry) return null;
+  return coachDirectory.find(c => c.id === entry.coachId) || null;
+}
+function viewCoach(cid){
+  const c = coachDirectory.find(x => x.id === cid);
+  toast('Coach profiles are coming — ' + (c ? c.name : 'this coach') + '\u2019s page on the site will open here.');
+}
+function renderCoachesTab(s, d, t){
+  ensureStaff(t);
+  const staffRows = t.staff.map(en => {
+    const c = coachDirectory.find(x => x.id === en.coachId);
+    if (!c) return '';
+    const roleCell = editStaffId === en.id ? `
+        <select id="es-role-${en.id}" style="max-width:180px;font-size:.84rem;padding:.4rem .5rem">
+          <option value="head" ${en.role==='head'?'selected':''}>Head Coach</option>
+          <option value="assistant" ${en.role==='assistant'?'selected':''}>Assistant Coach</option>
+        </select>`
+      : `<span class="pill ${en.role==='head'?'pill-blue':'pill-navy'}">${COACH_ROLES[en.role]}</span>`;
+    const actions = editStaffId === en.id ? `
+        <button class="link-red" onclick="saveStaffRole(${en.id})">Save</button>
+        <span style="padding:0 .2rem"></span>
+        <button class="link-muted" onclick="editStaffId=null;render()">Cancel</button>`
+      : `
+        <button class="link-red" onclick="editStaffRole(${en.id})">Edit</button>
+        <span style="padding:0 .2rem"></span>
+        <button class="link-muted" onclick="removeStaff(${en.id})">Remove</button>`;
+    return `
+    <tr>
+      <td data-label="Name"><button class="link-red" style="font-size:.9rem;padding:0" onclick="viewCoach(${c.id})">${esc(c.name)}</button>
+        ${(c.email || c.phone) ? `<div class="cell-sub">${[c.email, c.phone].filter(Boolean).map(esc).join(' · ')}</div>` : ''}</td>
+      <td data-label="Role">${roleCell}</td>
+      <td data-label="Status">${c.registered ? '<span class="pill pill-green">Registered</span>' : '<span class="pill pill-gold">Invite Sent</span>'}</td>
+      <td data-label="Actions" style="text-align:right;white-space:nowrap">${actions}</td>
+    </tr>`;
+  }).join('');
+
+  const manualForm = manualCoachOpen ? `
+    <div style="margin-top:1.1rem;border-top:1px solid var(--line);padding-top:1rem">
+      <label class="field-label">New Coach — Not In The System Yet</label>
+      <p class="hint" style="margin-bottom:.7rem">They'll get an email and text notification to complete their coach registration.</p>
+      <div class="form-grid">
+        <div class="full"><label class="field-label">Coach Name</label><input type="text" id="mc-name" value="${esc(coachSearch)}" placeholder="First and last name"></div>
+        <div><label class="field-label">Email</label><input type="email" id="mc-email" placeholder="coach@email.com"></div>
+        <div><label class="field-label">Phone</label><input type="tel" id="mc-phone" placeholder="(813) 555-0100"></div>
+      </div>
+      <div style="margin-top:1rem;display:flex;gap:.7rem;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm" onclick="addManualCoach()">Add Coach &amp; Send Registration Invite</button>
+        <button class="link-muted" onclick="manualCoachOpen=false;render()">Cancel</button>
+      </div>
+    </div>` : '';
+
+  return `
+  <div class="card card-pad">
+    <div class="section-head" style="margin-top:0">Connect A Coach</div>
+    <div class="section-body">
+      <div class="editor-row">
+        <div style="min-width:170px">
+          <label class="field-label">Role On This Team</label>
+          <select id="coach-role" style="max-width:200px">
+            <option value="head">Head Coach</option>
+            <option value="assistant">Assistant Coach</option>
+          </select>
+        </div>
+        <div style="flex:1;min-width:220px">
+          <label class="field-label">Coach Name</label>
+          <input type="text" id="coach-search" placeholder="Start typing a name…" value="${esc(coachSearch)}" oninput="updateCoachSuggestions(this.value)" style="max-width:100%">
+        </div>
+      </div>
+      <div id="coachSuggest" style="margin-top:.6rem"></div>
+      ${manualForm}
+      <p class="hint" style="margin-top:1rem">Directors aren't added here — once coach registration and staff management are built, a division director (say, 2027) will automatically appear on every 2027 team.</p>
+    </div>
+    <div class="section-head">Team Staff (${t.staff.length})</div>
+    ${t.staff.length ? `
+    <div class="table-wrap" style="border:1.5px solid var(--line);border-top:none;border-radius:0 0 8px 8px;overflow:hidden">
+      <table class="team-table">
+        <thead><tr><th>Name</th><th>Role</th><th>Status</th><th></th></tr></thead>
+        <tbody>${staffRows}</tbody>
+      </table>
+    </div>` : `
+    <div class="section-body"><p class="hint">No coaches connected to this team yet — search the system above or add one manually.</p></div>`}
+  </div>`;
+}
+/* Type-ahead: updates only the suggestion list so the input keeps focus */
+function updateCoachSuggestions(v){
+  coachSearch = v;
+  const box = document.getElementById('coachSuggest');
+  if (!box) return;
+  const s = season();
+  const t = s.teams.find(x => x.id === currentTeamId);
+  const q = v.trim().toLowerCase();
+  if (!q){ box.innerHTML = ''; return; }
+  const onTeam = {};
+  (t.staff || []).forEach(en => { onTeam[en.coachId] = true; });
+  const matches = coachDirectory.filter(c => c.name.toLowerCase().includes(q) && !onTeam[c.id]).slice(0, 6);
+  if (!matches.length){
+    box.innerHTML = `
+      <div class="pool-row" style="border-bottom:none">
+        <span class="pool-sub">No coach named "${esc(v.trim())}" in the system yet.</span>
+        <button class="link-red" onclick="manualCoachOpen=true;render()">+ Add them manually</button>
+      </div>`;
+    return;
+  }
+  box.innerHTML = matches.map(c => `
+    <div class="pool-row">
+      <span class="pool-name">${esc(c.name)}</span>
+      ${c.registered ? '<span class="pill pill-green">In System</span>' : '<span class="pill pill-gold">Registration Pending</span>'}
+      <button class="link-red tag" onclick="connectCoach(${c.id})">Connect</button>
+    </div>`).join('');
+}
+function connectCoach(cid){
+  const s = season();
+  const t = s.teams.find(x => x.id === currentTeamId);
+  const roleSel = document.getElementById('coach-role');
+  const role = roleSel ? roleSel.value : 'head';
+  t.staff.push({ id: nid(), coachId: cid, role: role });
+  const c = coachDirectory.find(x => x.id === cid);
+  coachSearch = ''; manualCoachOpen = false;
+  render();
+  toast((c ? c.name : 'Coach') + ' connected as ' + COACH_ROLES[role] + '.');
+}
+function addManualCoach(){
+  const s = season();
+  const t = s.teams.find(x => x.id === currentTeamId);
+  const name = document.getElementById('mc-name').value.trim();
+  const email = document.getElementById('mc-email').value.trim();
+  const phone = document.getElementById('mc-phone').value.trim();
+  if (!name){ toast('Coach name is required.'); return; }
+  if (!email || !phone){ toast('Email and phone are required — that\'s how the registration invite reaches them.'); return; }
+  const roleSel = document.getElementById('coach-role');
+  const role = roleSel ? roleSel.value : 'head';
+  const c = { id: nid(), name: name, email: email, phone: phone, registered: false };
+  coachDirectory.push(c);
+  t.staff.push({ id: nid(), coachId: c.id, role: role });
+  coachSearch = ''; manualCoachOpen = false;
+  render();
+  toast(name + ' added — coach registration invite sent to ' + email + '.');
+}
+function editStaffRole(sid){ editStaffId = sid; render(); }
+function saveStaffRole(sid){
+  const s = season();
+  const t = s.teams.find(x => x.id === currentTeamId);
+  const en = (t.staff || []).find(x => x.id === sid);
+  if (!en) return;
+  const sel = document.getElementById('es-role-' + sid);
+  const newRole = sel ? sel.value : en.role;
+  const changed = newRole !== en.role;
+  en.role = newRole;
+  editStaffId = null;
+  const c = coachDirectory.find(x => x.id === en.coachId);
+  render();
+  toast(changed ? (c ? c.name : 'Coach') + ' is now ' + COACH_ROLES[newRole] + '.' : 'No change made.');
+}
+function removeStaff(sid){
+  const s = season();
+  const t = s.teams.find(x => x.id === currentTeamId);
+  t.staff = (t.staff || []).filter(x => x.id !== sid);
+  render();
+  toast('Coach removed from this team.');
+}
+
+/* ============================================================
+   DEMO CONTROLS (remove when wired to real data)
+   ============================================================ */
+function demoReset(){
+  seasons = []; currentSeasonId = null; wiz = null; archiveArmed = false;
+  showArchived = false; currentTeamId = null; teamTab = 'roster';
+  addPanelOpen = false; manualOpen = false;
+  coachDirectory = []; coachSearch = ''; manualCoachOpen = false;
+  poolFilters = null;
+  seasonPayOpen = false; editTxnId = null;
+  for (const k in openTxn) delete openTxn[k];
+  for (const k in applyOpen) delete applyOpen[k];
+  for (const k in openAddTeam) delete openAddTeam[k];
+  for (const k in openOverride) delete openOverride[k];
+  for (const k in tryoutPools) delete tryoutPools[k];
+  render();
+  toast('Demo reset — back to the empty state.');
+}
+function demoSimulateRegistration(){
+  const s = season();
+  if (!s || currentTeamId == null){ toast('Open a team page first, then simulate a registration.'); return; }
+  const t = s.teams.find(x => x.id === currentTeamId);
+  const d = s.divisions.find(x => x.id === t.divId);
+  const p = (t.roster || []).find(x => !x.registered);
+  if (!p){ toast('Everyone on this roster is already registered.'); return; }
+  p.registered = true; p.completion = 100;
+  const fee = playerFee(s, d, t, p);
+  if (Math.random() < 0.5){ p.plan = 'full'; p.paid = fee; }
+  else { p.plan = 'installments'; p.paid = Math.round(fee / 3); }
+  render();
+  toast(p.name + ' just registered' + (p.plan === 'full' ? ' and paid in full.' : ' — first installment collected.'));
+}
+function demoSimulateFailedPayment(){
+  const s = season();
+  if (!s || (currentTeamId == null && !seasonPayOpen)){ toast('Open a team page or Season Payments first, then simulate a failed payment.'); return; }
+  const teams = currentTeamId != null ? s.teams.filter(x => x.id === currentTeamId) : s.teams;
+  let p = null, t = null;
+  teams.forEach(function(tt){
+    if (p) return;
+    const dd = s.divisions.find(x => x.id === tt.divId);
+    const hit = (tt.roster || []).find(x => x.registered && !x.payFailed && (x.paid || 0) < playerFee(s, dd, tt, x));
+    if (hit){ p = hit; t = tt; }
+  });
+  if (!p){
+    teams.forEach(function(tt){ if (!p){ const hit = (tt.roster || []).find(x => x.registered && !x.payFailed); if (hit){ p = hit; t = tt; } } });
+  }
+  if (!p){ toast('No registered players left to fail here.'); return; }
+  p.payFailed = true;
+  render();
+  toast('Stripe (simulated): ' + p.name + '\u2019s charge failed.');
+}
+/* Build a mock roster with a mix of registered / in-progress / invited players */
+function mockRoster(n, seed){
+  const r = [];
+  for (let i = 0; i < n; i++){
+    const name = MOCK_FIRST[(i*5 + seed) % 16] + ' ' + MOCK_LAST[(i*7 + seed*3) % 16];
+    const p = { id: nid(), name: name, pos: POSITIONS[(i*3 + seed) % 11],
+      email: slugify(name) + '@email.com', phone: '(813) 555-0' + ('00' + (100 + i)).slice(-3),
+      source: (i % 5 === 4) ? 'manual' : 'tryout', tryoutId: null,
+      registered: false, completion: 0, plan: null, paid: 0 };
+    const roll = (i + seed) % 10;
+    if (roll < 5){ p.registered = true; p.completion = 100; p.plan = (roll % 2) ? 'installments' : 'full'; }
+    else if (roll < 7){ p.registered = true; p.completion = 35 + roll * 8; p.plan = 'installments'; }
+    r.push(p);
+  }
+  return r;
+}
+/* After rosters exist, set paid amounts from each player's actual fee */
+function seedPayments(s){
+  s.teams.forEach(t => {
+    const d = s.divisions.find(x => x.id === t.divId);
+    (t.roster || []).forEach(p => {
+      if (!p.registered) return;
+      const fee = playerFee(s, d, t, p);
+      p.paid = (p.plan === 'full') ? fee : Math.round(fee * ((p.completion >= 100) ? 0.66 : 0.33));
+    });
+  });
+}
+function demoLoadSample(){
+  wiz = null; archiveArmed = false;
+  const ftPP = nid(), ftP = nid();
+  const d27 = nid(), d28 = nid(), d29 = nid();
+  const summer = {
+    id: nid(), name: 'Summer 2026', program: 'hs', status: 'active',
+    feeTypes: [{id:ftPP,name:'Position Player',def:1500},{id:ftP,name:'Pitcher',def:950}],
+    divisions: [
+      {id:d27,name:'Class of 2027',kind:'hs',prices:{}},
+      {id:d28,name:'Class of 2028',kind:'hs',prices:{}},
+      {id:d29,name:'Class of 2029',kind:'hs',prices:{}}
+    ],
+    teams: [
+      {id:nid(),divId:d27,name:'Fleming',coach:'Wayne Stofsky',players:0,overrides:{},roster:mockRoster(13,1),comms:[],record:{w:3,l:8,t:0},finishes:{}},
+      {id:nid(),divId:d27,name:'McCoy',coach:'Mark McCoy',players:0,overrides:{},roster:mockRoster(22,2),comms:[],record:{w:12,l:5,t:0},finishes:{first:1,second:1}},
+      {id:nid(),divId:d27,name:'Menendez',coach:'Miguel Menendez',players:0,overrides:{},roster:[],comms:[],record:{w:7,l:7,t:0},finishes:{first:2,third:1}},
+      {id:nid(),divId:d27,name:'Olasin',coach:'Michael Olasin',players:0,overrides:{},roster:mockRoster(21,4),comms:[],record:{w:19,l:9,t:2},finishes:{first:12,second:3,third:2}},
+      {id:nid(),divId:d27,name:'Thomas',coach:'Tony Thomas',players:0,overrides:{},roster:mockRoster(20,5),comms:[],record:{w:12,l:6,t:1},finishes:{first:1}},
+      {id:nid(),divId:d28,name:'DiBenedetto',coach:'John Dibenedetto',players:0,overrides:{},roster:mockRoster(17,6),comms:[],record:{w:9,l:8,t:1},finishes:{}},
+      {id:nid(),divId:d28,name:'Hudgins',coach:'Richie Warren',players:0,overrides:{},roster:mockRoster(13,7),comms:[],record:{w:8,l:4,t:1},finishes:{first:1}},
+      {id:nid(),divId:d28,name:'Lawson',coach:'Aaron Lawson',players:0,overrides:{},roster:mockRoster(18,8),comms:[],record:{w:19,l:5,t:1},finishes:{first:1,second:1}},
+      {id:nid(),divId:d28,name:'Merrell',coach:'Tripp Merrell',players:0,overrides:{},roster:mockRoster(15,9),comms:[],record:{w:17,l:5,t:1},finishes:{first:2}},
+      {id:nid(),divId:d29,name:'Cates',coach:'Gary Cates',players:0,overrides:{},roster:mockRoster(18,10),comms:[],record:{w:14,l:7,t:0},finishes:{first:1}}
+    ]
+  };
+  summer.teams.find(t => t.name === 'Merrell').overrides[ftPP] = 1350; /* sample team-level override */
+  /* Menendez gets a hand-built roster (mirrors the app screenshot) */
+  const menendez = summer.teams.find(t => t.name === 'Menendez');
+  [['Johnny Adams','C',1,'full'],['Bryce Besece','C',1,'inst'],['Cole Davidson','3B',1,'full'],
+   ['Ryan Dejnak','SS',1,'inst'],['Bryan Eberly','RHP',1,'full'],['Alejandro Fernandez','LHP',0,null],
+   ['Ryder Fogler','RHP',1,'inst'],['Trey Glaser','CF',0,null],['Josiah Guevara','SS',1,'full']
+  ].forEach(function(row, i){
+    menendez.roster.push({ id: nid(), name: row[0], pos: row[1],
+      email: slugify(row[0]) + '@email.com', phone: '(904) 555-02' + ('0' + i).slice(-2),
+      source: (i === 5) ? 'manual' : 'tryout', tryoutId: null,
+      registered: !!row[2], completion: row[2] ? 100 : 0,
+      plan: row[3] === 'full' ? 'full' : (row[3] === 'inst' ? 'installments' : null), paid: 0 });
+  });
+  seedPayments(summer);
+  /* One Stripe-style failed installment to demo the failure surfacing */
+  const fp = menendez.roster.find(r => r.name === 'Ryan Dejnak');
+  if (fp) fp.payFailed = true;
+  /* Menendez sample events (mirrors the current app's list) */
+  menendez.events = [
+    {id:nid(),org:'Prospect Select',name:'PS Palm Beach Classic',start:'2026-06-05',end:'2026-06-08',city:'West Palm Beach',state:'FL',site:'https://www.prospectselectbaseball.com',hotel:''},
+    {id:nid(),org:'Prospect Select',name:'PS Black Bear',start:'2026-06-17',end:'2026-06-20',city:'Boone',state:'NC',site:'',hotel:''},
+    {id:nid(),org:'Perfect Game',name:'PG WWBA',start:'2026-06-23',end:'2026-06-28',city:'Fort Myers',state:'FL',site:'https://www.perfectgame.org',hotel:'https://www.perfectgame.org/hotels'},
+    {id:nid(),org:'Prospect Select',name:'PS Boston Invitational',start:'2026-07-06',end:'2026-07-09',city:'Boston',state:'MA',site:'',hotel:''}
+  ];
+  const ftY = nid();
+  const y10 = nid(), y12 = nid(), y14 = nid();
+  const fallYouth = {
+    id: nid(), name: 'Fall 2026 Youth', program: 'youth', status: 'active',
+    feeTypes: [{id:ftY,name:'Player Fee',def:795}],
+    divisions: [
+      {id:y10,name:'10U',kind:'youth',prices:{}},
+      {id:y12,name:'12U',kind:'youth',prices:{}},
+      {id:y14,name:'14U',kind:'youth',prices:{}}
+    ],
+    teams: [
+      {id:nid(),divId:y10,name:'CBU Youth Red',coach:'',players:0,overrides:{},roster:mockRoster(11,11),comms:[],record:{w:6,l:3,t:0},finishes:{third:1}},
+      {id:nid(),divId:y12,name:'CBU Youth Navy',coach:'',players:0,overrides:{},roster:mockRoster(12,12),comms:[],record:{w:9,l:2,t:1},finishes:{first:1}},
+      {id:nid(),divId:y14,name:'CBU Youth White',coach:'',players:0,overrides:{},roster:mockRoster(13,13),comms:[],record:{w:4,l:6,t:0},finishes:{}}
+    ]
+  };
+  fallYouth.divisions[1].prices[ftY] = 895;   /* 12U override */
+  fallYouth.divisions[2].prices[ftY] = 995;   /* 14U override */
+  seedPayments(fallYouth);
+  seasons = [summer, fallYouth];
+  /* Tryout registrations available to each season (first one pre-connected) */
+  summer.tryoutRegs = [
+    { id: nid(), name: 'CBU Tampa Summer 2026 Tryout', status: 'active' },
+    { id: nid(), name: 'CBU Jacksonville Summer 2026 Tryout', status: 'active' },
+    { id: nid(), name: 'CBU Winter Prospect Camp', status: 'active' }
+  ];
+  summer.connectedTryouts = {};
+  summer.connectedTryouts[summer.tryoutRegs[0].id] = true;
+  fallYouth.tryoutRegs = [
+    { id: nid(), name: 'CBU Youth Fall 2026 Tryout', status: 'active' },
+    { id: nid(), name: 'CBU Youth Skills Camp', status: 'active' }
+  ];
+  fallYouth.connectedTryouts = {};
+  fallYouth.connectedTryouts[fallYouth.tryoutRegs[0].id] = true;
+  /* Coach system directory: every sample head coach + a few extras to find via search */
+  coachDirectory = [];
+  function dirCoach(name, registered){
+    const c = { id: nid(), name: name, email: slugify(name) + '@cbubaseball.com', phone: '(813) 555-03' + ('0' + coachDirectory.length).slice(-2), registered: registered };
+    coachDirectory.push(c);
+    return c;
+  }
+  [summer, fallYouth].forEach(function(se){
+    se.teams.forEach(function(t){
+      t.staff = [];
+      if (t.coach){
+        let c = coachDirectory.find(x => x.name === t.coach);
+        if (!c) c = dirCoach(t.coach, true);
+        t.staff.push({ id: nid(), coachId: c.id, role: 'head' });
+      }
+    });
+  });
+  const asst1 = dirCoach('Chris Fernandez', true);
+  const asst2 = dirCoach('Ron Perez', true);
+  dirCoach('Tom Stanton', false);            /* findable, registration pending */
+  menendez.staff.push({ id: nid(), coachId: asst1.id, role: 'assistant' });
+  menendez.staff.push({ id: nid(), coachId: asst2.id, role: 'assistant' });
+  currentSeasonId = summer.id;
+  currentTeamId = null; teamTab = 'roster';
+  for (const k in tryoutPools) delete tryoutPools[k];
+  render();
+  toast('Sample data loaded — Summer 2026 + Fall 2026 Youth.');
+}
+
+/* Boot */
+render();
+</script>
+</body>
+</html>
