@@ -7,7 +7,32 @@ navy one.
 always. It reads `CLAUDE.md` on its own, which points it at `CHEATSHEET.md` and
 the rules. You do not attach anything.
 
-Just describe the piece. Something like:
+## First time, right after you pull
+
+Paste this once so it orients itself and you can confirm it got the rules:
+
+---
+
+Read CLAUDE.md and CHEATSHEET.md in this repo, then look at
+starter-template.html and gallery.html.
+
+Then tell me back in a few lines:
+
+1. What components already exist that you should use
+2. What you do when I ask for something the design system does not have
+3. Where new CSS goes, and what you leave in the markup when you build something new
+
+Do not build anything yet.
+
+---
+
+If it says it will use the `ui-*` components from the cheatsheet, that new
+components go in the `data-new-components` style block with a `NEW COMPONENT`
+comment at first use, and that it never uses hex colors, it has it. Start building.
+
+## Every piece after that
+
+Just describe what you want. Something like:
 
 ---
 
