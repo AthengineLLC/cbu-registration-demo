@@ -9,7 +9,7 @@ Clickable workflow demos for the team management app's registration system. Buil
 | `starter-template.html` | Copy this to start a new page |
 | `CHEATSHEET.md` | Component reference. Source of truth for new pages. |
 | `gallery.html` | Every component rendered, with the markup under it |
-| `new-chat-prompt.md` | Kickoff prompt for a fresh claude.ai chat |
+| `new-chat-prompt.md` | How to kick off a new Claude Code session |
 | `index.html` | Launcher, links to every demo |
 | `admin.html` | Organization admin side: Registration Management dashboard, 10-step create/edit wizard, template builder with locked mandatory baseline, field/waiver libraries, subsection pricing, registrants dashboard with filtering, Comms messaging, archive |
 | `registration.html` | Parent/player side: tryouts hub → individual tryout page → pre-pay registration flow (ticket + subsection or age-group pricing, player info, Parent 1/2, post-tryout contacts, waiver gate) → confirmation with the org's custom message |

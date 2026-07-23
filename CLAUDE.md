@@ -33,12 +33,11 @@ built from these classes looks identical to production.
 
 ## Previewing
 
-The stylesheet is loaded from an outside domain, so claude.ai's in-chat preview
-pane will render the page unstyled. That is a sandbox restriction, not a bug. Open
-the file directly in a browser, or push and view it on
-cbu-registration-demo.vercel.app, to see it correctly.
+Open the `.html` file directly in a browser. It is styled straight away, no server
+and no build needed. Pushing also deploys it to cbu-registration-demo.vercel.app.
 
-Never "fix" this by inlining CSS into the page.
+If a page ever renders unstyled, the stylesheet link in the `<head>` is wrong or
+was removed. Fix the link. Never "fix" it by inlining CSS into the page.
 
 ## Missing components
 
@@ -75,7 +74,7 @@ into build work.
 | `starter-template.html` | Copy this to start a new page |
 | `CHEATSHEET.md` | The component reference. Source of truth. |
 | `gallery.html` | Every component rendered, with markup |
-| `new-chat-prompt.md` | Kickoff prompt for a fresh claude.ai chat |
+| `new-chat-prompt.md` | How to kick off a new Claude Code session |
 | `legacy/` | The old navy design system, kept for reference |
 | `admin.html` `registration.html` `teams.html` `season-registration.html` | Existing demos, still on the old navy system. Leave them alone. |
 
