@@ -31,6 +31,15 @@ built from these classes looks identical to production.
 10. Real semantic HTML: `<table>` for tables, `<button>` for actions, `<a>` for
     navigation, `<label>` wrapping every form control.
 
+## Previewing
+
+The stylesheet is loaded from an outside domain, so claude.ai's in-chat preview
+pane will render the page unstyled. That is a sandbox restriction, not a bug. Open
+the file directly in a browser, or push and view it on
+cbu-registration-demo.vercel.app, to see it correctly.
+
+Never "fix" this by inlining CSS into the page.
+
 ## Missing components
 
 Wizard steps, modals, chip filters, and progress bars are not in the system yet.

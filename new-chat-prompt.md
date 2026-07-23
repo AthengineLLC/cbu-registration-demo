@@ -51,6 +51,15 @@ is out of scope.
 
 ---
 
+## The preview in the chat will look plain. That is expected.
+
+claude.ai blocks outside stylesheets inside its preview pane, so the page it shows
+you in the chat will look unstyled. Nothing is broken.
+
+To see the real thing, do what you already do: save the file into the repo folder,
+commit, push, then open it on cbu-registration-demo.vercel.app. It will be styled
+there. Same for opening the file directly in your browser.
+
 ## Tips
 
 - Look at `gallery.html` first, either open the file or go to
