@@ -32,8 +32,10 @@ are already in `CLAUDE.md`, so you do not have to repeat them every time.
 - Look at `gallery.html` first, either open the file or go to
   cbu-registration-demo.vercel.app/gallery.html. It shows every component
   rendered with the markup under it. Fastest way to see what you can build with.
-- Tell it to read `CHEATSHEET.md` if it ever starts inventing its own CSS. That
-  is the one failure mode to watch for.
+- Build whatever the piece needs. If the design system does not cover it, it
+  should build the new component and comment it so Ben sees it. The failure mode
+  to watch for is the opposite: rebuilding a card or a button that already
+  exists. Tell it to read `CHEATSHEET.md` if you see that.
 - When the piece connects to registration data (tickets, registrants, waivers),
   say so.
 - The intent file matters more than it looks. It is what Ben turns into actual

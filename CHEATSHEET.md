@@ -4,7 +4,10 @@ Every class below is real. It comes from the app's own stylesheet, served at
 `https://cbu.athengine.com/proto.css`. If you use these class names, your mockup
 looks exactly like the product.
 
-Do not write CSS. Do not use hex colors. Use only what is on this page.
+Use these where they fit. Where they do not, build what you need and follow the
+"Building something new" section at the bottom.
+
+Never use hex colors, in system components or new ones.
 
 To see all of it rendered, open `gallery.html`.
 
@@ -250,14 +253,42 @@ There is no grid framework. These two cover almost everything.
 
 ---
 
-## When the system does not have what you need
+## Building something new
 
-Wizard steps, modals, chip filters, progress bars: these do not exist yet as
-primitives. Build the closest thing out of cards, buttons and badges, then leave a
-marker so Ben knows to build the real one:
+Wizard steps, modals, chip filters, progress bars, drawers: none of these exist
+yet. Build them. A real component beats a bad approximation stitched together out
+of cards.
+
+Two things are required when you do.
+
+**1. Comment it at its first use.** Ben reads these to decide what gets promoted
+into the real app.
 
 ```html
-<!-- NEEDS: a 10-step wizard progress banner -->
+<!-- NEW COMPONENT: wizard-steps
+     A numbered progress banner across the top of a multi-step form.
+     Nothing in the cheatsheet does this. -->
+<ol class="wizard-steps">
+  ...
+</ol>
 ```
 
-Do not solve it with custom CSS. The marker list is genuinely useful, flag freely.
+**2. Put its CSS in the `<style data-new-components>` block** that is already in
+`starter-template.html`. All novel CSS lives in that one block so it is obvious
+at a glance what is new on the page.
+
+```html
+<style data-new-components>
+  /* wizard-steps: numbered progress banner for multi-step forms */
+  .wizard-steps { ... }
+</style>
+```
+
+Rules for new components:
+
+- `var(--token)` colors, never hex, so they inherit the org's branding.
+- Plain class names (`wizard-steps`, `modal`, `chip-filter`). Do not prefix them
+  `ui-`, that belongs to the real system.
+- Reuse existing tokens for radius, spacing and type instead of inventing numbers.
+- Do not restyle or override a `ui-*` class to make a new thing. Build a new class
+  next to it.

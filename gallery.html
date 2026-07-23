@@ -74,9 +74,10 @@
     here, it looks right in the product. Copy the markup, not the CSS.
   </p>
   <p class="proto-note">
-    Rule: use these class names. Do not write new CSS. If you need something that
-    is not here, build it out of what is here, or leave a note and Ben adds a real
-    primitive.
+    Use these where they fit. Where they do not, build what you need: put the CSS
+    in the page's <code>data-new-components</code> block and comment the component
+    at its first use. Ben reads those comments to decide what gets promoted into
+    the real app.
   </p>
   <nav class="proto-toc">
     <a href="#tokens">Colors</a>
@@ -553,7 +554,8 @@ collapsible: swap section/div for details/summary, drop the actions</pre>
   <h2>Baseball bits</h2>
   <p class="proto-note">
     Result pills and game tags take their color from per-org config, so in a
-    prototype set the color inline. Everything else is token driven.
+    prototype set the color inline. These two are the only place an inline
+    <code>style</code> attribute is fine. Everything else is token driven.
   </p>
   <div class="proto-demo">
     <div class="proto-row">

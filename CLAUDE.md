@@ -17,18 +17,26 @@ built from these classes looks identical to production.
 
 ## Hard rules
 
-1. Start every new page from `starter-template.html`. Keep its `<head>` exactly
-   as is, including the stylesheet link and the single small style block.
-2. Use only class names that appear in `CHEATSHEET.md`. Do not invent classes.
-3. Write no CSS. No extra `<style>` blocks. No inline `style` attributes, except
+1. Start every new page from `starter-template.html`. Keep its `<head>` as is,
+   including the stylesheet link.
+2. **If `CHEATSHEET.md` has a component for it, use it.** Do not rebuild a card,
+   button, badge, table, or form field that already exists, and do not restyle
+   one.
+3. **If you need something that is not in the cheatsheet, build it.** Do not
+   contort existing components into a bad approximation. Build the right thing.
+4. All new CSS goes in the `<style data-new-components>` block in the head.
+   Nowhere else. No other `<style>` blocks, no inline `style` attributes except
    the result pill and game tag colors the cheatsheet shows inline.
-4. Never use a hex color. Use `var(--token)` names from the cheatsheet.
-5. No Tailwind, Bootstrap, or any CDN framework.
-6. Never use `prompt()` or `confirm()`. All confirmations are inline.
-7. Everything contained on mobile. No horizontal shifting.
-8. No em-dashes or en-dashes in any copy. Use a hyphen or comma.
-9. Do not set a `max-width` on text to control line length. Let containers do it.
-10. Real semantic HTML: `<table>` for tables, `<button>` for actions, `<a>` for
+5. **Comment every new component at its first use** (see below). This is how the
+   design system grows.
+6. Never use a hex color, including in new components. Use `var(--token)` names
+   from the cheatsheet so new work inherits the org's branding.
+7. No Tailwind, Bootstrap, or any CDN framework.
+8. Never use `prompt()` or `confirm()`. All confirmations are inline.
+9. Everything contained on mobile. No horizontal shifting.
+10. No em-dashes or en-dashes in any copy. Use a hyphen or comma.
+11. Do not set a `max-width` on text to control line length. Let containers do it.
+12. Real semantic HTML: `<table>` for tables, `<button>` for actions, `<a>` for
     navigation, `<label>` wrapping every form control.
 
 ## Previewing
@@ -39,16 +47,47 @@ and no build needed. Pushing also deploys it to cbu-registration-demo.vercel.app
 If a page ever renders unstyled, the stylesheet link in the `<head>` is wrong or
 was removed. Fix the link. Never "fix" it by inlining CSS into the page.
 
-## Missing components
+## Building something new
 
-Wizard steps, modals, chip filters, and progress bars are not in the system yet.
-Build the closest version out of cards, buttons and badges, then leave a marker:
+The design system does not cover everything yet. Wizard step banners, modals, chip
+filters, progress bars, and drawers all have no primitive. Build them. A good new
+component beats a bad approximation stitched out of cards.
+
+Two things are required when you do.
+
+**1. Comment it at its first use.** Ben reads these to decide what becomes a real
+component in the app.
 
 ```html
-<!-- NEEDS: a 10-step wizard progress banner -->
+<!-- NEW COMPONENT: wizard-steps
+     A numbered progress banner across the top of a multi-step form.
+     Nothing in the cheatsheet does this. -->
+<ol class="wizard-steps">
+  ...
+</ol>
 ```
 
-Do not solve it with custom CSS. That marker list is how new primitives get built.
+**2. Put its CSS in the one marked block**, which is already in the template:
+
+```html
+<style data-new-components>
+  /* wizard-steps: numbered progress banner for multi-step forms */
+  .wizard-steps { ... }
+</style>
+```
+
+Keeping all novel CSS in one block means Ben can see at a glance exactly what is
+new on the page and what came from the system.
+
+Rules for new components:
+
+- Use `var(--token)` colors, never hex, so they match the org's branding.
+- Name classes plainly (`wizard-steps`, `modal`, `chip-filter`). Do not prefix
+  them `ui-`, that prefix belongs to the real system.
+- Reuse the existing tokens for radius, spacing and type rather than inventing
+  new numbers where you can.
+- Do not restyle or override an existing `ui-*` class to make a new thing. Build
+  a new class next to it.
 
 ## Every page needs an intent file
 

@@ -9,9 +9,9 @@
   This links the real athengine stylesheet. Every class you use from
   CHEATSHEET.md renders exactly as it does in the product.
 
-  Do not add a <style> block. Do not use hex colors. Do not copy CSS in here.
-  If you need something the cheatsheet does not have, build the closest thing
-  from what is there and leave a <!-- NEEDS: ... --> marker.
+  Use the cheatsheet's components where they exist. If you need something it
+  does not have, build it: put the CSS in the data-new-components block below
+  and comment the component at its first use in the body.
 -->
 <link rel="stylesheet" href="https://cbu.athengine.com/proto.css">
 
@@ -19,14 +19,23 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  /* Font wiring and page padding only. This is the one allowed style block.
-     Do not add anything else to it. */
+  /* Page scaffolding. Leave this alone. */
   :root {
     --font-display-loaded: "Barlow Condensed";
     --font-body-loaded: "Inter";
   }
   .proto-page { padding: 32px 24px 96px; }
   .proto-page > * + * { margin-top: 24px; }
+</style>
+
+<style data-new-components>
+  /* Anything the design system does not have yet goes here, and ONLY here.
+     One short comment per component saying what it is. Use var(--token)
+     colors, never hex. Do not prefix new classes with ui-.
+
+     Example:
+     .wizard-steps { ... }   numbered progress banner for multi-step forms
+  */
 </style>
 </head>
 <body>
@@ -37,7 +46,8 @@
 
   <section class="ui-card ui-card--pad-default">
     <header class="ui-card__header">Replace me</header>
-    <p>Build the piece here using only classes from CHEATSHEET.md.</p>
+    <p>Build the piece here. Use CHEATSHEET.md components where they fit, build
+       what you need where they do not.</p>
   </section>
 
 </main>
