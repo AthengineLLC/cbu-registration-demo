@@ -1,0 +1,596 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>athengine component gallery</title>
+
+<link rel="stylesheet" href="https://cbu.athengine.com/proto.css">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --font-display-loaded: "Barlow Condensed";
+    --font-body-loaded: "Inter";
+  }
+  .proto-page { padding: 32px 24px 96px; }
+  .proto-sec { margin-bottom: 44px; }
+  .proto-sec > h2 {
+    margin: 0 0 4px;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+  .proto-sec > p.proto-note {
+    margin: 0 0 16px;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+  .proto-demo {
+    padding: 20px;
+    border: 1px dashed var(--line-strong);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.35);
+  }
+  .proto-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .proto-code {
+    margin: 10px 0 0;
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: var(--surface-dark);
+    color: #dfe7ee;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.78rem;
+    line-height: 1.6;
+    overflow-x: auto;
+    white-space: pre;
+  }
+  .proto-toc a { display: inline-block; margin: 0 14px 8px 0; font-weight: 600; }
+  .proto-swatches { display: flex; flex-wrap: wrap; gap: 10px; }
+  .proto-swatch {
+    width: 132px;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: var(--surface-strong);
+    font-size: 0.72rem;
+    font-family: "IBM Plex Mono", monospace;
+  }
+  .proto-chip { height: 34px; border-radius: 6px; margin-bottom: 6px; border: 1px solid rgba(0,0,0,.08); }
+</style>
+</head>
+<body>
+
+<main class="proto-page">
+
+<header class="proto-sec">
+  <h1>athengine component gallery</h1>
+  <p class="proto-note">
+    Everything below is rendered by the real app stylesheet, served live from
+    the product at <code>cbu.athengine.com/proto.css</code>. If it looks right
+    here, it looks right in the product. Copy the markup, not the CSS.
+  </p>
+  <p class="proto-note">
+    Rule: use these class names. Do not write new CSS. If you need something that
+    is not here, build it out of what is here, or leave a note and Ben adds a real
+    primitive.
+  </p>
+  <nav class="proto-toc">
+    <a href="#tokens">Colors</a>
+    <a href="#buttons">Buttons</a>
+    <a href="#cards">Cards</a>
+    <a href="#badges">Badges</a>
+    <a href="#stats">Stat tiles</a>
+    <a href="#summary">Summary strip</a>
+    <a href="#tables">Tables</a>
+    <a href="#forms">Forms</a>
+    <a href="#filter">Filter bar</a>
+    <a href="#empty">Empty state</a>
+    <a href="#sections">Detail sections</a>
+    <a href="#listpage">List page</a>
+    <a href="#baseball">Baseball bits</a>
+    <a href="#layout">Layout</a>
+  </nav>
+</header>
+
+
+<section class="proto-sec" id="tokens">
+  <h2>Colors and tokens</h2>
+  <p class="proto-note">
+    Never type a hex code. Use these variables so the page repaints correctly for
+    every org's brand.
+  </p>
+  <div class="proto-demo">
+    <div class="proto-swatches">
+      <div class="proto-swatch"><div class="proto-chip" style="background:var(--bg)"></div>--bg</div>
+      <div class="proto-swatch"><div class="proto-chip" style="background:var(--surface)"></div>--surface</div>
+      <div class="proto-swatch"><div class="proto-chip" style="background:var(--surface-strong)"></div>--surface-strong</div>
+      <div class="proto-swatch"><div class="proto-chip" style="background:var(--surface-dark)"></div>--surface-dark</div>
+      <div class="proto-swatch"><div class="proto-chip" style="background:var(--text)"></div>--text</div>
+      <div class="proto-swatch"><div class="proto-chip" style="background:var(--muted)"></div>--muted</div>
+      <div class="proto-swatch"><div class="proto-chip" style="background:var(--line)"></div>--line</div>
+      <div class="proto-swatch"><div class="proto-chip" style="background:var(--line-strong)"></div>--line-strong</div>
+      <div class="proto-swatch"><div class="proto-chip" style="background:var(--accent)"></div>--accent</div>
+      <div class="proto-swatch"><div class="proto-chip" style="background:var(--accent-deep)"></div>--accent-deep</div>
+      <div class="proto-swatch"><div class="proto-chip" style="background:var(--navy)"></div>--navy</div>
+      <div class="proto-swatch"><div class="proto-chip" style="background:var(--gold)"></div>--gold</div>
+      <div class="proto-swatch"><div class="proto-chip" style="background:var(--green)"></div>--green</div>
+      <div class="proto-swatch"><div class="proto-chip" style="background:var(--blue)"></div>--blue</div>
+    </div>
+    <pre class="proto-code">&lt;div style="background: var(--surface); color: var(--text)"&gt;
+
+Fonts:  var(--font-display)  headlines, condensed, uppercase
+        var(--font-body)     everything else
+Radius: var(--radius-card)</pre>
+  </div>
+</section>
+
+
+<section class="proto-sec" id="buttons">
+  <h2>Buttons</h2>
+  <p class="proto-note">Four variants, two sizes. Use <code>&lt;a&gt;</code> when it navigates, <code>&lt;button&gt;</code> when it acts.</p>
+  <div class="proto-demo">
+    <div class="proto-row">
+      <button class="ui-button ui-button--primary" type="button">Primary</button>
+      <button class="ui-button ui-button--secondary" type="button">Secondary</button>
+      <button class="ui-button ui-button--tertiary" type="button">Tertiary</button>
+      <button class="ui-button ui-button--danger" type="button">Danger</button>
+      <button class="ui-button ui-button--primary" type="button" disabled>Disabled</button>
+    </div>
+    <div class="proto-row" style="margin-top:12px">
+      <button class="ui-button ui-button--primary ui-button--sm" type="button">Small primary</button>
+      <button class="ui-button ui-button--secondary ui-button--sm" type="button">Small secondary</button>
+      <a class="ui-button ui-button--primary" href="#buttons">Link styled as button</a>
+    </div>
+    <pre class="proto-code">&lt;button class="ui-button ui-button--primary" type="button"&gt;Save&lt;/button&gt;
+&lt;button class="ui-button ui-button--secondary ui-button--sm" type="button"&gt;Edit&lt;/button&gt;
+&lt;a class="ui-button ui-button--primary" href="/players/new"&gt;New player&lt;/a&gt;
+
+variants: primary | secondary | tertiary | danger
+size:     add ui-button--sm for in-row / in-table actions</pre>
+  </div>
+</section>
+
+
+<section class="proto-sec" id="cards">
+  <h2>Cards</h2>
+  <p class="proto-note">The default surface. Three padding densities, optional red accent bar, optional hover lift.</p>
+  <div class="proto-demo">
+    <div class="grid grid-2">
+      <section class="ui-card ui-card--pad-default">
+        <header class="ui-card__header">Default card</header>
+        <p>Standard padding. This is what most content sits in.</p>
+      </section>
+      <section class="ui-card ui-card--pad-compact ui-card--accent">
+        <header class="ui-card__header">Accent + compact</header>
+        <p>Red bar on the left edge. Tighter padding.</p>
+      </section>
+      <section class="ui-card ui-card--pad-spacious ui-card--interactive">
+        <header class="ui-card__header">Spacious + interactive</header>
+        <p>Lifts on hover. Use when the whole card is a link.</p>
+      </section>
+      <section class="card">
+        <strong>Legacy .card</strong>
+        <p>Older surface, still used by list pages and detail sections. Softer, rounder.</p>
+      </section>
+    </div>
+    <pre class="proto-code">&lt;section class="ui-card ui-card--pad-default"&gt;
+  &lt;header class="ui-card__header"&gt;Title&lt;/header&gt;
+  ...
+&lt;/section&gt;
+
+padding:  ui-card--pad-compact | ui-card--pad-default | ui-card--pad-spacious
+add-ons:  ui-card--accent  (left red bar)
+          ui-card--interactive  (hover lift, for clickable cards)</pre>
+  </div>
+</section>
+
+
+<section class="proto-sec" id="badges">
+  <h2>Badges</h2>
+  <p class="proto-note">Status chips. Five tones, two sizes. Tone is platform-level, never org vocabulary.</p>
+  <div class="proto-demo">
+    <div class="proto-row">
+      <span class="ui-badge ui-badge--neutral">Neutral</span>
+      <span class="ui-badge ui-badge--info">Info</span>
+      <span class="ui-badge ui-badge--success">Active</span>
+      <span class="ui-badge ui-badge--warning">Grace</span>
+      <span class="ui-badge ui-badge--danger">Past due</span>
+    </div>
+    <div class="proto-row" style="margin-top:12px">
+      <span class="ui-badge ui-badge--success ui-badge--sm">Paid</span>
+      <span class="ui-badge ui-badge--warning ui-badge--sm">Owes</span>
+      <span class="ui-badge ui-badge--neutral ui-badge--sm">Comped</span>
+    </div>
+    <pre class="proto-code">&lt;span class="ui-badge ui-badge--success"&gt;Active&lt;/span&gt;
+&lt;span class="ui-badge ui-badge--warning ui-badge--sm"&gt;Owes&lt;/span&gt;
+
+tones: neutral | info | success | warning | danger</pre>
+  </div>
+</section>
+
+
+<section class="proto-sec" id="stats">
+  <h2>Stat tiles</h2>
+  <p class="proto-note">Big number, small label, optional trend line. Three tones.</p>
+  <div class="proto-demo">
+    <div class="grid grid-2">
+      <div class="ui-stat-tile ui-stat-tile--neutral">
+        <span class="ui-stat-tile__label">Registered players</span>
+        <span class="ui-stat-tile__value">148</span>
+        <span class="ui-stat-tile__delta">+12 this week</span>
+      </div>
+      <div class="ui-stat-tile ui-stat-tile--success">
+        <span class="ui-stat-tile__label">Collected</span>
+        <span class="ui-stat-tile__value">$41,200</span>
+        <span class="ui-stat-tile__delta">92% of expected</span>
+      </div>
+      <div class="ui-stat-tile ui-stat-tile--alert">
+        <span class="ui-stat-tile__label">Outstanding</span>
+        <span class="ui-stat-tile__value">$3,650</span>
+        <span class="ui-stat-tile__delta">9 families</span>
+      </div>
+    </div>
+    <pre class="proto-code">&lt;div class="ui-stat-tile ui-stat-tile--success"&gt;
+  &lt;span class="ui-stat-tile__label"&gt;Collected&lt;/span&gt;
+  &lt;span class="ui-stat-tile__value"&gt;$41,200&lt;/span&gt;
+  &lt;span class="ui-stat-tile__delta"&gt;92% of expected&lt;/span&gt;
+&lt;/div&gt;
+
+tones: ui-stat-tile--neutral | --success | --alert</pre>
+  </div>
+</section>
+
+
+<section class="proto-sec" id="summary">
+  <h2>Summary strip</h2>
+  <p class="proto-note">Dense stats row. Goes between a page header and the table. Lighter than stat tiles.</p>
+  <div class="proto-demo">
+    <dl class="ui-summary-strip">
+      <div class="ui-summary-strip__item">
+        <dt class="ui-summary-strip__label">Roster</dt><dd>22</dd>
+      </div>
+      <div class="ui-summary-strip__item">
+        <dt class="ui-summary-strip__label">Record</dt><dd>18-6</dd>
+      </div>
+      <div class="ui-summary-strip__item">
+        <dt class="ui-summary-strip__label">Committed</dt><dd>4</dd>
+      </div>
+      <div class="ui-summary-strip__item ui-summary-strip__item--zero">
+        <dt class="ui-summary-strip__label">Unpaid</dt><dd>0</dd>
+      </div>
+    </dl>
+    <pre class="proto-code">&lt;dl class="ui-summary-strip"&gt;
+  &lt;div class="ui-summary-strip__item"&gt;
+    &lt;dt class="ui-summary-strip__label"&gt;Roster&lt;/dt&gt;&lt;dd&gt;22&lt;/dd&gt;
+  &lt;/div&gt;
+&lt;/dl&gt;
+
+add ui-summary-strip__item--zero to dim a zero value</pre>
+  </div>
+</section>
+
+
+<section class="proto-sec" id="tables">
+  <h2>Data table</h2>
+  <p class="proto-note">Navy header, zebra rows, hover highlight. Always a real <code>&lt;table&gt;</code>.</p>
+  <div class="proto-demo">
+    <div class="ui-data-table__scroll">
+      <table class="ui-data-table ui-data-table--zebra ui-data-table--hover">
+        <caption class="ui-data-table__caption">Fall 2026 registrations</caption>
+        <thead class="ui-data-table__head">
+          <tr>
+            <th scope="col" class="ui-data-table__th">Player</th>
+            <th scope="col" class="ui-data-table__th">Team</th>
+            <th scope="col" class="ui-data-table__th ui-data-table__cell--center">Grad year</th>
+            <th scope="col" class="ui-data-table__th ui-data-table__cell--right">Balance</th>
+            <th scope="col" class="ui-data-table__th">Status</th>
+          </tr>
+        </thead>
+        <tbody class="ui-data-table__body">
+          <tr>
+            <td class="ui-data-table__td">Jalen Rivera</td>
+            <td class="ui-data-table__td">16U National</td>
+            <td class="ui-data-table__td ui-data-table__cell--center">2028</td>
+            <td class="ui-data-table__td ui-data-table__cell--right">$0</td>
+            <td class="ui-data-table__td"><span class="ui-badge ui-badge--success ui-badge--sm">Paid</span></td>
+          </tr>
+          <tr>
+            <td class="ui-data-table__td">Marcus Webb</td>
+            <td class="ui-data-table__td">16U National</td>
+            <td class="ui-data-table__td ui-data-table__cell--center">2027</td>
+            <td class="ui-data-table__td ui-data-table__cell--right">$450</td>
+            <td class="ui-data-table__td"><span class="ui-badge ui-badge--warning ui-badge--sm">Owes</span></td>
+          </tr>
+          <tr>
+            <td class="ui-data-table__td">Eli Thornton</td>
+            <td class="ui-data-table__td">15U American</td>
+            <td class="ui-data-table__td ui-data-table__cell--center">2029</td>
+            <td class="ui-data-table__td ui-data-table__cell--right">$0</td>
+            <td class="ui-data-table__td"><span class="ui-badge ui-badge--neutral ui-badge--sm">Comped</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="ui-count-badge">Showing all 3 players</p>
+    <pre class="proto-code">&lt;div class="ui-data-table__scroll"&gt;
+  &lt;table class="ui-data-table ui-data-table--zebra ui-data-table--hover"&gt;
+    &lt;caption class="ui-data-table__caption"&gt;Registrations&lt;/caption&gt;
+    &lt;thead class="ui-data-table__head"&gt;
+      &lt;tr&gt;&lt;th scope="col" class="ui-data-table__th"&gt;Player&lt;/th&gt;...&lt;/tr&gt;
+    &lt;/thead&gt;
+    &lt;tbody class="ui-data-table__body"&gt;
+      &lt;tr&gt;&lt;td class="ui-data-table__td"&gt;Jalen Rivera&lt;/td&gt;...&lt;/tr&gt;
+    &lt;/tbody&gt;
+  &lt;/table&gt;
+&lt;/div&gt;
+&lt;p class="ui-count-badge"&gt;Showing all 3 players&lt;/p&gt;
+
+cell alignment: ui-data-table__cell--center | --right
+empty table:    &lt;td class="ui-data-table__empty" colspan="5"&gt;No rows&lt;/td&gt;</pre>
+  </div>
+</section>
+
+
+<section class="proto-sec" id="forms">
+  <h2>Form controls</h2>
+  <p class="proto-note">Wrap every control in a Field so the label, hint, and error line up.</p>
+  <div class="proto-demo">
+    <div class="grid grid-2">
+      <label class="ui-field">
+        <span class="ui-field__label">Player name<span class="ui-field__required" aria-hidden="true">*</span></span>
+        <input class="ui-input" type="text" value="Jalen Rivera">
+        <span class="ui-field__hint">First and last, as it appears on the birth certificate.</span>
+      </label>
+
+      <label class="ui-field">
+        <span class="ui-field__label">Team</span>
+        <select class="ui-select">
+          <option>16U National</option>
+          <option>15U American</option>
+        </select>
+      </label>
+
+      <label class="ui-field ui-field--error">
+        <span class="ui-field__label">Registration fee</span>
+        <input class="ui-input" type="text" value="-50">
+        <span class="ui-field__error" role="alert">Fee must be zero or more.</span>
+      </label>
+
+      <label class="ui-field">
+        <span class="ui-field__label">Notes</span>
+        <textarea class="ui-textarea" rows="3">Pitcher, also plays third.</textarea>
+      </label>
+    </div>
+
+    <fieldset class="ui-fieldset" style="margin-top:16px">
+      <legend class="ui-fieldset__legend">Waivers</legend>
+      <label class="ui-checkbox">
+        <input class="ui-checkbox__input" type="checkbox" checked>
+        <span class="ui-checkbox__label">Liability release</span>
+      </label>
+      <label class="ui-checkbox">
+        <input class="ui-checkbox__input" type="checkbox">
+        <span class="ui-checkbox__label">Media consent</span>
+      </label>
+    </fieldset>
+
+    <pre class="proto-code">&lt;label class="ui-field"&gt;
+  &lt;span class="ui-field__label"&gt;Player name&lt;span class="ui-field__required"&gt;*&lt;/span&gt;&lt;/span&gt;
+  &lt;input class="ui-input" type="text"&gt;
+  &lt;span class="ui-field__hint"&gt;Helper text.&lt;/span&gt;
+&lt;/label&gt;
+
+error state: add ui-field--error on the label, and
+             &lt;span class="ui-field__error" role="alert"&gt;Message&lt;/span&gt;
+controls:    ui-input | ui-select | ui-textarea | ui-checkbox
+grouping:    &lt;fieldset class="ui-fieldset"&gt;&lt;legend class="ui-fieldset__legend"&gt;</pre>
+  </div>
+</section>
+
+
+<section class="proto-sec" id="filter">
+  <h2>Filter bar</h2>
+  <p class="proto-note">Sits above a table. Holds selects, inputs, and small buttons.</p>
+  <div class="proto-demo">
+    <div class="ui-filter-bar" role="search" aria-label="Filter players">
+      <input class="ui-input" type="search" placeholder="Search players">
+      <select class="ui-select">
+        <option>All teams</option>
+        <option>16U National</option>
+      </select>
+      <select class="ui-select">
+        <option>All statuses</option>
+        <option>Owes</option>
+      </select>
+      <button class="ui-button ui-button--secondary ui-button--sm" type="button">Clear</button>
+    </div>
+    <pre class="proto-code">&lt;div class="ui-filter-bar" role="search" aria-label="Filter players"&gt;
+  &lt;input class="ui-input" type="search" placeholder="Search players"&gt;
+  &lt;select class="ui-select"&gt;...&lt;/select&gt;
+  &lt;button class="ui-button ui-button--secondary ui-button--sm"&gt;Clear&lt;/button&gt;
+&lt;/div&gt;</pre>
+  </div>
+</section>
+
+
+<section class="proto-sec" id="empty">
+  <h2>Empty state</h2>
+  <p class="proto-note">Every list needs one. Say what is missing and give the action that fixes it.</p>
+  <div class="proto-demo">
+    <div class="ui-empty-state">
+      <h3 class="ui-empty-state__heading">No registrations yet</h3>
+      <p class="ui-empty-state__description">Once families start signing up for the fall season, they show up here.</p>
+      <div class="ui-empty-state__action">
+        <a class="ui-button ui-button--primary" href="#empty">Open registration</a>
+      </div>
+    </div>
+    <pre class="proto-code">&lt;div class="ui-empty-state"&gt;
+  &lt;h3 class="ui-empty-state__heading"&gt;No registrations yet&lt;/h3&gt;
+  &lt;p class="ui-empty-state__description"&gt;Explain what lands here.&lt;/p&gt;
+  &lt;div class="ui-empty-state__action"&gt;
+    &lt;a class="ui-button ui-button--primary" href="#"&gt;Open registration&lt;/a&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</pre>
+  </div>
+</section>
+
+
+<section class="proto-sec" id="sections">
+  <h2>Detail sections</h2>
+  <p class="proto-note">How a detail page is chunked. Collapsible variant uses a native <code>&lt;details&gt;</code>.</p>
+  <div class="proto-demo">
+    <section class="card ui-detail-section">
+      <div class="ui-detail-section__header">
+        <div class="ui-detail-section__copy">
+          <p class="ui-detail-section__kicker">Registration</p>
+          <h2 class="ui-detail-section__title">Payment plan</h2>
+        </div>
+        <div class="ui-detail-section__actions">
+          <button class="ui-button ui-button--secondary ui-button--sm" type="button">Edit</button>
+        </div>
+      </div>
+      <div class="ui-detail-section__body">
+        <p>Four installments of $325, first due at signup.</p>
+      </div>
+    </section>
+
+    <details class="card ui-detail-section" style="margin-top:16px">
+      <summary class="ui-detail-section__summary">
+        <div class="ui-detail-section__copy">
+          <p class="ui-detail-section__kicker">History</p>
+          <h2 class="ui-detail-section__title">Past seasons</h2>
+        </div>
+      </summary>
+      <div class="ui-detail-section__body">
+        <p>Spring 2026, Fall 2025, Spring 2025.</p>
+      </div>
+    </details>
+
+    <pre class="proto-code">&lt;section class="card ui-detail-section"&gt;
+  &lt;div class="ui-detail-section__header"&gt;
+    &lt;div class="ui-detail-section__copy"&gt;
+      &lt;p class="ui-detail-section__kicker"&gt;Registration&lt;/p&gt;
+      &lt;h2 class="ui-detail-section__title"&gt;Payment plan&lt;/h2&gt;
+    &lt;/div&gt;
+    &lt;div class="ui-detail-section__actions"&gt;...&lt;/div&gt;
+  &lt;/div&gt;
+  &lt;div class="ui-detail-section__body"&gt;...&lt;/div&gt;
+&lt;/section&gt;
+
+collapsible: swap section/div for details/summary, drop the actions</pre>
+  </div>
+</section>
+
+
+<section class="proto-sec" id="listpage">
+  <h2>List page shell</h2>
+  <p class="proto-note">The standard shape of every index screen: header, actions, summary, filter, count, table.</p>
+  <div class="proto-demo">
+    <section class="card ui-list-page">
+      <div class="ui-list-page__header">
+        <div class="portal-page-hero-copy">
+          <h1>Registrations</h1>
+          <p>Everyone signed up for the fall season.</p>
+        </div>
+        <div class="ui-list-page__actions">
+          <a class="ui-button ui-button--primary" href="#listpage">New registration</a>
+        </div>
+      </div>
+
+      <dl class="ui-summary-strip">
+        <div class="ui-summary-strip__item"><dt class="ui-summary-strip__label">Total</dt><dd>148</dd></div>
+        <div class="ui-summary-strip__item"><dt class="ui-summary-strip__label">Paid</dt><dd>139</dd></div>
+        <div class="ui-summary-strip__item"><dt class="ui-summary-strip__label">Owes</dt><dd>9</dd></div>
+      </dl>
+
+      <div class="ui-filter-bar" role="search" aria-label="Filter registrations">
+        <input class="ui-input" type="search" placeholder="Search">
+        <select class="ui-select"><option>All teams</option></select>
+      </div>
+
+      <p class="ui-count-badge">Showing all 2 registrations</p>
+
+      <div class="ui-data-table__scroll">
+        <table class="ui-data-table ui-data-table--zebra ui-data-table--hover">
+          <thead class="ui-data-table__head">
+            <tr>
+              <th scope="col" class="ui-data-table__th">Player</th>
+              <th scope="col" class="ui-data-table__th">Team</th>
+              <th scope="col" class="ui-data-table__th">Status</th>
+            </tr>
+          </thead>
+          <tbody class="ui-data-table__body">
+            <tr>
+              <td class="ui-data-table__td">Jalen Rivera</td>
+              <td class="ui-data-table__td">16U National</td>
+              <td class="ui-data-table__td"><span class="ui-badge ui-badge--success ui-badge--sm">Paid</span></td>
+            </tr>
+            <tr>
+              <td class="ui-data-table__td">Marcus Webb</td>
+              <td class="ui-data-table__td">16U National</td>
+              <td class="ui-data-table__td"><span class="ui-badge ui-badge--warning ui-badge--sm">Owes</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <pre class="proto-code">&lt;section class="card ui-list-page"&gt;
+  &lt;div class="ui-list-page__header"&gt;
+    &lt;div class="portal-page-hero-copy"&gt;&lt;h1&gt;Title&lt;/h1&gt;&lt;p&gt;Subtitle&lt;/p&gt;&lt;/div&gt;
+    &lt;div class="ui-list-page__actions"&gt;&lt;a class="ui-button ui-button--primary"&gt;New&lt;/a&gt;&lt;/div&gt;
+  &lt;/div&gt;
+  ...summary strip, filter bar, count badge, data table
+&lt;/section&gt;</pre>
+  </div>
+</section>
+
+
+<section class="proto-sec" id="baseball">
+  <h2>Baseball bits</h2>
+  <p class="proto-note">
+    Result pills and game tags take their color from per-org config, so in a
+    prototype set the color inline. Everything else is token driven.
+  </p>
+  <div class="proto-demo">
+    <div class="proto-row">
+      <span class="ui-result-pill" style="background:#166534;color:var(--white)">W 8-3</span>
+      <span class="ui-result-pill" style="background:#b01f24;color:var(--white)">L 2-6</span>
+      <span class="ui-result-pill ui-result-pill--muted">T 4-4</span>
+      <span class="ui-result-pill ui-result-pill--none"> - </span>
+    </div>
+    <div class="proto-row" style="margin-top:12px">
+      <span class="ui-badge ui-game-tag" style="background:linear-gradient(135deg,#b59152,#7d1418);color:var(--white)">Championship</span>
+      <span class="ui-badge ui-game-tag ui-game-tag--muted">Pool play</span>
+      <span class="ui-badge ui-game-tag ui-game-tag--muted">Scrimmage</span>
+    </div>
+    <pre class="proto-code">&lt;span class="ui-result-pill" style="background:#166534;color:var(--white)"&gt;W 8-3&lt;/span&gt;
+&lt;span class="ui-result-pill ui-result-pill--muted"&gt;T 4-4&lt;/span&gt;
+&lt;span class="ui-result-pill ui-result-pill--none"&gt; - &lt;/span&gt;   not played
+
+&lt;span class="ui-badge ui-game-tag ui-game-tag--muted"&gt;Pool play&lt;/span&gt;</pre>
+  </div>
+</section>
+
+
+<section class="proto-sec" id="layout">
+  <h2>Layout helpers</h2>
+  <p class="proto-note">There is no grid framework. These two cover almost everything.</p>
+  <div class="proto-demo">
+    <div class="grid grid-2">
+      <section class="ui-card ui-card--pad-compact"><p>Column one</p></section>
+      <section class="ui-card ui-card--pad-compact"><p>Column two</p></section>
+      <section class="ui-card ui-card--pad-compact"><p>Column three</p></section>
+    </div>
+    <pre class="proto-code">&lt;div class="grid"&gt;        stacked, 16px gap
+&lt;div class="grid grid-2"&gt; auto-fit columns, min 240px each</pre>
+  </div>
+</section>
+
+</main>
+
+</body>
+</html>
