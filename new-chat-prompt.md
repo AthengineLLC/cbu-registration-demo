@@ -7,14 +7,19 @@ navy one.
 always. It reads `CLAUDE.md` on its own, which points it at `CHEATSHEET.md` and
 the rules. You do not attach anything.
 
-## First time, right after you pull
+## First time, right after Ben updates the repo
 
-Paste this once so it orients itself and you can confirm it got the rules:
+Start a fresh session for this, not one that has been open building navy pages.
+Claude Code loads `CLAUDE.md` when a session starts, and a long-running session
+carries the old design in its head. Paste this once so it pulls, orients itself,
+and reports the rules back so you can confirm it got them:
 
 ---
 
-Read CLAUDE.md and CHEATSHEET.md in this repo, then look at
-starter-template.html and gallery.html.
+First, run `git pull` in this repo. Ben pushed a new design system.
+
+Then read CLAUDE.md and CHEATSHEET.md, and look at starter-template.html and
+gallery.html.
 
 Then tell me back in a few lines:
 
