@@ -21,6 +21,7 @@
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 /* ============ TOKENS ============ */
 :root{
@@ -373,6 +374,11 @@ input[disabled]{background:var(--row-alt);color:var(--muted)}
   display:grid;place-items:center;font-size:.56rem;font-weight:700;color:var(--ink);
 }
 .pay-cell{display:inline-flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+.jersey-in{
+  width:52px;max-width:52px;text-align:center;font-weight:700;font-size:.92rem;
+  padding:.45rem .3rem;border:1.5px dashed #c9cfdd;border-radius:8px;color:var(--ink);background:#fff;
+}
+.jersey-in:focus{border-style:solid}
 .pay-row{cursor:pointer}
 .pay-row:hover td{background:#eef2fa}
 .txn-wrap{background:#f4f6fb;border-bottom:1px solid var(--line);padding:1rem 1.3rem}
@@ -386,6 +392,24 @@ input[disabled]{background:var(--row-alt);color:var(--muted)}
 .txn-meta{font-family:'SFMono-Regular',Consolas,monospace;font-size:.7rem;color:var(--muted);overflow-wrap:anywhere}
 .txn-amt{margin-left:auto;font-weight:700;color:var(--ink);white-space:nowrap}
 .txn-line .link-red,.txn-line .link-muted{white-space:nowrap}
+.size-sel{
+  width:74px;max-width:74px;padding:.4rem .3rem;border:1.5px solid #d5dae6;border-radius:7px;
+  font-family:'Inter',Arial,sans-serif;font-size:.8rem;color:var(--ink);background:#fff;text-align:center;
+}
+.size-sel:disabled{background:var(--row-alt);color:var(--muted)}
+.pkg-btn{border:none;background:none;cursor:pointer;font-size:.95rem;line-height:1;padding:.2rem}
+.pkg-yes{color:var(--green)}
+.pkg-no{color:var(--red)}
+.ordered-check{width:17px;height:17px;accent-color:var(--green)}
+.totals-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.9rem;margin-top:.6rem}
+.totals-item{border:1.5px solid var(--line);border-radius:8px;padding:.7rem .9rem}
+.totals-item h4{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.1em;font-size:.7rem;color:var(--navy-deep)}
+.totals-item .tline{font-size:.82rem;color:var(--ink);margin-top:.35rem;display:flex;justify-content:space-between}
+.totals-item .tline b{color:var(--red)}
+.jitem-chip{display:inline-flex;align-items:center;gap:.45rem;background:var(--navy-deep);color:#fff;border-radius:999px;padding:.4rem .55rem .4rem .9rem;font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.08em;font-size:.7rem;font-weight:600}
+.jitem-chip .jt{background:rgba(255,255,255,.18);border-radius:999px;padding:.1rem .5rem;font-size:.6rem}
+.jitem-chip .x{background:rgba(255,255,255,.18);border:none;color:#fff;width:18px;height:18px;border-radius:50%;cursor:pointer;font-size:.66rem;display:inline-flex;align-items:center;justify-content:center}
+.jitem-chip .x:hover{background:rgba(255,255,255,.4)}
 
 /* ============ MOBILE ============ */
 @media (max-width:760px){
@@ -456,6 +480,7 @@ input[disabled]{background:var(--row-alt);color:var(--muted)}
     <button onclick="demoLoadSample()">Load sample data</button>
     <button onclick="demoSimulateRegistration()">Simulate a registration</button>
     <button onclick="demoSimulateFailedPayment()">Simulate a failed payment</button>
+    <button onclick="demoLoadSampleTournaments()">Load sample tournaments</button>
     <button onclick="demoReset()">Reset to empty</button>
   </div>
 </div>
@@ -492,6 +517,9 @@ let editStaffId = null;      // staff entry whose role is being edited
 let poolFilters = null;      // tryout pool: {divs:{divId:true}, q, pitch:'all'|'pitched'|'no', showPlaced}
 let seasonPayOpen = false;   // season-wide payments page
 let seasonPayFilters = { team: 'all', status: 'all' };
+let seasonJerseysOpen = false;              // season-wide uniform orders page
+let jerseyFilters = { team: 'all' };
+let sizeTotalsOpen = false;                 // size totals panel
 const openTxn = {};          // playerId -> true (expanded transaction log)
 let editTxnId = null;        // transaction being edited inline
 const applyOpen = {};        // playerId -> true (apply-payment form open)
@@ -577,6 +605,14 @@ function render(){
     return;
   }
   const s = season();
+  if (seasonJerseysOpen && currentTeamId == null && s){
+    pill.style.display = 'inline-block';
+    pill.textContent = s.name;
+    pill.className = 'pill ' + (s.status === 'archived' ? 'pill-gold' : 'pill-green');
+    sub.textContent = 'Uniform orders — jersey package sizes from every team\u2019s registrations.';
+    app.innerHTML = renderSeasonJerseys(s);
+    return;
+  }
   if (seasonPayOpen && currentTeamId == null && s){
     pill.style.display = 'inline-block';
     pill.textContent = s.name;
@@ -1087,6 +1123,7 @@ function renderLanding(){
     </div>
     <div class="season-actions">
       <button class="btn btn-outline btn-sm" onclick="openSeasonPayments()">Payments</button>
+      <button class="btn btn-outline btn-sm" onclick="openSeasonJerseys()">Jerseys</button>
       <button class="btn btn-outline btn-sm" onclick="startWizard(${s.id})">Edit Season</button>
       ${archiveBtn}
       <button class="btn btn-primary btn-sm" onclick="startWizard()">+ New Season</button>
@@ -1229,6 +1266,7 @@ function switchSeason(v){
   archiveArmed = false;
   currentTeamId = null;
   seasonPayOpen = false;
+  seasonJerseysOpen = false;
   render();
 }
 function toggleAddTeam(divId){
@@ -1415,7 +1453,7 @@ function pitchLabel(p){
 
 function openTeam(id){
   currentTeamId = id; teamTab = 'roster';
-  seasonPayOpen = false;
+  seasonPayOpen = false; seasonJerseysOpen = false;
   addPanelOpen = false; manualOpen = false;
   for (const k in openTxn) delete openTxn[k];
   for (const k in applyOpen) delete applyOpen[k];
@@ -1434,6 +1472,11 @@ function viewProfile(pid){
   const t = s.teams.find(x => x.id === currentTeamId);
   const p = t.roster.find(x => x.id === pid);
   toast('Player profiles are coming — ' + (p ? p.name : 'this player') + '\u2019s full profile will open here.');
+}
+function setJersey(pid, v){
+  const hit = findPlayerById(pid);
+  if (!hit) return;
+  hit.p.jersey = v.trim();
 }
 
 function renderTeamPage(s, t){
@@ -1591,29 +1634,17 @@ function renderRosterTab(s, d, t){
     </div>` : '';
 
   const rows = (t.roster || []).map(p => {
-    const fee = playerFee(s, d, t, p);
     const pft = playerFeeType(s, p);
-    const paid = Math.min(p.paid || 0, fee);
-    const payPct = fee ? Math.round(paid / fee * 100) : 0;
-    const subBits = [p.pos ? p.pos + (p.pos2 ? ' / ' + p.pos2 : '') : null, (p.registered && pft) ? pft.name : null, p.email, p.phone]
-      .filter(Boolean).map(esc).join(' · ');
     let regPill;
     if (p.registered && p.completion >= 100) regPill = '<span class="pill pill-green">✓ Registered</span>';
     else if (p.registered) regPill = `<span class="pill pill-blue">Registering — ${p.completion}%</span>`;
-    else regPill = `<span class="pill pill-navy">Invited as ${pft ? esc(pft.name) : 'Player'}</span>`;
-    const ring = `<span class="pay-ring ${p.payFailed ? 'failed' : ''}" style="--p:${payPct}" data-pct="${payPct}%"></span>`;
-    let payText;
-    if (!p.registered) payText = '<span style="color:var(--muted)">—</span>';
-    else if (p.payFailed) payText = `<span class="pay-cell">${ring}<span>${money(paid)} of ${money(fee)} <span class="pill pill-red" style="margin-left:.3rem">⚠ Payment Failed</span></span></span>`;
-    else if (paid >= fee && fee > 0) payText = `<span class="pay-cell">${ring}<span class="pill pill-green">Paid ${money(fee)}</span></span>`;
-    else if (paid > 0) payText = `<span class="pay-cell">${ring}<span>${money(paid)} of ${money(fee)} <span class="pill pill-blue" style="margin-left:.3rem">Installments</span></span></span>`;
-    else payText = `<span class="pay-cell">${ring}<span class="pill pill-red">Unpaid — ${money(fee)}</span></span>`;
+    else regPill = '<span class="pill pill-navy">Invited</span>';
     return `
     <tr>
-      <td data-label="Player"><button class="link-red" style="font-size:.9rem;padding:0" onclick="viewProfile(${p.id})">${esc(p.name)}</button><div class="cell-sub">${subBits || '—'}</div></td>
-      <td data-label="Source"><span class="pill ${p.source==='tryout'?'pill-red':'pill-navy'}">${p.source==='tryout'?'From Tryout':'Manual'}</span></td>
+      <td data-label="#"><input type="text" class="jersey-in" maxlength="3" value="${esc(p.jersey != null ? p.jersey : '')}" placeholder="—" onchange="setJersey(${p.id}, this.value)"></td>
+      <td data-label="Player"><button class="link-red" style="font-size:.92rem;padding:0" onclick="viewProfile(${p.id})">${esc(p.name)}</button></td>
+      <td data-label="Ticket">${pft ? esc(pft.name) : '<span style="color:var(--muted)">—</span>'}</td>
       <td data-label="Registration">${regPill}</td>
-      <td data-label="Payment">${payText}</td>
       <td data-label="Actions" style="text-align:right"><button class="link-muted" onclick="removePlayer(${p.id})">Remove</button></td>
     </tr>`;
   }).join('');
@@ -1624,7 +1655,7 @@ function renderRosterTab(s, d, t){
   <div class="card">
     <div class="table-wrap">
       <table class="team-table">
-        <thead><tr><th>Player</th><th>Source</th><th>Registration</th><th>Payment</th><th></th></tr></thead>
+        <thead><tr><th style="width:70px">#</th><th>Player</th><th>Ticket</th><th>Registration</th><th></th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>
@@ -2075,6 +2106,7 @@ function renderPaymentsTab(s, d, t){
 /* ---------- Season-wide payments page ---------- */
 function openSeasonPayments(){
   seasonPayOpen = true;
+  seasonJerseysOpen = false;
   seasonPayFilters = { team: 'all', status: 'all' };
   for (const k in openTxn) delete openTxn[k];
   for (const k in applyOpen) delete applyOpen[k];
@@ -2526,6 +2558,272 @@ function removeStaff(sid){
   toast('Coach removed from this team.');
 }
 
+/* ---------- Season jerseys / uniform orders (interconnects with the Uniform Order Checklist) ---------- */
+const SIZE_SETS = {
+  apparel: ['YS','YM','YL','YXL','AS','AM','AL','AXL','AXXL'],
+  sock: ['S','M','L','XL'],
+  hat: ['6 3/4','6 7/8','7','7 1/8','7 1/4','7 3/8','7 1/2','7 5/8']
+};
+const JITEM_TYPES = { apparel: 'Apparel', sock: 'Sock', hat: 'Hat' };
+/* Jersey package items are defined per season — the same package the season registration
+   sells and the Uniform Order Checklist reads. Columns everywhere come from this list. */
+function ensureJerseyItems(s){
+  if (s.jerseyItems) return;
+  s.jerseyItems = [
+    { id: nid(), name: 'Navy Jersey', type: 'apparel' },
+    { id: nid(), name: 'White Jersey', type: 'apparel' },
+    { id: nid(), name: 'White Pant', type: 'apparel' },
+    { id: nid(), name: 'Dry Fit', type: 'apparel' },
+    { id: nid(), name: 'Sock', type: 'sock' },
+    { id: nid(), name: 'Hat', type: 'hat' }
+  ];
+}
+/* Registered players carry sizes from their registration; mock-seed deterministically */
+function ensureJerseyData(s, p){
+  p.sizes = p.sizes || {};
+  if (p.jerseyPkg === undefined) p.jerseyPkg = p.registered ? (p.id % 7 !== 3) : false;
+  if (p.ordered === undefined) p.ordered = false;
+  if (p.registered && p.jerseyPkg){
+    (s.jerseyItems || []).forEach(function(it){
+      if (p.sizes[it.id]) return;
+      const set = SIZE_SETS[it.type] || SIZE_SETS.apparel;
+      p.sizes[it.id] = set[(p.id * 3 + it.id) % set.length];
+    });
+  }
+}
+function openSeasonJerseys(){
+  const s = season();
+  ensureJerseyItems(s);
+  seasonJerseysOpen = true; seasonPayOpen = false;
+  jerseyFilters = { team: 'all' }; sizeTotalsOpen = false;
+  render(); window.scrollTo({top:0});
+}
+function closeSeasonJerseys(){ seasonJerseysOpen = false; render(); window.scrollTo({top:0}); }
+function setJerseyTeamFilter(v){ jerseyFilters.team = v; render(); }
+function toggleSizeTotals(){ sizeTotalsOpen = !sizeTotalsOpen; render(); }
+function setSize(pid, itemId, v){
+  const hit = findPlayerById(pid);
+  if (!hit) return;
+  hit.p.sizes = hit.p.sizes || {};
+  if (v) hit.p.sizes[itemId] = v;
+  else delete hit.p.sizes[itemId];
+  if (sizeTotalsOpen) render();
+}
+function togglePkg(pid){
+  const hit = findPlayerById(pid);
+  if (!hit) return;
+  hit.p.jerseyPkg = !hit.p.jerseyPkg;
+  render();
+  toast(hit.p.name + (hit.p.jerseyPkg ? ' now has a jersey package.' : ' marked as no jersey package — excluded from order totals.'));
+}
+function toggleOrdered(pid, checked){
+  const hit = findPlayerById(pid);
+  if (!hit) return;
+  hit.p.ordered = !!checked;
+}
+function addJerseyItem(){
+  const s = season();
+  const name = document.getElementById('ji-name').value.trim();
+  const type = document.getElementById('ji-type').value;
+  if (!name){ toast('Give the item a name — e.g. "Red Jersey".'); return; }
+  if (s.jerseyItems.some(it => it.name.toLowerCase() === name.toLowerCase())){ toast('That item is already in the package.'); return; }
+  s.jerseyItems.push({ id: nid(), name: name, type: type });
+  render();
+  toast(name + ' added to the season jersey package — a column just appeared for every team.');
+}
+function removeJerseyItem(itemId){
+  const s = season();
+  const it = s.jerseyItems.find(x => x.id === itemId);
+  s.jerseyItems = s.jerseyItems.filter(x => x.id !== itemId);
+  s.teams.forEach(t => (t.roster || []).forEach(p => { if (p.sizes) delete p.sizes[itemId]; }));
+  render();
+  toast((it ? it.name : 'Item') + ' removed from the package for every team.');
+}
+/* Per-team Excel export: roster grid + size totals, ready for the vendor order */
+function exportTeamExcel(teamId){
+  const s = season();
+  const t = s.teams.find(x => x.id === teamId);
+  const items = s.jerseyItems || [];
+  const rows = [];
+  rows.push(['CBU Uniform Order — ' + s.name]);
+  rows.push([t.name]);
+  rows.push([]);
+  rows.push(['Ordered', 'Jersey Pkg', '#', 'Player'].concat(items.map(it => it.name)));
+  (t.roster || []).forEach(function(p){
+    ensureJerseyData(s, p);
+    rows.push([
+      p.ordered ? 'Yes' : '',
+      p.jerseyPkg ? 'Yes' : 'No',
+      p.jersey || '',
+      p.name
+    ].concat(items.map(it => p.sizes[it.id] || '')));
+  });
+  rows.push([]);
+  rows.push(['Size Totals (jersey-package players only)']);
+  const totals = buildSizeTotals(s, [t]);
+  items.forEach(function(it){
+    const sizes = SIZE_SETS[it.type] || SIZE_SETS.apparel;
+    const parts = sizes.filter(sz => totals[it.id][sz]).map(sz => sz + ' x' + totals[it.id][sz]);
+    const itemTotal = sizes.reduce((n, sz) => n + (totals[it.id][sz] || 0), 0);
+    rows.push([it.name, parts.join(', ') || '—', 'Total: ' + itemTotal]);
+  });
+  const fname = slugify(s.name) + '-' + slugify(t.name) + '-uniform-order';
+  if (window.XLSX){
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{wch:8},{wch:10},{wch:5},{wch:22}].concat(items.map(it => ({wch: Math.max(10, it.name.length + 2)})));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, t.name.replace(/[\\/?*\[\]:]/g, '').slice(0, 31) || 'Roster');
+    XLSX.writeFile(wb, fname + '.xlsx');
+    toast(t.name + ' uniform order exported to Excel.');
+  } else {
+    /* Fallback if the Excel library didn't load: CSV (opens in Excel) */
+    const csv = rows.map(r => r.map(c => '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"').join(',')).join('\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+    a.download = fname + '.csv';
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toast(t.name + ' exported as CSV (opens in Excel).');
+  }
+}
+function buildSizeTotals(s, teams){
+  const totals = {};
+  (s.jerseyItems || []).forEach(it => { totals[it.id] = {}; });
+  teams.forEach(function(t){
+    (t.roster || []).forEach(function(p){
+      ensureJerseyData(s, p);
+      if (!p.jerseyPkg) return;                 /* no-package players excluded from order counts */
+      (s.jerseyItems || []).forEach(function(it){
+        const sz = p.sizes[it.id];
+        if (!sz) return;
+        totals[it.id][sz] = (totals[it.id][sz] || 0) + 1;
+      });
+    });
+  });
+  return totals;
+}
+function renderSeasonJerseys(s){
+  ensureJerseyItems(s);
+  const items = s.jerseyItems;
+  const teams = s.teams.filter(t => jerseyFilters.team === 'all' || t.id === Number(jerseyFilters.team));
+  let pkgCount = 0, noPkg = 0, rostered = 0;
+  s.teams.forEach(t => (t.roster || []).forEach(function(p){
+    ensureJerseyData(s, p);
+    rostered++;
+    if (p.jerseyPkg) pkgCount++; else noPkg++;
+  }));
+
+  const itemChips = items.map(it => `
+    <span class="jitem-chip">${esc(it.name)}<span class="jt">${JITEM_TYPES[it.type]}</span><button class="x" onclick="removeJerseyItem(${it.id})" aria-label="Remove ${esc(it.name)}">✕</button></span>`).join(' ');
+
+  const totals = buildSizeTotals(s, teams);
+  const totalsPanel = sizeTotalsOpen ? `
+    <div class="card card-pad" style="margin-bottom:1.4rem">
+      <div class="section-head" style="margin-top:0">Size Totals ${jerseyFilters.team === 'all' ? '— All Teams' : ''}</div>
+      <div class="section-body">
+        <p class="hint">Counts every roster row in view, excluding players without a jersey package. Updates live as sizes are edited.</p>
+        <div class="totals-grid">
+          ${items.map(it => {
+            const sizes = SIZE_SETS[it.type] || SIZE_SETS.apparel;
+            const lines = sizes.filter(sz => totals[it.id][sz]).map(sz => `<div class="tline"><span>${esc(sz)}</span><b>×${totals[it.id][sz]}</b></div>`).join('');
+            const itemTotal = sizes.reduce((n, sz) => n + (totals[it.id][sz] || 0), 0);
+            return `<div class="totals-item"><h4>${esc(it.name)}</h4>${lines || '<div class="tline"><span style="color:var(--muted)">No sizes yet</span></div>'}
+              <div class="tline" style="border-top:2px solid var(--navy-deep);margin-top:.45rem;padding-top:.4rem;font-weight:700"><span>Total</span><b style="color:var(--navy-deep)">×${itemTotal}</b></div></div>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>` : '';
+
+  const teamBlocks = teams.map(function(t){
+    const d = s.divisions.find(x => x.id === t.divId);
+    const roster = t.roster || [];
+    const rows = roster.map(function(p){
+      ensureJerseyData(s, p);
+      const cells = items.map(function(it){
+        const set = SIZE_SETS[it.type] || SIZE_SETS.apparel;
+        return `<td data-label="${esc(it.name)}">
+          <select class="size-sel" onchange="setSize(${p.id}, ${it.id}, this.value)" ${p.jerseyPkg ? '' : 'disabled'}>
+            <option value="">—</option>
+            ${set.map(sz => `<option ${p.sizes[it.id] === sz ? 'selected' : ''}>${sz}</option>`).join('')}
+          </select>
+        </td>`;
+      }).join('');
+      return `
+      <tr>
+        <td data-label="Ordered"><input type="checkbox" class="ordered-check" ${p.ordered ? 'checked' : ''} onchange="toggleOrdered(${p.id}, this.checked)"></td>
+        <td data-label="Pkg"><button class="pkg-btn ${p.jerseyPkg ? 'pkg-yes' : 'pkg-no'}" title="Toggle jersey package" onclick="togglePkg(${p.id})">${p.jerseyPkg ? '✔' : '✘'}</button></td>
+        <td data-label="#"><span class="cell-strong">${esc(p.jersey || '')}</span></td>
+        <td data-label="Player"><span class="cell-strong">${esc(p.name)}</span>${!p.registered ? '<div class="cell-sub">Awaiting registration</div>' : ''}</td>
+        ${cells}
+      </tr>`;
+    }).join('');
+    return `
+    <div class="div-block ${d && d.kind === 'youth' ? 'youth' : ''}">
+      <div class="div-head">
+        <span class="div-title">${esc(t.name)}</span>
+        ${d ? `<span class="pill ${d.kind==='youth'?'pill-blue':'pill-red'}" style="background:rgba(255,255,255,.9)">${esc(divShort(d.name))}</span>` : ''}
+        <div class="div-fees">
+          <span class="fee-chip">${roster.length} players</span>
+          ${roster.length ? `<button class="btn-add-team" onclick="exportTeamExcel(${t.id})">Export Excel</button>` : ''}
+        </div>
+      </div>
+      <div class="div-body">
+        ${roster.length ? `
+        <div class="table-wrap">
+          <table class="team-table">
+            <thead><tr><th style="width:52px">✓</th><th style="width:52px">Pkg</th><th style="width:60px">#</th><th>Player</th>${items.map(it => `<th>${esc(it.name)}</th>`).join('')}</tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>` : `<div style="padding:1.1rem;color:var(--muted);font-size:.86rem">No players rostered yet — this team fills in as players register.</div>`}
+      </div>
+    </div>`;
+  }).join('');
+
+  return `
+  <div style="margin-top:1.6rem">
+    <button class="back-link" onclick="closeSeasonJerseys()">← Back to Team Management</button>
+    <div class="card card-pad">
+      <div class="team-head">
+        <div>
+          <div class="team-name">Uniform Orders</div>
+          <div class="team-sub"><span>${esc(s.name)}</span> · sizes flow in from each player\u2019s team registration and can be edited here — the same data the Uniform Order Checklist reads.</div>
+        </div>
+      </div>
+      <div style="margin-top:1.2rem">
+        <label class="field-label">Season Jersey Package — ${items.length} items</label>
+        <p class="hint" style="margin:.15rem 0 .5rem">These items ARE the columns below and the sizing questions parents answer at registration. Add a third jersey here and it appears everywhere instantly.</p>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">${itemChips}</div>
+        <div class="editor-row" style="margin-top:.9rem">
+          <div><input type="text" id="ji-name" placeholder='e.g. "Red Jersey"' style="max-width:200px"></div>
+          <div><select id="ji-type" style="max-width:130px"><option value="apparel">Apparel</option><option value="sock">Sock</option><option value="hat">Hat</option></select></div>
+          <button class="btn btn-outline-dark btn-sm" onclick="addJerseyItem()">+ Add Item</button>
+        </div>
+      </div>
+    </div>
+    <div class="stat-tiles" style="margin-top:1.2rem">
+      <div class="stat-tile"><div class="st-num">${rostered}</div><div class="st-label">Rostered Players</div></div>
+      <div class="stat-tile accent-red"><div class="st-num">${pkgCount}</div><div class="st-label">With Jersey Package</div></div>
+      <div class="stat-tile"><div class="st-num">${noPkg}</div><div class="st-label">No Package / Pending</div><div class="st-sub">excluded from order totals</div></div>
+    </div>
+    <div class="season-bar" style="margin:1.4rem 0 1rem">
+      <div>
+        <label class="field-label" style="color:#aab3cc">Show Team</label>
+        <select onchange="setJerseyTeamFilter(this.value)" style="max-width:260px">
+          <option value="all" ${jerseyFilters.team==='all'?'selected':''}>All Teams</option>
+          ${s.teams.map(t => `<option value="${t.id}" ${String(jerseyFilters.team)===String(t.id)?'selected':''}>${esc(t.name)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="season-actions" style="align-self:flex-end">
+        <button class="btn btn-outline btn-sm" onclick="toggleSizeTotals()">${sizeTotalsOpen ? 'Hide Size Totals' : 'Size Totals'}</button>
+      </div>
+    </div>
+    ${totalsPanel}
+    <div class="card card-pad">
+      ${teamBlocks || '<p class="hint">No teams in this season yet.</p>'}
+    </div>
+  </div>`;
+}
+
 /* ============================================================
    DEMO CONTROLS (remove when wired to real data)
    ============================================================ */
@@ -2536,6 +2834,7 @@ function demoReset(){
   coachDirectory = []; coachSearch = ''; manualCoachOpen = false;
   poolFilters = null;
   seasonPayOpen = false; editTxnId = null;
+  seasonJerseysOpen = false; sizeTotalsOpen = false; jerseyFilters = { team: 'all' };
   for (const k in openTxn) delete openTxn[k];
   for (const k in applyOpen) delete applyOpen[k];
   for (const k in openAddTeam) delete openAddTeam[k];
@@ -2552,11 +2851,35 @@ function demoSimulateRegistration(){
   const p = (t.roster || []).find(x => !x.registered);
   if (!p){ toast('Everyone on this roster is already registered.'); return; }
   p.registered = true; p.completion = 100;
+  p.jerseyPkg = true; p.sizes = p.sizes || {};
+  ensureJerseyItems(s);
+  ensureJerseyData(s, p);
   const fee = playerFee(s, d, t, p);
   if (Math.random() < 0.5){ p.plan = 'full'; p.paid = fee; }
   else { p.plan = 'installments'; p.paid = Math.round(fee / 3); }
   render();
   toast(p.name + ' just registered' + (p.plan === 'full' ? ' and paid in full.' : ' — first installment collected.'));
+}
+function demoLoadSampleTournaments(){
+  const s = season();
+  if (!s || currentTeamId == null){ toast('Open a team page first, then load sample tournaments.'); return; }
+  const t = s.teams.find(x => x.id === currentTeamId);
+  t.events = t.events || [];
+  const samples = [
+    { org:'Prospect Select', name:'PS Palm Beach Classic', start:'2026-06-05', end:'2026-06-08', city:'West Palm Beach', state:'FL', site:'https://www.prospectselectbaseball.com', hotel:'' },
+    { org:'Prospect Select', name:'PS Black Bear', start:'2026-06-17', end:'2026-06-20', city:'Boone', state:'NC', site:'', hotel:'' },
+    { org:'Perfect Game', name:'PG WWBA', start:'2026-06-23', end:'2026-06-28', city:'Fort Myers', state:'FL', site:'https://www.perfectgame.org', hotel:'https://www.perfectgame.org/hotels' },
+    { org:'Prospect Select', name:'PS Boston Invitational', start:'2026-07-06', end:'2026-07-09', city:'Boston', state:'MA', site:'', hotel:'' }
+  ];
+  let added = 0;
+  samples.forEach(function(ev){
+    if (t.events.some(e => e.name === ev.name)) return;
+    t.events.push(Object.assign({ id: nid() }, ev));
+    added++;
+  });
+  teamTab = 'events'; eventFormOpen = false; editingEventId = null;
+  render();
+  toast(added ? added + ' sample tournament(s) loaded onto ' + t.name + '.' : t.name + ' already has all the sample tournaments.');
 }
 function demoSimulateFailedPayment(){
   const s = season();
@@ -2583,6 +2906,7 @@ function mockRoster(n, seed){
   for (let i = 0; i < n; i++){
     const name = MOCK_FIRST[(i*5 + seed) % 16] + ' ' + MOCK_LAST[(i*7 + seed*3) % 16];
     const p = { id: nid(), name: name, pos: POSITIONS[(i*3 + seed) % 11],
+      jersey: String((i*7 + seed*3) % 45 + 1),
       email: slugify(name) + '@email.com', phone: '(813) 555-0' + ('00' + (100 + i)).slice(-3),
       source: (i % 5 === 4) ? 'manual' : 'tryout', tryoutId: null,
       registered: false, completion: 0, plan: null, paid: 0 };
@@ -2632,11 +2956,11 @@ function demoLoadSample(){
   summer.teams.find(t => t.name === 'Merrell').overrides[ftPP] = 1350; /* sample team-level override */
   /* Menendez gets a hand-built roster (mirrors the app screenshot) */
   const menendez = summer.teams.find(t => t.name === 'Menendez');
-  [['Johnny Adams','C',1,'full'],['Bryce Besece','C',1,'inst'],['Cole Davidson','3B',1,'full'],
-   ['Ryan Dejnak','SS',1,'inst'],['Bryan Eberly','RHP',1,'full'],['Alejandro Fernandez','LHP',0,null],
-   ['Ryder Fogler','RHP',1,'inst'],['Trey Glaser','CF',0,null],['Josiah Guevara','SS',1,'full']
+  [['Johnny Adams','C',1,'full','3'],['Bryce Besece','C',1,'inst','4'],['Cole Davidson','3B',1,'full','47'],
+   ['Ryan Dejnak','SS',1,'inst','15'],['Bryan Eberly','RHP',1,'full','25'],['Alejandro Fernandez','LHP',0,null,''],
+   ['Ryder Fogler','RHP',1,'inst','12'],['Trey Glaser','CF',0,null,'0'],['Josiah Guevara','SS',1,'full','5']
   ].forEach(function(row, i){
-    menendez.roster.push({ id: nid(), name: row[0], pos: row[1],
+    menendez.roster.push({ id: nid(), name: row[0], pos: row[1], jersey: row[4],
       email: slugify(row[0]) + '@email.com', phone: '(904) 555-02' + ('0' + i).slice(-2),
       source: (i === 5) ? 'manual' : 'tryout', tryoutId: null,
       registered: !!row[2], completion: row[2] ? 100 : 0,
@@ -2687,6 +3011,25 @@ function demoLoadSample(){
   ];
   fallYouth.connectedTryouts = {};
   fallYouth.connectedTryouts[fallYouth.tryoutRegs[0].id] = true;
+  /* Jersey packages: summer runs three jerseys, youth runs two (mirrors the live Uniform Order Checklist) */
+  summer.jerseyItems = [
+    { id: nid(), name: 'Red Jersey', type: 'apparel' },
+    { id: nid(), name: 'Navy Pin Jersey', type: 'apparel' },
+    { id: nid(), name: 'White Jersey', type: 'apparel' },
+    { id: nid(), name: 'Navy Pin Pant', type: 'apparel' },
+    { id: nid(), name: 'White Pant', type: 'apparel' },
+    { id: nid(), name: 'Dry Fit', type: 'apparel' },
+    { id: nid(), name: 'Sock', type: 'sock' },
+    { id: nid(), name: 'Hat', type: 'hat' }
+  ];
+  fallYouth.jerseyItems = [
+    { id: nid(), name: 'Navy Jersey', type: 'apparel' },
+    { id: nid(), name: 'White Jersey', type: 'apparel' },
+    { id: nid(), name: 'White Pant', type: 'apparel' },
+    { id: nid(), name: 'Dry Fit', type: 'apparel' },
+    { id: nid(), name: 'Sock', type: 'sock' },
+    { id: nid(), name: 'Hat', type: 'hat' }
+  ];
   /* Coach system directory: every sample head coach + a few extras to find via search */
   coachDirectory = [];
   function dirCoach(name, registered){
