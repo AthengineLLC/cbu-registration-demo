@@ -6,7 +6,11 @@ Clickable workflow demos for the team management app's registration system. Buil
 
 | File | What it is |
 |---|---|
-| `index.html` | Launcher — links to both demos |
+| `starter-template.html` | Copy this to start a new page |
+| `CHEATSHEET.md` | Component reference. Source of truth for new pages. |
+| `gallery.html` | Every component rendered, with the markup under it |
+| `new-chat-prompt.md` | How to kick off a new Claude Code session |
+| `index.html` | Launcher, links to every demo |
 | `admin.html` | Organization admin side: Registration Management dashboard, 10-step create/edit wizard, template builder with locked mandatory baseline, field/waiver libraries, subsection pricing, registrants dashboard with filtering, Comms messaging, archive |
 | `registration.html` | Parent/player side: tryouts hub → individual tryout page → pre-pay registration flow (ticket + subsection or age-group pricing, player info, Parent 1/2, post-tryout contacts, waiver gate) → confirmation with the org's custom message |
 
@@ -16,7 +20,17 @@ Open `index.html` in any browser, or deploy the folder to Vercel / GitHub Pages 
 
 ## Design standard
 
-All pages follow the CBU brand system: dark navy background (`#0c1327` → `#141d3a`) with white content cards, deep navy (`#0e1730`) section/table headers, CBU red `#b91e2d` primary actions with powder blue `#6daed4` as the Youth accent, Oswald condensed uppercase display type with Inter body text, pill badges, chevron step banners, chip filters, and big-number stat tiles. New pages should reuse these tokens.
+**New pages use the real app's design system.** Start from `starter-template.html`
+and build only from the components in `CHEATSHEET.md`. Open `gallery.html` to see
+them all rendered.
+
+The styling is served live from the product at `https://cbu.athengine.com/proto.css`,
+so a mockup built from these classes looks identical to what ships. Nothing is
+copied or vendored, it cannot go stale.
+
+The four existing demos below still use the older navy system (`#0c1327` background,
+Oswald display type, CBU red actions). They are being absorbed into the app as-is, so
+leave them alone. That system is preserved in `legacy/` for reference.
 
 ## Key behaviors for implementation
 
