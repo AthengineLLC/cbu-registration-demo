@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Team Management - New System Taste Test</title>
+
+<!--
+  This links the real athengine stylesheet. Every class you use from
+  CHEATSHEET.md renders exactly as it does in the product.
+
+  Use the cheatsheet's components where they exist. If you need something it
+  does not have, build it: put the CSS in the data-new-components block below
+  and comment the component at its first use in the body.
+-->
+<link rel="stylesheet" href="https://cbu.athengine.com/proto.css">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Page scaffolding. Leave this alone. */
+  :root {
+    --font-display-loaded: "Barlow Condensed";
+    --font-body-loaded: "Inter";
+  }
+  .proto-page { padding: 32px 24px 96px; }
+  .proto-page > * + * { margin-top: 24px; }
+</style>
+
+<style data-new-components>
+  /* Anything the design system does not have yet goes here, and ONLY here.
+     One short comment per component saying what it is. Use var(--token)
+     colors, never hex. Do not prefix new classes with ui-. */
+
+  /* group-heading: a kicker + big label pair that splits a long list into
+     groups, here graduation years. Nothing in the cheatsheet does this
+     outside a detail section. */
+  .group-heading { margin-top: 32px; }
+  .group-heading__kicker {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: .18em;
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .group-heading__label {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.9rem;
+    line-height: 1.1;
+    color: var(--text);
+  }
+</style>
+</head>
+<body>
+
+<main class="proto-page">
+
+  <!-- Purpose of this page: the same Team Management screen Addison already
+       built in the navy system, rebuilt with athengine components only, so the
+       two looks can be compared with identical content. -->
+
+  <section class="card ui-list-page">
+    <div class="ui-list-page__header">
+      <div class="portal-page-hero-copy">
+        <h1>Team Management</h1>
+        <p>Every team in the organization, grouped by graduation year.</p>
+      </div>
+      <div class="ui-list-page__actions">
+        <button class="ui-button ui-button--primary" type="button">New team</button>
+      </div>
+    </div>
+
+    <p class="ui-count-badge">Showing all 11 teams</p>
+
+    <div class="group-heading">
+      <p class="group-heading__kicker">Graduation year</p>
+      <p class="group-heading__label">2027</p>
+    </div>
+
+    <div class="ui-data-table__scroll">
+      <table class="ui-data-table ui-data-table--zebra ui-data-table--hover">
+        <thead class="ui-data-table__head">
+          <tr>
+            <th scope="col" class="ui-data-table__th">Team name</th>
+            <th scope="col" class="ui-data-table__th">Head coach</th>
+            <th scope="col" class="ui-data-table__th">Age</th>
+            <th scope="col" class="ui-data-table__th">Program</th>
+            <th scope="col" class="ui-data-table__th ui-data-table__cell--center">Record</th>
+            <th scope="col" class="ui-data-table__th ui-data-table__cell--center">Trophies</th>
+            <th scope="col" class="ui-data-table__th ui-data-table__cell--center"># of players</th>
+            <th scope="col" class="ui-data-table__th">Next event</th>
+          </tr>
+        </thead>
+        <tbody class="ui-data-table__body">
+          <tr>
+            <td class="ui-data-table__td"><a href="#">Fleming</a></td>
+            <td class="ui-data-table__td">Wayne Stofsky</td>
+            <td class="ui-data-table__td">17U</td>
+            <td class="ui-data-table__td">United</td>
+            <td class="ui-data-table__td ui-data-table__cell--center">3-8-0</td>
+            <td class="ui-data-table__td ui-data-table__cell--center">0</td>
+            <td class="ui-data-table__td ui-data-table__cell--center">13</td>
+            <td class="ui-data-table__td">None</td>
+          </tr>
+          <tr>
+            <td class="ui-data-table__td"><a href="#">McCoy</a></td>
+            <td class="ui-data-table__td">Mark McCoy</td>
+            <td class="ui-data-table__td">17U</td>
+            <td class="ui-data-table__td">Scout</td>
+            <td class="ui-data-table__td ui-data-table__cell--center">12-5-0</td>
+            <td class="ui-data-table__td ui-data-table__cell--center">2</td>
+            <td class="ui-data-table__td ui-data-table__cell--center">22</td>
+            <td class="ui-data-table__td">None</td>
+          </tr>
+          <tr>
+            <td class="ui-data-table__td"><a href="#">Menendez</a></td>
+            <td class="ui-data-table__td">Miguel Menendez</td>
+            <td class="ui-data-table__td">17U</td>
+            <td class="ui-data-table__td">Scout</td>
+            <td class="ui-data-table__td ui-data-table__cell--center">7-7-0</td>
+            <td class="ui-data-table__td ui-data-table__cell--center">3</td>
+            <td class="ui-data-table__td ui-data-table__cell--center">21</td>
+            <td class="ui-data-table__td">None</td>
+          </tr>
+          <tr>
+            <td class="ui-data-table__td"><a href="#">Olasin</a></td>
+            <td class="ui-data-table__td">Michael Olasin</td>
+            <td class="ui-data-table__td">17U</td>
+            <td class="ui-data-table__td">Scout</td>
+            <td class="ui-data-table__td ui-data-table__cell--center">19-9-2</td>
+            <td class="ui-data-table__td ui-data-table__cell--center">17</td>
+            <td class="ui-data-table__td ui-data-table__cell--center">21</td>
+            <td class="ui-data-table__td">None</td>
+          </tr>
+          <tr>
+            <td class="ui-data-table__td"><a href="#">Thomas</a></td>
+            <td class="ui-data-table__td">Tony Thomas</td>
+            <td class="ui-data-table__td">17U</td>
+            <td class="ui-data-table__td">United</td>
+            <td class="ui-data-table__td ui-data-table__cell--center">12-6-1</td>
+            <td class="ui-data-table__td ui-data-table__cell--center">1</td>
+            <td class="ui-data-table__td ui-data-table__cell--center">20</td>
+            <td class="ui-data-table__td">None</td>
+          </tr>
+          <tr>
+            <td class="ui-data-table__td"><a href="#">CBU 16u</a></td>
+            <td class="ui-data-table__td">Unassigned</td>
+            <td class="ui-data-table__td">16U</td>
+            <td class="ui-data-table__td">High School</td>
+            <td class="ui-data-table__td ui-data-table__cell--center">0-0-0</td>
+            <td class="ui-data-table__td ui-data-table__cell--center">0</td>
+            <td class="ui-data-table__td ui-data-table__cell--center">0</td>
+            <td class="ui-data-table__td">None</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="group-heading">
+      <p class="group-heading__kicker">Graduation year</p>
+      <p class="group-heading__label">2028</p>
+    </div>
+
+    <div class="ui-data-table__scroll">
+      <table class="ui-data-table ui-data-table--zebra ui-data-table--hover">
+        <thead class="ui-data-table__head">
+          <tr>
+            <th scope="col" class="ui-data-table__th">Team name</th>
+            <th scope="col" class="ui-data-table__th">Head coach</th>
+            <th scope="col" class="ui-data-table__th">Age</th>
+            <th scope="col" class="ui-data-table__th">Program</th>
+            <th scope="col" class="ui-data-table__th ui-data-table__cell--center">Record</th>
+            <th scope="col" class="ui-data-table__th ui-data-table__cell--center">Trophies</th>
+            <th scope="col" class="ui-data-table__th ui-data-table__cell--center"># of players</th>
+            <th scope="col" class="ui-data-table__th">Next event</th>
+          </tr>
+        </thead>
+        <tbody class="ui-data-table__body">
+          <tr>
+            <td class="ui-data-table__td"><a href="#">DiBenedetto</a></td>
+            <td class="ui-data-table__td">John Dibenedetto</td>
+            <td class="ui-data-table__td">16U</td>
+            <td class="ui-data-table__td">Scout</td>
+            <td class="ui-data-table__td ui-data-table__cell--center">9-8-1</td>
+            <td class="ui-data-table__td ui-data-table__cell--center">0</td>
+            <td class="ui-data-table__td ui-data-table__cell--center">17</td>
+            <td class="ui-data-table__td">None</td>
+          </tr>
+          <tr>
+            <td class="ui-data-table__td"><a href="#">Hudgins</a></td>
+            <td class="ui-data-table__td">Richie Warren</td>
+            <td class="ui-data-table__td">16U</td>
+            <td class="ui-data-table__td">United</td>
+            <td class="ui-data-table__td ui-data-table__cell--center">8-4-1</td>
+            <td class="ui-data-table__td ui-data-table__cell--center">1</td>
+            <td class="ui-data-table__td ui-data-table__cell--center">13</td>
+            <td class="ui-data-table__td">None</td>
+          </tr>
+          <tr>
+            <td class="ui-data-table__td"><a href="#">Lawson</a></td>
+            <td class="ui-data-table__td">Aaron Lawson</td>
+            <td class="ui-data-table__td">16U</td>
+            <td class="ui-data-table__td">Scout</td>
+            <td class="ui-data-table__td ui-data-table__cell--center">19-5-1</td>
+            <td class="ui-data-table__td ui-data-table__cell--center">2</td>
+            <td class="ui-data-table__td ui-data-table__cell--center">18</td>
+            <td class="ui-data-table__td">None</td>
+          </tr>
+          <tr>
+            <td class="ui-data-table__td"><a href="#">Merrell</a></td>
+            <td class="ui-data-table__td">Tripp Merrell</td>
+            <td class="ui-data-table__td">16U</td>
+            <td class="ui-data-table__td">United</td>
+            <td class="ui-data-table__td ui-data-table__cell--center">17-5-1</td>
+            <td class="ui-data-table__td ui-data-table__cell--center">2</td>
+            <td class="ui-data-table__td ui-data-table__cell--center">15</td>
+            <td class="ui-data-table__td">None</td>
+          </tr>
+          <tr>
+            <td class="ui-data-table__td"><a href="#">Severidt</a></td>
+            <td class="ui-data-table__td">Nick Severidt</td>
+            <td class="ui-data-table__td">16U</td>
+            <td class="ui-data-table__td">United</td>
+            <td class="ui-data-table__td ui-data-table__cell--center">5-9-1</td>
+            <td class="ui-data-table__td ui-data-table__cell--center">0</td>
+            <td class="ui-data-table__td ui-data-table__cell--center">15</td>
+            <td class="ui-data-table__td">None</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </section>
+
+</main>
+
+</body>
+</html>

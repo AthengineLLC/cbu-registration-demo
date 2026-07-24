@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CBU App Shell</title>
+<!--
+  APP SHELL - navy design system (Addison's look, not the athengine system).
+  A persistent left sidebar that hosts the existing demos in a content frame,
+  so flows can be designed around the real navigation instead of opening
+  individual files.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy-bg:#0c1327;
+  --navy-bg-2:#141d3a;
+  --navy-deep:#0e1730;
+  --card:#ffffff;
+  --row-alt:#f5f6fa;
+  --red:#b91e2d;
+  --red-dark:#8f1622;
+  --powder:#6daed4;
+  --powder-dark:#4d8fb6;
+  --ink:#16203c;
+  --muted:#6b7590;
+  --line:#e3e6ee;
+  --sidebar-w:264px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:'Inter',-apple-system,'Segoe UI',Arial,sans-serif;
+  background:var(--navy-bg);color:#eef1f8;
+  display:flex;min-height:100vh;overflow:hidden;
+}
+
+/* ============ SIDEBAR ============ */
+.sidebar{
+  width:var(--sidebar-w);flex:0 0 var(--sidebar-w);
+  background:linear-gradient(175deg,var(--navy-deep) 0%,var(--navy-bg) 100%);
+  border-right:1px solid rgba(255,255,255,.07);
+  display:flex;flex-direction:column;
+  transition:margin-left .2s ease;
+  min-height:100vh;
+}
+.sb-org{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:.6rem;
+  padding:1.1rem 1rem 1rem 1.15rem;border-bottom:1px solid rgba(255,255,255,.07);
+}
+.sb-org-name{
+  font-family:'Oswald',Arial,sans-serif;font-weight:600;font-size:.95rem;color:#fff;
+  line-height:1.25;letter-spacing:.02em;
+  overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+}
+.sb-org-role{font-size:.68rem;color:#8b96b5;margin-top:.3rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sb-collapse{
+  flex:0 0 auto;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);
+  color:#aab3cc;border-radius:8px;width:30px;height:30px;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;
+}
+.sb-collapse:hover{color:#fff;border-color:rgba(255,255,255,.3)}
+.sb-nav{flex:1;padding:.9rem .7rem;display:flex;flex-direction:column;gap:.15rem;overflow-y:auto}
+.sb-item{
+  display:flex;align-items:center;gap:.7rem;width:100%;
+  background:none;border:none;cursor:pointer;text-align:left;
+  font-family:'Inter',Arial,sans-serif;font-weight:600;font-size:.84rem;color:#9aa5c2;
+  padding:.62rem .75rem;border-radius:10px;transition:background .12s,color .12s;
+}
+.sb-item:hover{background:rgba(255,255,255,.05);color:#dfe5f2}
+.sb-item.active{background:rgba(255,255,255,.1);color:#fff}
+.sb-item svg{flex:0 0 18px;width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.sb-user{
+  margin:.7rem;margin-top:auto;
+  display:flex;align-items:center;gap:.65rem;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  border-radius:999px;padding:.45rem .6rem .45rem .5rem;
+}
+.sb-avatar{
+  width:34px;height:34px;border-radius:50%;flex:0 0 34px;
+  background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;
+  font-family:'Oswald',Arial,sans-serif;font-weight:700;font-size:.8rem;letter-spacing:.04em;
+}
+.sb-user-name{font-size:.8rem;font-weight:600;color:#eef1f8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Collapsed state: icons only */
+body.collapsed .sidebar{width:70px;flex-basis:70px}
+body.collapsed .sb-org-name,body.collapsed .sb-org-role,
+body.collapsed .sb-item span,body.collapsed .sb-user-name{display:none}
+body.collapsed .sb-org{justify-content:center;padding-left:.6rem;padding-right:.6rem}
+body.collapsed .sb-item{justify-content:center;padding:.62rem 0}
+body.collapsed .sb-user{justify-content:center;padding:.35rem}
+
+/* ============ CONTENT ============ */
+.content{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--navy-bg-2)}
+.frame{flex:1;width:100%;border:none;display:none;background:var(--navy-bg-2)}
+.frame.show{display:block}
+
+/* Placeholder for sections not built yet */
+.placeholder{
+  flex:1;display:none;align-items:center;justify-content:center;padding:2rem;
+  background:
+    radial-gradient(1200px 600px at 70% -10%, rgba(185,30,45,.12), transparent 60%),
+    linear-gradient(160deg,var(--navy-bg) 0%,var(--navy-bg-2) 100%);
+}
+.placeholder.show{display:flex}
+.ph-card{background:var(--card);border-radius:12px;color:var(--ink);box-shadow:0 18px 40px rgba(3,7,20,.45);padding:2.2rem 2.4rem;max-width:440px;text-align:center}
+.ph-eyebrow{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.28em;font-size:.68rem;font-weight:600;color:var(--powder-dark)}
+.ph-title{font-family:'Oswald','Arial Narrow',Arial,sans-serif;text-transform:uppercase;font-weight:700;font-size:1.7rem;color:var(--navy-deep);margin-top:.5rem}
+.ph-rule{width:52px;height:4px;background:var(--red);margin:.8rem auto 0;border-radius:2px}
+.ph-sub{color:var(--muted);font-size:.88rem;line-height:1.6;margin-top:.9rem}
+
+/* ============ MOBILE ============ */
+.mobile-bar{display:none}
+@media (max-width:760px){
+  body{flex-direction:column;overflow:auto}
+  .mobile-bar{
+    display:flex;align-items:center;gap:.8rem;
+    background:var(--navy-deep);border-bottom:1px solid rgba(255,255,255,.07);
+    padding:.7rem .9rem;position:sticky;top:0;z-index:60;
+  }
+  .mb-burger{background:none;border:1px solid rgba(255,255,255,.2);border-radius:8px;color:#fff;width:36px;height:34px;cursor:pointer;font-size:1rem}
+  .mb-title{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.14em;font-size:.8rem;font-weight:600;color:#fff}
+  .sidebar{
+    position:fixed;left:0;top:0;bottom:0;z-index:70;width:var(--sidebar-w);
+    transform:translateX(-100%);transition:transform .2s ease;
+  }
+  body.menu-open .sidebar{transform:translateX(0)}
+  .scrim{display:none;position:fixed;inset:0;background:rgba(3,7,20,.55);z-index:65}
+  body.menu-open .scrim{display:block}
+  .content{min-height:calc(100vh - 53px)}
+  .frame.show{min-height:calc(100vh - 53px)}
+  body.collapsed .sidebar{width:var(--sidebar-w)}
+  body.collapsed .sb-org-name,body.collapsed .sb-org-role,
+  body.collapsed .sb-item span,body.collapsed .sb-user-name{display:block}
+  .sb-collapse{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<!-- Mobile top bar (hidden on desktop) -->
+<div class="mobile-bar">
+  <button class="mb-burger" onclick="document.body.classList.toggle('menu-open')" aria-label="Open menu">&#9776;</button>
+  <div class="mb-title" id="mbTitle">Team Management</div>
+</div>
+<div class="scrim" onclick="document.body.classList.remove('menu-open')"></div>
+
+<aside class="sidebar">
+  <div class="sb-org">
+    <div>
+      <div class="sb-org-name">Cannons Baseball United</div>
+      <div class="sb-org-role">Organization Admin</div>
+    </div>
+    <button class="sb-collapse" onclick="document.body.classList.toggle('collapsed')" aria-label="Collapse sidebar">&#9776;</button>
+  </div>
+
+  <nav class="sb-nav" aria-label="Main">
+    <button class="sb-item" data-section="Dashboard">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      <span>Dashboard</span>
+    </button>
+    <button class="sb-item" data-section="Player Management">
+      <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.7-3 2.8-4.6 5.5-4.6S13.8 16 14.5 19"/><circle cx="17" cy="9" r="2.4"/><path d="M15.5 14.7c2.7 0 4.4 1.4 5 4.3"/></svg>
+      <span>Player Management</span>
+    </button>
+    <button class="sb-item" data-section="Team Management" data-src="teams.html">
+      <svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-2.9 8.2-7 10-4.1-1.8-7-5.5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4.5"/></svg>
+      <span>Team Management</span>
+    </button>
+    <button class="sb-item" data-section="Registration Management" data-src="admin.html">
+      <svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4.5V3h6v1.5"/><path d="M8.5 10h7M8.5 13.5h7M8.5 17h4.5"/></svg>
+      <span>Registration Management</span>
+    </button>
+    <button class="sb-item" data-section="Metrics Hub">
+      <svg viewBox="0 0 24 24"><path d="M4 20h16"/><rect x="6" y="11" width="3" height="6"/><rect x="11" y="7" width="3" height="10"/><rect x="16" y="13" width="3" height="4"/></svg>
+      <span>Metrics Hub</span>
+    </button>
+    <button class="sb-item" data-section="Coach Access">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="7.5" r="3.2"/><path d="M5.5 20c.8-3.5 3.2-5.4 6.5-5.4s5.7 1.9 6.5 5.4"/></svg>
+      <span>Coach Access</span>
+    </button>
+    <button class="sb-item" data-section="Settings">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3.5v2.2M12 18.3v2.2M20.5 12h-2.2M5.7 12H3.5M18 6l-1.6 1.6M7.6 16.4L6 18M18 18l-1.6-1.6M7.6 7.6L6 6"/></svg>
+      <span>Settings</span>
+    </button>
+  </nav>
+
+  <div class="sb-user">
+    <div class="sb-avatar">AM</div>
+    <div class="sb-user-name">Addison Maruszak</div>
+  </div>
+</aside>
+
+<div class="content">
+  <iframe class="frame" id="frame" title="Section content"></iframe>
+  <div class="placeholder" id="placeholder">
+    <div class="ph-card">
+      <div class="ph-eyebrow">Coming soon</div>
+      <div class="ph-title" id="phTitle">Dashboard</div>
+      <div class="ph-rule"></div>
+      <p class="ph-sub" id="phSub">This section has not been mocked up yet. It lives in the sidebar so the full navigation and flow are visible while other pieces get built.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const items = document.querySelectorAll('.sb-item');
+const frame = document.getElementById('frame');
+const placeholder = document.getElementById('placeholder');
+const phTitle = document.getElementById('phTitle');
+const mbTitle = document.getElementById('mbTitle');
+
+function select(item){
+  items.forEach(i => i.classList.remove('active'));
+  item.classList.add('active');
+  const name = item.dataset.section;
+  const src = item.dataset.src;
+  mbTitle.textContent = name;
+  if(src){
+    if(frame.getAttribute('src') !== src) frame.setAttribute('src', src);
+    frame.classList.add('show');
+    placeholder.classList.remove('show');
+  }else{
+    frame.classList.remove('show');
+    phTitle.textContent = name;
+    placeholder.classList.add('show');
+  }
+  document.body.classList.remove('menu-open');
+}
+
+items.forEach(item => item.addEventListener('click', () => select(item)));
+
+// Open on Team Management, same as the screenshot
+select(document.querySelector('[data-section="Team Management"]'));
+</script>
+</body>
+</html>
