@@ -11,7 +11,8 @@ show the emoji placeholder until the file exists.
 | `powder-pinstripe-jersey.png` | Powder pinstripe game jersey (Scout teams) - not saved yet, emoji placeholder shows |
 | `white-jersey.png` | White game jersey (United script) |
 | `navy-jersey.png` | Navy game jersey (United script) |
-| `navy-pinstripe-pant.png` | Navy pinstripe game pant |
+| `navy-pinstripe-pant.png` | Navy pinstripe game pant (United teams) |
+| `powder-pinstripe-pant.png` | Powder pinstripe game pant (Scout teams) - not saved yet, emoji placeholder shows |
 | `white-pant.png` | White game pant |
 | `sock.png` | Game socks |
 | `hat.png` | Game hat |
