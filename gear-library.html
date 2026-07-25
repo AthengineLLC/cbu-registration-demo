@@ -154,6 +154,11 @@ input:focus{outline:none;border-color:var(--powder-dark)}
   font-family:'Inter',Arial,sans-serif;font-weight:600;
 }
 .team-check.on{background:var(--navy-deep);color:#fff;border-color:var(--navy-deep)}
+/* yes/no switch for the different-jerseys-per-program question */
+.switch{width:46px;height:25px;border-radius:999px;background:#c9cfdd;border:none;cursor:pointer;position:relative;transition:background .15s;flex:0 0 auto}
+.switch::after{content:'';position:absolute;top:3px;left:3px;width:19px;height:19px;border-radius:50%;background:#fff;transition:left .15s;box-shadow:0 1px 3px rgba(3,7,20,.3)}
+.switch.on{background:var(--green)}
+.switch.on::after{left:24px}
 .size-edit-chips{display:flex;flex-wrap:wrap;gap:.35rem;min-height:1.8rem;margin-top:.7rem}
 .size-edit-chip{
   display:inline-flex;align-items:center;gap:.35rem;
@@ -260,6 +265,21 @@ var tags = loadStoredTags() || JSON.parse(JSON.stringify(DEFAULT_TAGS));
 function persistTags(){ try{ localStorage.setItem(TAGS_KEY, JSON.stringify(tags)); }catch(e){} }
 persistTags();
 
+/* The question that gates all of it: does this org use different jerseys
+   for different types of teams? Off = every piece goes to every team and
+   the tag machinery disappears. On (CBU's answer) = tags run the show. */
+var USE_TAGS_KEY = 'cbuGearUseTags';
+var useTags = true;
+try{ useTags = localStorage.getItem(USE_TAGS_KEY) !== '0'; }catch(e){}
+function toggleUseTags(){
+  useTags = !useTags;
+  try{ localStorage.setItem(USE_TAGS_KEY, useTags ? '1' : '0'); }catch(e){}
+  persist();
+  toast(useTags ? 'Program tags are on - tagged pieces only reach their program’s teams.' : 'Program tags are off - every piece goes to every team.');
+  render();
+}
+persist();   /* publish once at load, now that useTags is known */
+
 /* The library is the source of truth for the registration wizard: it is
    published to localStorage on every change, and admin.html's Jersey
    Package step reads it from there (falling back to this same lineup).
@@ -285,11 +305,13 @@ function persist(){
       /* an uploaded photo (data URL) rides along if it is small enough;
          otherwise keep the file path so storage never overflows */
       var photo = (it.img && it.img.length < 200000) ? it.img : (it.photo || null);
-      return { name: it.name, price: it.price, emoji: it.emoji, bg: it.bg, photo: photo, sizes: it.sizes, tags: it.tags || [] };
+      /* tags off = published untagged, so the wizard and family flows treat
+         every piece as all-teams; the tags themselves are kept for when it
+         is switched back on */
+      return { name: it.name, price: it.price, emoji: it.emoji, bg: it.bg, photo: photo, sizes: it.sizes, tags: useTags ? (it.tags || []) : [] };
     })));
   }catch(e){}
 }
-persist();
 
 var formOpen = false;
 var editId = null;       /* item being edited, null = adding new */
@@ -490,13 +512,13 @@ function render(){
         '<div style="margin-top:.9rem"><label class="field-label">Extra-Piece Price ($)</label>' +
         '<input type="text" id="gearPrice" inputmode="decimal" placeholder="55" value="' + esc(draft.price) + '" style="max-width:130px">' +
         '<p class="hint" style="margin-top:.35rem">What a spare costs when a family buys this piece on its own.</p></div>' +
-        '<div style="margin-top:1.1rem"><label class="field-label">Who Gets This Piece</label>' +
+        (useTags ? '<div style="margin-top:1.1rem"><label class="field-label">Who Gets This Piece</label>' +
           '<div class="preset-row">' +
             '<button class="preset-btn ' + (!draft.tags.length ? 'on' : '') + '" onclick="draft.tags=[];render()">All Teams</button>' +
             tags.map(function(t){ return '<button class="preset-btn ' + (draft.tags.indexOf(t.name) > -1 ? 'on' : '') + '" onclick="toggleDraftTag(\'' + esc(t.name).replace(/'/g, "\\'") + '\')">' + esc(t.name) + '</button>'; }).join('') +
           '</div>' +
           '<p class="hint" style="margin-top:.4rem">All Teams means every program sees it - socks, white jerseys. Tag it to a program and only that program’s families get it in their registration.</p>' +
-        '</div>' +
+        '</div>' : '') +
         '<div style="margin-top:1.1rem"><label class="field-label">Sizes</label>' +
           '<div class="preset-row">' +
             SIZE_PRESETS.map(function(p){ return '<button class="preset-btn" onclick="loadPreset(\'' + p.key + '\')">' + p.label + '</button>'; }).join('') +
@@ -538,9 +560,17 @@ function render(){
   '</div>' +
   '<p class="hint" style="margin-top:.5rem">These pieces are what the season registration wizard picks from when it builds a jersey package — add each piece once here, use it in every season. Changes here save automatically and show up in the registration wizard’s Jersey Package step.</p>';
 
-  /* Program Tags panel: create tags, attach teams to them, then tag pieces */
+  /* The gating question first; the Program Tags manager only exists when
+     the answer is yes */
   html += '<div class="tag-panel">' +
-    '<div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">' +
+    '<div style="display:flex;align-items:center;gap:.9rem;flex-wrap:wrap">' +
+      '<button class="switch' + (useTags ? ' on' : '') + '" onclick="toggleUseTags()" aria-label="Different jerseys per program"></button>' +
+      '<span style="font-weight:700;font-size:.95rem;color:var(--ink)">Do you use different styles of jerseys for different types of teams?</span>' +
+    '</div>';
+  if(!useTags){
+    html += '<p class="hint" style="margin:.5rem 0 0">Every piece goes to every team. Flip this on to create program tags — like United and Scout — and tag pieces so each program gets its own jerseys from one registration.</p></div>';
+  } else {
+  html += '<div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-top:.9rem">' +
       '<span class="field-label" style="margin:0">Program Tags</span>' +
       (tagFormIdx == null ? '<button class="btn btn-outline-dark btn-sm" onclick="openTagForm(-1)">+ Add Tag</button>' : '') +
     '</div>' +
@@ -570,6 +600,7 @@ function render(){
     '</div>';
   }
   html += '</div>';
+  }
 
   html += '<div class="gear-grid">' + items.map(function(it){
     var src = it.img || it.photo;
@@ -586,11 +617,11 @@ function render(){
       '<div class="gear-body">' +
         '<div class="gear-name">' + esc(it.name) + '</div>' +
         (it.price ? '<div class="gear-price">Extra: $' + esc(it.price) + '</div>' : '') +
-        '<div class="size-chips">' +
+        (useTags ? '<div class="size-chips">' +
           ((it.tags && it.tags.length)
             ? it.tags.map(function(t){ return '<span class="tag-chip">' + esc(t) + '</span>'; }).join('')
             : '<span class="tag-chip all">All Teams</span>') +
-        '</div>' +
+        '</div>' : '') +
         '<div class="size-chips">' + it.sizes.map(function(s){ return '<span class="size-chip">' + esc(s) + '</span>'; }).join('') + '</div>' +
         '<div class="gear-actions">' + actions + '</div>' +
       '</div>' +

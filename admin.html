@@ -1088,6 +1088,16 @@ function renderRegTable(){
     const statusCell = showArchive
       ? '<span class="pill '+(closed?'pill-navy':'pill-green')+'">'+esc(r.status)+'</span>'
       : '<button class="pill '+(closed?'pill-navy':'pill-green')+'" onclick="toggleRegStatus('+i+')" title="'+(closed?'Click to publish — opens signups':'Click to unpublish — closes signups')+'">'+esc(r.status)+'</button>';
+    /* Season registrations have no single link: every team gets its own,
+       which places the player on that team AND resolves its jersey set */
+    let linkCell;
+    if(r.kind === 'season'){
+      const sTm = r.swiz ? tmSeason(r.swiz.seasonId) : null;
+      const nTeams = sTm ? sTm.divisions.reduce(function(n, d){ return n + d.teams.length; }, 0) : 0;
+      linkCell = '<button class="link-red" onclick="teamLinksIdx=teamLinksIdx==='+i+'?null:'+i+';renderRegTable()">Team Links ('+nTeams+') '+(teamLinksIdx===i?'&#9652;':'&#9662;')+'</button>';
+    } else {
+      linkCell = '<button class="link-red" onclick="copyText(\''+r.link+'\')">Copy link</button>';
+    }
     return '<tr'+((closed||showArchive)?' style="opacity:.6"':'')+'>' +
       '<td><div class="cell-strong">'+esc(r.name)+'</div><div class="cell-sub">'+(showArchive?'Archived':(closed?'Closed to signups':'Open for signups'))+'</div></td>' +
       '<td><span class="pill '+m.pill+'">'+m.label+'</span></td>' +
@@ -1095,10 +1105,41 @@ function renderRegTable(){
       '<td>'+esc(r.closes)+'</td>' +
       '<td>'+esc(r.signups)+'</td>' +
       '<td>'+statusCell+'</td>' +
-      '<td><button class="link-red" onclick="copyText(\''+r.link+'\')">Copy link</button></td>' +
+      '<td>'+linkCell+'</td>' +
       '<td style="white-space:nowrap">'+actions+'</td>' +
-    '</tr>';
+    '</tr>' +
+    (teamLinksIdx === i && r.kind === 'season' ? '<tr><td colspan="8" style="padding:.2rem .8rem .8rem">'+teamLinksPanel(r)+'</td></tr>' : '');
   }).join('');
+}
+let teamLinksIdx = null;   /* season registration whose per-team links are expanded */
+function slugify(s){ return String(s).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,''); }
+function teamProgram(teamName){
+  const tgs = gearTags();
+  for(let i = 0; i < tgs.length; i++){
+    if((tgs[i].teams || []).indexOf(teamName) > -1) return tgs[i].name;
+  }
+  return null;
+}
+function teamLinksPanel(r){
+  const s = r.swiz ? tmSeason(r.swiz.seasonId) : null;
+  if(!s) return '<div class="cell-sub">No season attached yet - edit the registration to pick one.</div>';
+  const slug = slugify(s.name);
+  let rowsH = '';
+  s.divisions.forEach(function(d){
+    d.teams.forEach(function(tm){
+      const prog = teamProgram(tm);
+      const link = 'cbu.app/register/' + slug + '/' + slugify(tm);
+      rowsH += '<div style="display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;padding:.45rem 0;border-bottom:1px solid var(--line)">' +
+        '<span class="cell-strong" style="min-width:170px">'+esc(tm)+'</span>' +
+        (prog ? '<span class="pill pill-gold">'+esc(prog)+' jerseys</span>' : '<span class="cell-sub">no program tag</span>') +
+        '<span class="cell-sub" style="flex:1;min-width:200px">'+esc(link)+'</span>' +
+        '<button class="link-red" onclick="copyText(\''+link+'\')">Copy link</button></div>';
+    });
+  });
+  return '<div style="background:var(--row-alt);border:1.5px solid var(--line);border-radius:12px;padding:1rem 1.1rem">' +
+    '<div class="cell-strong">One link per team</div>' +
+    '<div class="cell-sub" style="margin-bottom:.5rem">Send each team its own link. The link places the player on that team automatically - and it carries the team\'s program tag, so that family sees their program\'s jersey set without ever choosing.</div>' +
+    rowsH + '</div>';
 }
 function toggleArchiveView(){
   showArchive = !showArchive;
