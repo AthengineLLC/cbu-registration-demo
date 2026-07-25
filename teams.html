@@ -441,6 +441,17 @@ input[disabled]{background:var(--row-alt);color:var(--muted)}
 /* today: red ring on the cell, day number in a red badge */
 .cal-cell.today{box-shadow:inset 0 0 0 2px var(--red)}
 .cal-cell.today .cal-daynum{background:var(--red);color:#fff;border-radius:999px;padding:.08rem .4rem;align-self:flex-start}
+/* cal-add: per-day add affordance. Invisible until the day is hovered on
+   desktop; faintly visible all the time on touch screens, where hover
+   does not exist. Clicking asks what to add to that date. */
+.cal-add{
+  margin-top:auto;width:100%;border:1.5px dashed #c9cfdd;background:none;color:var(--muted);
+  border-radius:6px;font-family:'Inter',Arial,sans-serif;font-weight:600;font-size:.6rem;
+  padding:.2rem .3rem;cursor:pointer;opacity:0;transition:opacity .12s;
+}
+.cal-cell:hover .cal-add,.cal-cell:focus-within .cal-add{opacity:1}
+.cal-add:hover{color:var(--red);border-color:var(--red)}
+@media (hover:none){.cal-add{opacity:.45}}
 .cal-chip{
   display:block;width:100%;text-align:left;border:none;cursor:pointer;border-radius:6px;
   font-family:'Inter',Arial,sans-serif;font-weight:600;font-size:.62rem;line-height:1.3;padding:.24rem .4rem;
@@ -2910,10 +2921,14 @@ function renderPracticesTab(s, d, t){
       ${p.canceled ? '<span class="pill pill-red">Canceled</span>' : ''}
       <div class="practice-actions" style="flex-wrap:wrap">
         ${practiceDeleteId === p.id
-          ? `<span style="font-size:.78rem;color:var(--muted)">Delete just this one, or all future on this schedule?</span>
+          ? (p.patternId != null
+            ? `<span style="font-size:.78rem;color:var(--muted)">Delete just this one, or all future on this schedule?</span>
              <button class="link-red" onclick="deletePractice('one')">This Practice</button>
              <button class="link-red" onclick="deletePractice('forward')">This + All Future</button>
              <button class="link-muted" onclick="practiceDeleteId=null;render()">Keep</button>`
+            : `<span style="font-size:.78rem;color:var(--muted)">Delete this practice?</span>
+             <button class="link-red" onclick="deletePractice('one')">Delete</button>
+             <button class="link-muted" onclick="practiceDeleteId=null;render()">Keep</button>`)
           : (p.canceled
             ? `<button class="link-red" onclick="togglePracticeCanceled(${p.id})">Restore</button>
                <button class="link-muted" onclick="practiceDeleteId=${p.id};render()">Delete</button>`
@@ -2965,7 +2980,7 @@ function renderPatternFormBody(){
       </div>`;
 }
 function cancelPatternForm(){ practiceFormOpen = false; patternDraft = null; patternEditId = null; calModal = null; render(); }
-function renderPracticeEditFormBody(p, inModal){
+function practiceDraftFields(){
   return `
         <div class="form-grid">
           <div><label class="field-label">Time</label><input type="time" value="${esc(practiceDraft.time)}" onchange="practiceDraft.time=this.value"></div>
@@ -2974,14 +2989,31 @@ function renderPracticeEditFormBody(p, inModal){
           <div><label class="field-label">City</label><input type="text" value="${esc(practiceDraft.city)}" onchange="practiceDraft.city=this.value.trim()"></div>
           <div><label class="field-label">State</label><input type="text" value="${esc(practiceDraft.state)}" onchange="practiceDraft.state=this.value.trim()"></div>
           <div><label class="field-label">Street Address</label><input type="text" value="${esc(practiceDraft.address)}" onchange="practiceDraft.address=this.value.trim()"></div>
-        </div>
-        <p class="hint" style="margin-top:.7rem">Save This Practice changes only ${fmtShortDate(p.date)}. Save From Here Forward also applies it to every later practice on the same weekly schedule - rare, but it is here for field moves.</p>
+        </div>`;
+}
+function renderPracticeEditFormBody(p, inModal){
+  const onSchedule = p.patternId != null;
+  return `
+        ${practiceDraftFields()}
+        <p class="hint" style="margin-top:.7rem">${onSchedule
+          ? 'Save This Practice changes only ' + fmtShortDate(p.date) + '. Save From Here Forward also applies it to every later practice on the same weekly schedule - rare, but it is here for field moves.'
+          : 'This practice was added by hand on its own, so changes save to it alone.'}</p>
         <div style="margin-top:.8rem;display:flex;gap:.7rem;flex-wrap:wrap;align-items:center">
           <button class="btn btn-primary btn-sm" onclick="savePracticeEdit('one')">Save This Practice</button>
-          <button class="btn btn-outline-dark btn-sm" onclick="savePracticeEdit('forward')">Save From Here Forward</button>
+          ${onSchedule ? `<button class="btn btn-outline-dark btn-sm" onclick="savePracticeEdit('forward')">Save From Here Forward</button>` : ''}
           <button class="link-muted" onclick="closePracticeEdit()">Cancel</button>
           ${inModal ? `<button class="link-red" style="margin-left:auto" onclick="togglePracticeCanceled(${p.id})">Cancel This Practice</button>` : ''}
         </div>`;
+}
+function saveNewPractice(){
+  const t = curTeam();
+  t.practices = t.practices || [];
+  const p = Object.assign({ id: nid(), patternId: null, date: calModal.date, canceled: false }, practiceDraft);
+  t.practices.push(p);
+  sortPractices(t);
+  toast(fmtGameDay(p.date) + ' practice added.');
+  calModal = null; practiceDraft = null;
+  render();
 }
 function closePracticeEdit(){ practiceEditId = null; practiceDraft = null; calModal = null; render(); }
 function togglePatternDay(i){
@@ -3101,9 +3133,9 @@ function calShift(dir){
   calMonth = y + '-' + ('0' + m).slice(-2);
   render();
 }
-function openCalModal(kind, id){
+function openCalModal(kind, id, date){
   const t = curTeam();
-  calModal = { kind: kind, id: id == null ? null : id };
+  calModal = { kind: kind, id: id == null ? null : id, date: date || null };
   eventFormOpen = false; practiceFormOpen = false; patternRemoveId = null; practiceDeleteId = null;
   if (kind === 'game') gameEditorId = id;
   if (kind === 'practice'){
@@ -3116,6 +3148,10 @@ function openCalModal(kind, id){
   if (kind === 'event') editingEventId = id;
   if (kind === 'addevent') editingEventId = null;
   if (kind === 'addpractice'){ patternEditId = null; patternDraft = null; }
+  if (kind === 'newpractice'){
+    practiceEditId = null;
+    practiceDraft = { time:'17:45', complex:'', field:'', city:'', state:'', address:'' };
+  }
   render();
 }
 function closeCalModal(){
@@ -3129,7 +3165,7 @@ function calAddGame(){
   const e = (t.events || []).find(x => x.id === +sel.value);
   if (!e) return;
   e.games = e.games || [];
-  const g = { id: nid(), date: e.start || calMonth + '-01', time:'', at:false, opp:'',
+  const g = { id: nid(), date: (calModal && calModal.date) || e.start || calMonth + '-01', time:'', at:false, opp:'',
     complex:'', field:'', city: e.city || '', state: e.state || '', address:'',
     us:null, them:null, jersey:'', rotation:[] };
   e.games.push(g);
@@ -3157,10 +3193,31 @@ function renderCalModal(s, t){
       ? `<p class="hint" style="margin-bottom:.9rem">This practice is canceled. It still shows on the calendar, struck through, so families know it existed.</p>
          <button class="btn btn-primary btn-sm" onclick="togglePracticeCanceled(${p.id})">Restore Practice</button>`
       : (practiceDraft ? renderPracticeEditFormBody(p, true) : '');
+  } else if (calModal.kind === 'addpick'){
+    /* the per-day + Add: ask what belongs on that date, then hand off with
+       the date already filled in */
+    title = 'Add · ' + fmtGameDay(calModal.date);
+    body = `
+      <p class="hint">What is being added to ${esc(fmtGameDay(calModal.date))}?</p>
+      <div style="display:flex;gap:.7rem;flex-wrap:wrap;margin-top:.9rem">
+        <button class="btn btn-primary btn-sm" onclick="openCalModal('addgame',null,'${calModal.date}')">+ Game</button>
+        <button class="btn btn-primary btn-sm" onclick="openCalModal('newpractice',null,'${calModal.date}')">+ Practice</button>
+        <button class="btn btn-primary btn-sm" onclick="openCalModal('addevent',null,'${calModal.date}')">+ Event / Tournament</button>
+        <button class="link-muted" onclick="closeCalModal()">Cancel</button>
+      </div>`;
+  } else if (calModal.kind === 'newpractice'){
+    title = 'Add Practice · ' + fmtGameDay(calModal.date);
+    body = `
+      ${practiceDraftFields()}
+      <p class="hint" style="margin-top:.7rem">A one-off practice on this date only. It is not part of a weekly schedule, so later edits touch it alone.</p>
+      <div style="margin-top:.9rem;display:flex;gap:.7rem;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm" onclick="saveNewPractice()">Add Practice</button>
+        <button class="link-muted" onclick="closeCalModal()">Cancel</button>
+      </div>`;
   } else if (calModal.kind === 'event' || calModal.kind === 'addevent'){
     const editing = calModal.kind === 'event' ? (t.events || []).find(e => e.id === calModal.id) : null;
     if (calModal.kind === 'event' && !editing) return '';
-    const ev = editing || { org:'', name:'', start:'', end:'', city:'', state:'', site:'', hotel:'' };
+    const ev = editing || { org:'', name:'', start: calModal.date || '', end: calModal.date || '', city:'', state:'', site:'', hotel:'' };
     title = editing ? 'Edit Event' : 'Add An Event';
     body = renderEventFormBody(!!editing, ev);
   } else if (calModal.kind === 'addpractice'){
@@ -3170,9 +3227,10 @@ function renderCalModal(s, t){
     title = 'Add A Weekly Schedule';
     body = renderPatternFormBody();
   } else if (calModal.kind === 'addgame'){
-    title = 'Add A Game';
+    title = 'Add A Game' + (calModal.date ? ' · ' + fmtGameDay(calModal.date) : '');
+    /* if the day clicked falls inside a tournament, preselect it */
     const evOpts = (t.events || []).slice().sort((a,b) => (a.start || '9999') < (b.start || '9999') ? -1 : 1)
-      .map(e => `<option value="${e.id}">${esc(e.name)}${e.start ? ' · ' + fmtShortDate(e.start) : ''}</option>`).join('');
+      .map(e => `<option value="${e.id}"${calModal.date && e.start && e.start <= calModal.date && calModal.date <= (e.end || e.start) ? ' selected' : ''}>${esc(e.name)}${e.start ? ' · ' + fmtShortDate(e.start) : ''}</option>`).join('');
     body = evOpts ? `
       <label class="field-label">Which tournament is the game part of?</label>
       <div style="display:flex;gap:.7rem;flex-wrap:wrap;align-items:center">
@@ -3228,7 +3286,7 @@ function renderCalendarTab(s, d, t){
   for (let i = 0; i < firstDow; i++) cells += '<div class="cal-cell blank"></div>';
   for (let day = 1; day <= daysIn; day++){
     const iso = y + '-' + ('0' + m).slice(-2) + '-' + ('0' + day).slice(-2);
-    cells += `<div class="cal-cell${iso === tIso ? ' today' : ''}"><span class="cal-daynum">${day}</span>${(byDate[iso] || []).join('')}</div>`;
+    cells += `<div class="cal-cell${iso === tIso ? ' today' : ''}"><span class="cal-daynum">${day}</span>${(byDate[iso] || []).join('')}<button class="cal-add" onclick="openCalModal('addpick',null,'${iso}')">+ Add</button></div>`;
   }
   const trailing = (firstDow + daysIn) % 7;
   if (trailing) for (let i = trailing; i < 7; i++) cells += '<div class="cal-cell blank"></div>';
@@ -3255,7 +3313,7 @@ function renderCalendarTab(s, d, t){
       <span><span class="swatch" style="background:#f6ecd2"></span>Tournament</span>
       <span><span class="swatch" style="background:#f8e3e6"></span>Game</span>
       <span><span class="swatch" style="background:#e8ebf4"></span>Practice</span>
-      <span style="margin-left:auto">Click anything to edit it right here.</span>
+      <span style="margin-left:auto">Click anything to edit it right here. Hover a day to add to it.</span>
     </div>
   </div>
   ${renderCalModal(s, t)}`;
