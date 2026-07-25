@@ -8,6 +8,7 @@ show the emoji placeholder until the file exists.
 | Filename | Piece |
 |---|---|
 | `navy-pinstripe-jersey.png` | Navy pinstripe game jersey (CBU chest logo) |
+| `powder-pinstripe-jersey.png` | Powder pinstripe game jersey (Scout teams) - not saved yet, emoji placeholder shows |
 | `white-jersey.png` | White game jersey (United script) |
 | `navy-jersey.png` | Navy game jersey (United script) |
 | `navy-pinstripe-pant.png` | Navy pinstripe game pant |

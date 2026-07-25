@@ -137,6 +137,23 @@ input:focus{outline:none;border-color:var(--powder-dark)}
   border:1.5px solid #c9cfdd;border-radius:999px;padding:.35rem .8rem;cursor:pointer;
 }
 .preset-btn:hover{border-color:var(--red);color:var(--red)}
+.preset-btn.on{background:var(--navy-deep);color:#fff;border-color:var(--navy-deep)}
+.preset-btn.on:hover{color:#fff;border-color:var(--navy-deep)}
+/* program tag chips on gear cards */
+.tag-chip{
+  font-family:'Oswald',Arial,sans-serif;font-size:.62rem;font-weight:600;letter-spacing:.06em;
+  background:#f6ecd2;color:#7a5f14;border-radius:6px;padding:.2rem .45rem;white-space:nowrap;
+}
+.tag-chip.all{background:#e2f2e8;color:var(--green)}
+/* the Program Tags panel above the grid */
+.tag-panel{border:1.5px solid var(--line);border-radius:12px;padding:1rem 1.1rem;margin:1rem 0 1.2rem;background:var(--row-alt)}
+.tag-row{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;padding:.4rem 0}
+.team-check{
+  display:inline-flex;align-items:center;gap:.4rem;font-size:.82rem;color:var(--ink);
+  border:1.5px solid #c9cfdd;border-radius:8px;padding:.35rem .6rem;cursor:pointer;background:#fff;
+  font-family:'Inter',Arial,sans-serif;font-weight:600;
+}
+.team-check.on{background:var(--navy-deep);color:#fff;border-color:var(--navy-deep)}
 .size-edit-chips{display:flex;flex-wrap:wrap;gap:.35rem;min-height:1.8rem;margin-top:.7rem}
 .size-edit-chip{
   display:inline-flex;align-items:center;gap:.35rem;
@@ -203,17 +220,45 @@ var SIZE_PRESETS = [
    exists the emoji placeholder square shows instead. Dragging a photo onto
    the square in the edit form also works and overrides the file. */
 var RUN = ['YS','YM','YL','YXL','AS','AM','AL','AXL','AXXL'];
+/* tags: [] means All Teams get the piece; otherwise only teams under the
+   named program tags see it in their registration */
 var DEFAULT_ITEMS = [
-  { name:'Navy Pinstripe Jersey', price:'55', emoji:'👕', bg:'linear-gradient(135deg,#141d3a,#0c1327)', photo:'img/gear/navy-pinstripe-jersey.png', sizes:RUN.slice() },
-  { name:'White Jersey',          price:'55', emoji:'👕', bg:'linear-gradient(135deg,#f5f6fa,#dfe3ee)', photo:'img/gear/white-jersey.png',          sizes:RUN.slice() },
-  { name:'Navy Jersey',           price:'55', emoji:'👕', bg:'linear-gradient(135deg,#1b2749,#0e1730)', photo:'img/gear/navy-jersey.png',           sizes:RUN.slice() },
-  { name:'Navy Pinstripe Pant',   price:'45', emoji:'👖', bg:'linear-gradient(135deg,#141d3a,#0c1327)', photo:'img/gear/navy-pinstripe-pant.png',   sizes:RUN.slice() },
-  { name:'White Pant',            price:'45', emoji:'👖', bg:'linear-gradient(135deg,#eef1f8,#c9cfdd)', photo:'img/gear/white-pant.jpg',            sizes:RUN.slice() },
-  { name:'Game Socks',            price:'12', emoji:'🧦', bg:'linear-gradient(135deg,#d94b58,#b91e2d)', photo:'img/gear/sock.png',                  sizes:['S','M','L','XL'] },
-  { name:'Game Hat',              price:'30', emoji:'🧢', bg:'linear-gradient(135deg,#b91e2d,#7a1420)', photo:'img/gear/hat.png',                   sizes:['XS','S/M','M/L','L/XL'] },
-  { name:'Dry Fit — Navy',        price:'25', emoji:'👕', bg:'linear-gradient(135deg,#1b2749,#0e1730)', photo:'img/gear/dryfit-navy.png',           sizes:RUN.slice() },
-  { name:'Dry Fit — Powder',      price:'25', emoji:'👕', bg:'linear-gradient(135deg,#6daed4,#4d8fb6)', photo:'img/gear/dryfit-powder.png',         sizes:RUN.slice() }
+  { name:'Navy Pinstripe Jersey',   price:'55', emoji:'👕', bg:'linear-gradient(135deg,#141d3a,#0c1327)', photo:'img/gear/navy-pinstripe-jersey.png',   sizes:RUN.slice(), tags:['United'] },
+  { name:'Powder Pinstripe Jersey', price:'55', emoji:'👕', bg:'linear-gradient(135deg,#6daed4,#4d8fb6)', photo:'img/gear/powder-pinstripe-jersey.png', sizes:RUN.slice(), tags:['Scout'] },
+  { name:'White Jersey',            price:'55', emoji:'👕', bg:'linear-gradient(135deg,#f5f6fa,#dfe3ee)', photo:'img/gear/white-jersey.png',            sizes:RUN.slice(), tags:[] },
+  { name:'Navy Jersey',             price:'55', emoji:'👕', bg:'linear-gradient(135deg,#1b2749,#0e1730)', photo:'img/gear/navy-jersey.png',             sizes:RUN.slice(), tags:[] },
+  { name:'Navy Pinstripe Pant',     price:'45', emoji:'👖', bg:'linear-gradient(135deg,#141d3a,#0c1327)', photo:'img/gear/navy-pinstripe-pant.png',     sizes:RUN.slice(), tags:[] },
+  { name:'White Pant',              price:'45', emoji:'👖', bg:'linear-gradient(135deg,#eef1f8,#c9cfdd)', photo:'img/gear/white-pant.jpg',              sizes:RUN.slice(), tags:[] },
+  { name:'Game Socks',              price:'12', emoji:'🧦', bg:'linear-gradient(135deg,#d94b58,#b91e2d)', photo:'img/gear/sock.png',                    sizes:['S','M','L','XL'], tags:[] },
+  { name:'Game Hat',                price:'30', emoji:'🧢', bg:'linear-gradient(135deg,#b91e2d,#7a1420)', photo:'img/gear/hat.png',                     sizes:['XS','S/M','M/L','L/XL'], tags:[] },
+  { name:'Dry Fit — Navy',          price:'25', emoji:'👕', bg:'linear-gradient(135deg,#1b2749,#0e1730)', photo:'img/gear/dryfit-navy.png',             sizes:RUN.slice(), tags:[] },
+  { name:'Dry Fit — Powder',        price:'25', emoji:'👕', bg:'linear-gradient(135deg,#6daed4,#4d8fb6)', photo:'img/gear/dryfit-powder.png',           sizes:RUN.slice(), tags:[] }
 ];
+
+/* Program tags: created here at the org level, each naming which teams sit
+   under it. CBU calls its programs United and Scout; another org will name
+   its own. Team names come from Team Management in the real app - the
+   workflow is teams first, then tags attach teams, then pieces get tagged.
+   Published to localStorage alongside the pieces so the wizard resolves a
+   family's team to its pieces. */
+var TEAM_POOL = ['CBU United 2027','CBU United 2028','CBU Scout 2028','CBU United 2029','CBU United 2030'];
+var DEFAULT_TAGS = [
+  { name:'United', teams:['CBU United 2027','CBU United 2028','CBU United 2029','CBU United 2030'] },
+  { name:'Scout',  teams:['CBU Scout 2028'] }
+];
+var TAGS_KEY = 'cbuGearTags';
+function loadStoredTags(){
+  try{
+    var raw = localStorage.getItem(TAGS_KEY);
+    if(!raw) return null;
+    var arr = JSON.parse(raw);
+    if(!Array.isArray(arr) || (arr.length && !arr[0].name)) return null;
+    return arr;
+  }catch(e){ return null; }
+}
+var tags = loadStoredTags() || JSON.parse(JSON.stringify(DEFAULT_TAGS));
+function persistTags(){ try{ localStorage.setItem(TAGS_KEY, JSON.stringify(tags)); }catch(e){} }
+persistTags();
 
 /* The library is the source of truth for the registration wizard: it is
    published to localStorage on every change, and admin.html's Jersey
@@ -232,7 +277,7 @@ function loadStored(){
   }catch(e){ return null; }
 }
 var items = (loadStored() || DEFAULT_ITEMS).map(function(o){
-  return Object.assign({ img:null, photo:null, emoji:'👕', bg:'linear-gradient(135deg,#eef1f8,#c9cfdd)' }, o, { id: nid() });
+  return Object.assign({ img:null, photo:null, emoji:'👕', bg:'linear-gradient(135deg,#eef1f8,#c9cfdd)', tags:[] }, o, { id: nid() });
 });
 function persist(){
   try{
@@ -240,7 +285,7 @@ function persist(){
       /* an uploaded photo (data URL) rides along if it is small enough;
          otherwise keep the file path so storage never overflows */
       var photo = (it.img && it.img.length < 200000) ? it.img : (it.photo || null);
-      return { name: it.name, price: it.price, emoji: it.emoji, bg: it.bg, photo: photo, sizes: it.sizes };
+      return { name: it.name, price: it.price, emoji: it.emoji, bg: it.bg, photo: photo, sizes: it.sizes, tags: it.tags || [] };
     })));
   }catch(e){}
 }
@@ -251,9 +296,67 @@ var editId = null;       /* item being edited, null = adding new */
 var deleteId = null;     /* item pending inline delete confirm */
 var draft = null;        /* {name, price, emoji, bg, img, sizes:[]} */
 var resetConfirm = false;/* inline confirm for Reset Library */
+var tagFormIdx = null;   /* null = tag form closed, -1 = new tag, >=0 = editing that tag */
+var tagDraft = null;     /* {name, teams:[]} */
 function resetLibrary(){
-  try{ localStorage.removeItem(STORE_KEY); }catch(e){}
+  try{ localStorage.removeItem(STORE_KEY); localStorage.removeItem(TAGS_KEY); }catch(e){}
   location.reload();
+}
+
+/* ---- Program tag manager ---- */
+function openTagForm(idx){
+  tagFormIdx = idx;
+  tagDraft = idx >= 0 ? JSON.parse(JSON.stringify(tags[idx])) : { name:'', teams:[] };
+  render();
+}
+function toggleTagTeam(team){
+  var at = tagDraft.teams.indexOf(team);
+  if(at > -1) tagDraft.teams.splice(at, 1);
+  else tagDraft.teams.push(team);
+  render();
+}
+function saveTag(){
+  tagDraft.name = document.getElementById('tagName').value.trim();
+  if(!tagDraft.name){ toast('Give the tag a name - e.g. United, Scout, Elite.'); return; }
+  if(tagFormIdx >= 0){
+    var oldName = tags[tagFormIdx].name;
+    tags[tagFormIdx] = tagDraft;
+    if(oldName !== tagDraft.name){
+      /* renamed: pieces tagged with the old name follow it */
+      items.forEach(function(it){
+        var at = (it.tags || []).indexOf(oldName);
+        if(at > -1) it.tags[at] = tagDraft.name;
+      });
+      persist();
+    }
+    toast(tagDraft.name + ' tag updated.');
+  } else {
+    tags.push(tagDraft);
+    toast(tagDraft.name + ' tag created - now tag pieces with it.');
+  }
+  persistTags();
+  tagFormIdx = null; tagDraft = null;
+  render();
+}
+function deleteTag(){
+  var t = tags.splice(tagFormIdx, 1)[0];
+  if(t){
+    items.forEach(function(it){
+      var at = (it.tags || []).indexOf(t.name);
+      if(at > -1) it.tags.splice(at, 1);
+    });
+    persist();
+  }
+  persistTags();
+  tagFormIdx = null; tagDraft = null;
+  toast((t ? t.name : 'Tag') + ' deleted - its pieces now go to all teams unless tagged otherwise.');
+  render();
+}
+function toggleDraftTag(name){
+  var at = draft.tags.indexOf(name);
+  if(at > -1) draft.tags.splice(at, 1);
+  else draft.tags.push(name);
+  render();
 }
 
 function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -274,7 +377,8 @@ function openForm(id){
   var it = id != null ? findItem(id) : null;
   draft = it
     ? JSON.parse(JSON.stringify(it))
-    : { name:'', price:'', emoji:'👕', bg:'linear-gradient(135deg,#eef1f8,#c9cfdd)', photo:null, img:null, sizes:[] };
+    : { name:'', price:'', emoji:'👕', bg:'linear-gradient(135deg,#eef1f8,#c9cfdd)', photo:null, img:null, sizes:[], tags:[] };
+  if(!draft.tags) draft.tags = [];
   render();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -386,6 +490,13 @@ function render(){
         '<div style="margin-top:.9rem"><label class="field-label">Extra-Piece Price ($)</label>' +
         '<input type="text" id="gearPrice" inputmode="decimal" placeholder="55" value="' + esc(draft.price) + '" style="max-width:130px">' +
         '<p class="hint" style="margin-top:.35rem">What a spare costs when a family buys this piece on its own.</p></div>' +
+        '<div style="margin-top:1.1rem"><label class="field-label">Who Gets This Piece</label>' +
+          '<div class="preset-row">' +
+            '<button class="preset-btn ' + (!draft.tags.length ? 'on' : '') + '" onclick="draft.tags=[];render()">All Teams</button>' +
+            tags.map(function(t){ return '<button class="preset-btn ' + (draft.tags.indexOf(t.name) > -1 ? 'on' : '') + '" onclick="toggleDraftTag(\'' + esc(t.name).replace(/'/g, "\\'") + '\')">' + esc(t.name) + '</button>'; }).join('') +
+          '</div>' +
+          '<p class="hint" style="margin-top:.4rem">All Teams means every program sees it - socks, white jerseys. Tag it to a program and only that program’s families get it in their registration.</p>' +
+        '</div>' +
         '<div style="margin-top:1.1rem"><label class="field-label">Sizes</label>' +
           '<div class="preset-row">' +
             SIZE_PRESETS.map(function(p){ return '<button class="preset-btn" onclick="loadPreset(\'' + p.key + '\')">' + p.label + '</button>'; }).join('') +
@@ -427,6 +538,39 @@ function render(){
   '</div>' +
   '<p class="hint" style="margin-top:.5rem">These pieces are what the season registration wizard picks from when it builds a jersey package — add each piece once here, use it in every season. Changes here save automatically and show up in the registration wizard’s Jersey Package step.</p>';
 
+  /* Program Tags panel: create tags, attach teams to them, then tag pieces */
+  html += '<div class="tag-panel">' +
+    '<div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">' +
+      '<span class="field-label" style="margin:0">Program Tags</span>' +
+      (tagFormIdx == null ? '<button class="btn btn-outline-dark btn-sm" onclick="openTagForm(-1)">+ Add Tag</button>' : '') +
+    '</div>' +
+    '<p class="hint" style="margin:.45rem 0 .3rem">Teams come first in Team Management, then a tag names each program and attaches its teams. A piece tagged United only reaches United families; untagged pieces reach everyone.</p>';
+  if(tagFormIdx == null){
+    html += tags.length ? tags.map(function(t, i){
+      return '<div class="tag-row"><span class="tag-chip">' + esc(t.name) + '</span>' +
+        '<span class="hint">' + (t.teams.length ? t.teams.map(esc).join(' · ') : 'No teams attached yet') + '</span>' +
+        '<button class="link-muted" style="margin-left:auto" onclick="openTagForm(' + i + ')">Edit</button></div>';
+    }).join('') : '<p class="hint">No tags yet - add one per program (United, Scout, Elite, whatever this org calls its levels).</p>';
+  } else {
+    html += '<div style="margin-top:.6rem">' +
+      '<label class="field-label">Tag Name</label>' +
+      '<input type="text" id="tagName" placeholder="e.g. United" value="' + esc(tagDraft.name) + '" style="max-width:240px">' +
+      '<label class="field-label" style="margin-top:.9rem">Teams Under This Tag</label>' +
+      '<div style="display:flex;gap:.45rem;flex-wrap:wrap">' +
+        TEAM_POOL.map(function(tm){
+          return '<button class="team-check ' + (tagDraft.teams.indexOf(tm) > -1 ? 'on' : '') + '" onclick="toggleTagTeam(\'' + esc(tm).replace(/'/g, "\\'") + '\')">' + esc(tm) + '</button>';
+        }).join('') +
+      '</div>' +
+      '<p class="hint" style="margin-top:.4rem">This team list comes from Team Management - every team in the org shows here.</p>' +
+      '<div style="margin-top:.8rem;display:flex;gap:.7rem;flex-wrap:wrap;align-items:center">' +
+        '<button class="btn btn-primary btn-sm" onclick="saveTag()">' + (tagFormIdx >= 0 ? 'Save Tag' : 'Create Tag') + '</button>' +
+        '<button class="link-muted" onclick="tagFormIdx=null;tagDraft=null;render()">Cancel</button>' +
+        (tagFormIdx >= 0 ? '<button class="link-red" style="margin-left:auto" onclick="deleteTag()">Delete Tag</button>' : '') +
+      '</div>' +
+    '</div>';
+  }
+  html += '</div>';
+
   html += '<div class="gear-grid">' + items.map(function(it){
     var src = it.img || it.photo;
     var photo = src
@@ -442,6 +586,11 @@ function render(){
       '<div class="gear-body">' +
         '<div class="gear-name">' + esc(it.name) + '</div>' +
         (it.price ? '<div class="gear-price">Extra: $' + esc(it.price) + '</div>' : '') +
+        '<div class="size-chips">' +
+          ((it.tags && it.tags.length)
+            ? it.tags.map(function(t){ return '<span class="tag-chip">' + esc(t) + '</span>'; }).join('')
+            : '<span class="tag-chip all">All Teams</span>') +
+        '</div>' +
         '<div class="size-chips">' + it.sizes.map(function(s){ return '<span class="size-chip">' + esc(s) + '</span>'; }).join('') + '</div>' +
         '<div class="gear-actions">' + actions + '</div>' +
       '</div>' +

@@ -350,7 +350,7 @@ input.err{border-color:var(--red);background:#fff7f8}
 
   <!-- Page header -->
   <div class="eyebrow">You're Invited</div>
-  <h1 class="page-title display">CBU United 2028 — Summer 2026</h1>
+  <h1 class="page-title display" id="pageTitle">CBU United 2028 — Summer 2026</h1>
   <div class="title-rule"></div>
   <p class="page-title-sub">Congratulations — you've been offered a roster spot. Complete the steps below to register for the season and secure your place on the team.</p>
 
@@ -359,7 +359,7 @@ input.err{border-color:var(--red);background:#fff7f8}
     <div class="invite-grid">
       <div class="invite-cell">
         <div class="invite-k">Team</div>
-        <div class="invite-v display">CBU United 2028</div>
+        <div class="invite-v display" id="inviteTeam">CBU United 2028</div>
       </div>
       <div class="invite-cell">
         <div class="invite-k">Season</div>
@@ -375,6 +375,10 @@ input.err{border-color:var(--red);background:#fff7f8}
       </div>
     </div>
   </div>
+
+  <!-- DEMO ONLY: one registration serves every program - flip the invite to
+       see the other program's jerseys resolve from the same package -->
+  <p style="margin:.7rem 0 0;font-size:.8rem;color:#aab3cc">Demo: this invite is for a <strong id="demoProg" style="color:#fff"></strong> family · <a class="link-red" id="demoSwitch" href="#">View the other program's invite</a> — same registration, its jerseys swap in.</p>
 
   <!-- Step banner -->
   <div class="steps" id="stepBanner">
@@ -522,7 +526,7 @@ input.err{border-color:var(--red);background:#fff7f8}
           <div class="opt-head">
             <div>
               <div class="opt-title">2026 United Jersey Package</div>
-              <div class="opt-desc">Three game jerseys (navy pinstripe, white &amp; navy), two game pants, game hat, and socks. Required for players who don't already have current-season uniforms.</div>
+              <div class="opt-desc" id="pkgDesc"><!-- filled by JS from this program's resolved pieces --></div>
             </div>
             <div class="opt-price" id="pkgPrice"></div>
           </div>
@@ -833,17 +837,29 @@ var SEASON = {
    per item, AND a price per item (used when families buy extra pieces).
    This object is what the backend will feed this page.                       */
 var RUN = ['YS','YM','YL','YXL','AS','AM','AL','AXL','AXXL'];
+/* Which family is this? Season registration links are per-team, so the
+   invite already knows the team - and the team's program tag (United or
+   Scout) decides which tagged pieces the package resolves to.
+   Demo: ?team=scout shows the Scout invite; default is United. */
+var TEAM_PARAM = (new URLSearchParams(location.search).get('team') || 'united').toLowerCase();
+var INVITE = TEAM_PARAM === 'scout'
+  ? { team:'CBU Scout 2028',  program:'Scout' }
+  : { team:'CBU United 2028', program:'United' };
+SEASON.team = INVITE.team;
+SEASON.program = INVITE.program;
 var PACKAGE = {
   name: '2026 United Jersey Package',
-  price: 0,   /* computed below: the sum of the pieces (admin can override in the wizard) */
+  price: 0,   /* computed below: the sum of THIS program's pieces (admin can override in the wizard) */
+  /* tags: [] = every program gets it; tagged pieces only reach their program's teams */
   items: [
-    { id:'pinJersey',   name:'Navy Pinstripe Jersey', desc:'Sublimated game jersey, navy pinstripe', price:55, img:'img/gear/navy-pinstripe-jersey.png', sizes:RUN },
-    { id:'whiteJersey', name:'White Jersey',          desc:'Sublimated game jersey, white',          price:55, img:'img/gear/white-jersey.png',          sizes:RUN },
-    { id:'navyJersey',  name:'Navy Jersey',           desc:'Sublimated game jersey, navy',           price:55, img:'img/gear/navy-jersey.png',           sizes:RUN },
-    { id:'pinPant',     name:'Navy Pinstripe Pant',   desc:'Game pant, navy pinstripe',              price:45, img:'img/gear/navy-pinstripe-pant.png',   sizes:RUN },
-    { id:'whitePant',   name:'White Pant',            desc:'Game pant, white',                       price:45, img:'img/gear/white-pant.jpg',            sizes:RUN },
-    { id:'hat',         name:'Game Hat',              desc:'Official CBU game hat',                  price:30, img:'img/gear/hat.png',                   sizes:['XS','S/M','M/L','L/XL'] },
-    { id:'socks',       name:'Game Socks',            desc:'Game socks, navy and red',               price:12, img:'img/gear/sock.png',                  sizes:['S','M','L','XL'] }
+    { id:'pinJersey',    name:'Navy Pinstripe Jersey',   desc:'Sublimated game jersey, navy pinstripe',   price:55, img:'img/gear/navy-pinstripe-jersey.png',   sizes:RUN, tags:['United'] },
+    { id:'powderJersey', name:'Powder Pinstripe Jersey', desc:'Sublimated game jersey, powder pinstripe', price:55, img:'img/gear/powder-pinstripe-jersey.png', sizes:RUN, tags:['Scout'] },
+    { id:'whiteJersey',  name:'White Jersey',            desc:'Sublimated game jersey, white',            price:55, img:'img/gear/white-jersey.png',            sizes:RUN, tags:[] },
+    { id:'navyJersey',   name:'Navy Jersey',             desc:'Sublimated game jersey, navy',             price:55, img:'img/gear/navy-jersey.png',             sizes:RUN, tags:[] },
+    { id:'pinPant',      name:'Navy Pinstripe Pant',     desc:'Game pant, navy pinstripe',                price:45, img:'img/gear/navy-pinstripe-pant.png',     sizes:RUN, tags:[] },
+    { id:'whitePant',    name:'White Pant',              desc:'Game pant, white',                         price:45, img:'img/gear/white-pant.jpg',              sizes:RUN, tags:[] },
+    { id:'hat',          name:'Game Hat',                desc:'Official CBU game hat',                    price:30, img:'img/gear/hat.png',                     sizes:['XS','S/M','M/L','L/XL'], tags:[] },
+    { id:'socks',        name:'Game Socks',              desc:'Game socks, navy and red',                 price:12, img:'img/gear/sock.png',                    sizes:['S','M','L','XL'], tags:[] }
   ],
   /* Optional season add-ons — from the same gear library, sized like everything else */
   addons: [
@@ -857,7 +873,14 @@ function addonById(id){
   }
   return null;
 }
-/* Package price = sum of its pieces, matching the wizard's auto pricing */
+/* Resolve the package to this family's program: untagged pieces are for
+   everyone, tagged pieces only for their program. A Scout invite gets the
+   powder pinstripe; a United invite gets the navy pinstripe. */
+PACKAGE.items = PACKAGE.items.filter(function(item){
+  var t = item.tags || [];
+  return !t.length || t.indexOf(INVITE.program) > -1;
+});
+/* Package price = sum of this program's pieces, matching the wizard's auto pricing */
 PACKAGE.price = PACKAGE.items.reduce(function(t, item){ return t + item.price; }, 0);
 
 /* Set by the admin in the season registration wizard: ship gear straight to
@@ -1715,6 +1738,14 @@ document.getElementById('pkgStrip').innerHTML = PACKAGE.items.map(function(item)
 /* Package price displays come from the computed price, never hardcoded */
 document.getElementById('pkgPrice').textContent = money(PACKAGE.price);
 document.getElementById('extraPkgPrice').textContent = money(PACKAGE.price);
+/* The invite banner and package copy follow this family's team and program */
+document.getElementById('pageTitle').textContent = SEASON.team + ' — ' + SEASON.season;
+document.getElementById('inviteTeam').textContent = SEASON.team;
+document.getElementById('pkgDesc').textContent = 'Includes: ' + PACKAGE.items.map(function(i){ return i.name; }).join(', ') + '. Required for players who don\'t already have current-season uniforms.';
+document.getElementById('demoProg').textContent = SEASON.program;
+var demoLink = document.getElementById('demoSwitch');
+demoLink.href = '?team=' + (SEASON.program === 'Scout' ? 'united' : 'scout');
+demoLink.textContent = 'View as a ' + (SEASON.program === 'Scout' ? 'United' : 'Scout') + ' family';
 renderAddons();
 </script>
 </body>

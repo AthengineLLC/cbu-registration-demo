@@ -126,6 +126,7 @@ tbody tr:last-child td{border-bottom:none}
   padding:.28rem .65rem;border-radius:999px;white-space:nowrap;
 }
 .pill-green{background:var(--green-bg);color:var(--green)}
+.pill-gold{background:#f6ecd2;color:#7a5f14}
 .pill-red{background:#f8e3e6;color:var(--red)}
 .pill-blue{background:#e2eef7;color:#2d6f96}
 .pill-navy{background:#e8ebf4;color:var(--navy-deep)}
@@ -2683,16 +2684,22 @@ let sAddingStore = false;   // external-store add form open on the Message step
    fallback below mirrors the library's standard lineup for when the
    library page has never been opened. */
 const GEAR_RUN = ['YS','YM','YL','YXL','AS','AM','AL','AXL','AXXL'];
+/* tags: [] = every team gets the piece; named program tags scope it */
 const GEAR_FALLBACK = [
-  { name:'Navy Pinstripe Jersey', price:'55', photo:'img/gear/navy-pinstripe-jersey.png', sizes:GEAR_RUN },
-  { name:'White Jersey',          price:'55', photo:'img/gear/white-jersey.png',          sizes:GEAR_RUN },
-  { name:'Navy Jersey',           price:'55', photo:'img/gear/navy-jersey.png',           sizes:GEAR_RUN },
-  { name:'Navy Pinstripe Pant',   price:'45', photo:'img/gear/navy-pinstripe-pant.png',   sizes:GEAR_RUN },
-  { name:'White Pant',            price:'45', photo:'img/gear/white-pant.jpg',            sizes:GEAR_RUN },
-  { name:'Game Socks',            price:'12', photo:'img/gear/sock.png',                  sizes:['S','M','L','XL'] },
-  { name:'Game Hat',              price:'30', photo:'img/gear/hat.png',                   sizes:['XS','S/M','M/L','L/XL'] },
-  { name:'Dry Fit — Navy',        price:'25', photo:'img/gear/dryfit-navy.png',           sizes:GEAR_RUN },
-  { name:'Dry Fit — Powder',      price:'25', photo:'img/gear/dryfit-powder.png',         sizes:GEAR_RUN }
+  { name:'Navy Pinstripe Jersey',   price:'55', photo:'img/gear/navy-pinstripe-jersey.png',   sizes:GEAR_RUN, tags:['United'] },
+  { name:'Powder Pinstripe Jersey', price:'55', photo:'img/gear/powder-pinstripe-jersey.png', sizes:GEAR_RUN, tags:['Scout'] },
+  { name:'White Jersey',            price:'55', photo:'img/gear/white-jersey.png',            sizes:GEAR_RUN, tags:[] },
+  { name:'Navy Jersey',             price:'55', photo:'img/gear/navy-jersey.png',             sizes:GEAR_RUN, tags:[] },
+  { name:'Navy Pinstripe Pant',     price:'45', photo:'img/gear/navy-pinstripe-pant.png',     sizes:GEAR_RUN, tags:[] },
+  { name:'White Pant',              price:'45', photo:'img/gear/white-pant.jpg',              sizes:GEAR_RUN, tags:[] },
+  { name:'Game Socks',              price:'12', photo:'img/gear/sock.png',                    sizes:['S','M','L','XL'], tags:[] },
+  { name:'Game Hat',                price:'30', photo:'img/gear/hat.png',                     sizes:['XS','S/M','M/L','L/XL'], tags:[] },
+  { name:'Dry Fit — Navy',          price:'25', photo:'img/gear/dryfit-navy.png',             sizes:GEAR_RUN, tags:[] },
+  { name:'Dry Fit — Powder',        price:'25', photo:'img/gear/dryfit-powder.png',           sizes:GEAR_RUN, tags:[] }
+];
+const GEAR_TAGS_FALLBACK = [
+  { name:'United', teams:['CBU United 2027','CBU United 2028','CBU United 2029','CBU United 2030'] },
+  { name:'Scout',  teams:['CBU Scout 2028'] }
 ];
 function gearLibrary(){
   try{
@@ -2704,8 +2711,37 @@ function gearLibrary(){
   }catch(e){}
   return GEAR_FALLBACK;
 }
+function gearTags(){
+  try{
+    const raw = localStorage.getItem('cbuGearTags');
+    if(raw){
+      const arr = JSON.parse(raw);
+      if(Array.isArray(arr)) return arr;
+    }
+  }catch(e){}
+  return GEAR_TAGS_FALLBACK;
+}
 function libToPkgItem(g){
-  return { name:g.name, desc:g.desc || '', price:String(g.price || ''), sizes:(g.sizes || []).join(', '), img:g.photo || '' };
+  return { name:g.name, desc:g.desc || '', price:String(g.price || ''), sizes:(g.sizes || []).join(', '), img:g.photo || '', tags:(g.tags || []).slice() };
+}
+/* pill markup for a piece's program scope */
+function tagPills(tagsArr){
+  return (tagsArr && tagsArr.length)
+    ? tagsArr.map(function(t){ return '<span class="pill pill-gold" style="margin-left:.4rem">'+esc(t)+'</span>'; }).join('')
+    : '<span class="pill pill-green" style="margin-left:.4rem">All Teams</span>';
+}
+/* per-program package price - untagged pieces count for every program */
+function sVariantPrices(pk){
+  const anyTagged = pk.items.some(function(it){ return (it.tags || []).length; });
+  if(!anyTagged) return null;
+  return gearTags().map(function(tg){
+    let t = 0, n = 0;
+    pk.items.forEach(function(it){
+      const its = it.tags || [];
+      if(!its.length || its.indexOf(tg.name) > -1){ t += parseFloat(it.price) || 0; n++; }
+    });
+    return { name: tg.name, total: Math.round(t * 100) / 100, count: n };
+  });
 }
 /* Package price defaults to the sum of its pieces; the admin can override.
    priceAuto !== false means auto (sum), false means the typed override. */
@@ -2740,7 +2776,7 @@ function sGearPickerPanel(target, closeFlag){
     avail.forEach(function(g, i){
       html += '<div style="display:flex;align-items:center;gap:.8rem;padding:.45rem 0;border-bottom:1px solid var(--line)">' +
         (g.photo ? '<img src="'+escAttr(g.photo)+'" alt="" style="width:44px;height:44px;object-fit:contain;background:#fff;border:1.5px solid var(--line);border-radius:8px;padding:2px;flex:0 0 44px" onerror="this.remove()">' : '') +
-        '<div style="flex:1;min-width:0"><span class="cell-strong">'+esc(g.name)+'</span>' +
+        '<div style="flex:1;min-width:0"><span class="cell-strong">'+esc(g.name)+'</span>'+tagPills(g.tags)+
         '<div class="cell-sub">Sizes: '+esc((g.sizes || []).join(' · '))+'</div></div>' +
         '<span class="pill pill-red">$'+esc(g.price)+'</span>' +
         '<button class="btn btn-outline-dark btn-sm" onclick="sAddLibraryPiece('+i+',\''+target+'\')">Add</button></div>';
@@ -2758,13 +2794,14 @@ const RUN_SIZES = 'YS, YM, YL, YXL, AS, AM, AL, AXL, AXXL';
 const STANDARD_PKG = {
   name:'2026 United Jersey Package', price:'150',
   items:[
-    { name:'Navy Pinstripe Jersey', desc:'Sublimated game jersey, navy pinstripe', price:'55', sizes:RUN_SIZES, img:'img/gear/navy-pinstripe-jersey.png' },
-    { name:'White Jersey',          desc:'Sublimated game jersey, white',          price:'55', sizes:RUN_SIZES, img:'img/gear/white-jersey.png' },
-    { name:'Navy Jersey',           desc:'Sublimated game jersey, navy',           price:'55', sizes:RUN_SIZES, img:'img/gear/navy-jersey.png' },
-    { name:'Navy Pinstripe Pant',   desc:'Game pant, navy pinstripe',              price:'45', sizes:RUN_SIZES, img:'img/gear/navy-pinstripe-pant.png' },
-    { name:'White Pant',            desc:'Game pant, white',                       price:'45', sizes:RUN_SIZES, img:'img/gear/white-pant.jpg' },
-    { name:'Game Hat',              desc:'Official CBU game hat',                  price:'30', sizes:'XS, S/M, M/L, L/XL', img:'img/gear/hat.png' },
-    { name:'Game Socks',            desc:'Game socks, navy and red',               price:'12', sizes:'S, M, L, XL', img:'img/gear/sock.png' }
+    { name:'Navy Pinstripe Jersey',   desc:'Sublimated game jersey, navy pinstripe',   price:'55', sizes:RUN_SIZES, img:'img/gear/navy-pinstripe-jersey.png',   tags:['United'] },
+    { name:'Powder Pinstripe Jersey', desc:'Sublimated game jersey, powder pinstripe', price:'55', sizes:RUN_SIZES, img:'img/gear/powder-pinstripe-jersey.png', tags:['Scout'] },
+    { name:'White Jersey',            desc:'Sublimated game jersey, white',            price:'55', sizes:RUN_SIZES, img:'img/gear/white-jersey.png',            tags:[] },
+    { name:'Navy Jersey',             desc:'Sublimated game jersey, navy',             price:'55', sizes:RUN_SIZES, img:'img/gear/navy-jersey.png',             tags:[] },
+    { name:'Navy Pinstripe Pant',     desc:'Game pant, navy pinstripe',                price:'45', sizes:RUN_SIZES, img:'img/gear/navy-pinstripe-pant.png',     tags:[] },
+    { name:'White Pant',              desc:'Game pant, white',                         price:'45', sizes:RUN_SIZES, img:'img/gear/white-pant.jpg',              tags:[] },
+    { name:'Game Hat',                desc:'Official CBU game hat',                    price:'30', sizes:'XS, S/M, M/L, L/XL', img:'img/gear/hat.png',           tags:[] },
+    { name:'Game Socks',              desc:'Game socks, navy and red',                 price:'12', sizes:'S, M, L, XL', img:'img/gear/sock.png',                 tags:[] }
   ],
   addons:[
     { name:'Dry Fit — Navy',   desc:'Practice dry fit, navy',        price:'25', img:'img/gear/dryfit-navy.png' },
@@ -3232,11 +3269,21 @@ function sStepPkg(){
     '<div style="flex:1;min-width:240px"><label class="field-label" for="spk-name">Package Name</label>' +
       '<input type="text" id="spk-name" placeholder="e.g. 2026 United Jersey Package" value="'+escAttr(pk.name)+'" oninput="swiz.pkg.name=this.value" style="max-width:100%"></div>' +
     '<div><label class="field-label" for="spk-price">Package Price ($)</label>' +
-      (pk.priceAuto !== false
-        ? '<div class="cell-strong" style="font-size:1.15rem;padding:.35rem 0">$'+sPkgAutoPrice(pk).toLocaleString()+'</div>' +
-          '<div class="cell-sub">Sum of the pieces below · <button class="link-red" onclick="swiz.pkg.priceAuto=false;swiz.pkg.price=String(sPkgAutoPrice(swiz.pkg));renderSStepPanel()">Override</button></div>'
-        : '<input type="text" id="spk-price" inputmode="decimal" value="'+escAttr(pk.price)+'" oninput="swiz.pkg.price=this.value" style="max-width:130px">' +
-          '<div class="cell-sub" style="margin-top:.3rem">Overridden · pieces add up to $'+sPkgAutoPrice(pk).toLocaleString()+' · <button class="link-red" onclick="swiz.pkg.priceAuto=true;renderSStepPanel()">Use The Sum</button></div>') +
+      (function(){
+        const variants = sVariantPrices(pk);
+        if(pk.priceAuto !== false && variants){
+          return variants.map(function(v){
+            return '<div class="cell-strong" style="padding:.1rem 0">'+esc(v.name)+' teams: $'+v.total.toLocaleString()+' <span class="cell-sub" style="display:inline">('+v.count+' pieces)</span></div>';
+          }).join('') +
+          '<div class="cell-sub">Each program pays the sum of its pieces - untagged pieces count for everyone · <button class="link-red" onclick="swiz.pkg.priceAuto=false;swiz.pkg.price=String(sPkgAutoPrice(swiz.pkg));renderSStepPanel()">Override</button></div>';
+        }
+        if(pk.priceAuto !== false){
+          return '<div class="cell-strong" style="font-size:1.15rem;padding:.35rem 0">$'+sPkgAutoPrice(pk).toLocaleString()+'</div>' +
+          '<div class="cell-sub">Sum of the pieces below · <button class="link-red" onclick="swiz.pkg.priceAuto=false;swiz.pkg.price=String(sPkgAutoPrice(swiz.pkg));renderSStepPanel()">Override</button></div>';
+        }
+        return '<input type="text" id="spk-price" inputmode="decimal" value="'+escAttr(pk.price)+'" oninput="swiz.pkg.price=this.value" style="max-width:130px">' +
+          '<div class="cell-sub" style="margin-top:.3rem">Overridden - one price for every program · <button class="link-red" onclick="swiz.pkg.priceAuto=true;renderSStepPanel()">Use The Sum</button></div>';
+      })() +
     '</div>' +
     '<div><label class="field-label" for="spk-deadline">Sizing Deadline</label>' +
       '<input type="date" id="spk-deadline" value="'+pk.deadline+'" onchange="swiz.pkg.deadline=this.value" style="max-width:180px"></div>' +
@@ -3275,7 +3322,7 @@ function sStepPkg(){
     pk.items.forEach(function(it, i){
       html += '<div class="preview-field"><div style="display:flex;gap:.8rem;align-items:center;min-width:0">' +
         (it.img ? '<img src="'+esc(it.img)+'" alt="" style="width:48px;height:48px;object-fit:contain;background:#fff;border:1.5px solid var(--line);border-radius:8px;padding:2px;flex:0 0 48px" onerror="this.remove()">' : '') +
-        '<div><span class="cell-strong">'+esc(it.name)+'</span>' +
+        '<div><span class="cell-strong">'+esc(it.name)+'</span>'+tagPills(it.tags)+
         '<div class="cell-sub">'+esc(it.desc || '')+(it.desc?' · ':'')+'Sizes: '+esc(pkgSizes(it).join(' · '))+'</div></div></div>' +
         '<div style="white-space:nowrap"><span class="pill pill-red" style="margin-right:.6rem">Extra: $'+esc(it.price)+'</span>' +
         '<button class="link-red" onclick="sRemovePkgItem('+i+')">Remove</button></div></div>';
@@ -3485,7 +3532,12 @@ function sStepReview(){
         '<div class="cell-sub" style="margin-top:.35rem">Must be agreed to before payment</div>'
       : '<span style="color:var(--muted)">None</span>')+'</dd>' +
     '<dt>Jersey Package</dt><dd>'+(pk.offer
-      ? '<span class="cell-strong">'+esc(pk.name)+'</span> — $'+esc(sPkgPriceStr(pk))+(pk.priceAuto !== false ? ' (sum of pieces)' : ' (overridden)')+' · '+pk.items.length+' items' +
+      ? '<span class="cell-strong">'+esc(pk.name)+'</span> — ' +
+        (function(){
+          const variants = pk.priceAuto !== false ? sVariantPrices(pk) : null;
+          if(variants) return variants.map(function(v){ return esc(v.name)+' $'+v.total.toLocaleString(); }).join(' · ')+' (per-program, sum of each program\x27s pieces)';
+          return '$'+esc(sPkgPriceStr(pk))+(pk.priceAuto !== false ? ' (sum of pieces)' : ' (overridden)');
+        })() + ' · '+pk.items.length+' items' +
         (pk.allowSecond ? ' · second package allowed' : '') +
         (pk.ship ? ' · ships to players ($'+esc(pk.shipCost)+' flat shipping)' : ' · handed out at practice') +
         '<div class="cell-sub">Sizing deadline '+fmtDate(pk.deadline)+(pk.addons.length? ' · Add-ons: '+pk.addons.map(function(a){return esc(a.name)+' ($'+esc(a.price)+')';}).join(', ') : '')+(pk.ship ? ' · Families enter a shipping address before payment' : '')+'</div>'
