@@ -2666,8 +2666,15 @@ function seasonTplNeeds(){
   return need;
 }
 
-/* Org-level settings — shared across every registration. */
-let ORG_SETTINGS = { fanGearUrl:'https://cbubaseball.com/fan-gear' };
+/* Org-level settings — shared across every registration. The external
+   stores list rides along with the fan gear link: name + website each
+   (description optional), as many as the org wants, all shown on every
+   confirmation page. */
+let ORG_SETTINGS = { fanGearUrl:'https://cbubaseball.com/fan-gear',
+  stores:[
+    { name:'CBU Squad Locker', desc:'Custom CBU apparel — hoodies, polos, and bags', url:'https://teamlocker.squadlocker.com/cbu' }
+  ] };
+let sAddingStore = false;   // external-store add form open on the Message step
 
 /* The CBU standard package — one-click starting point in the wizard. */
 const STANDARD_PKG = {
@@ -3290,7 +3297,52 @@ function sStepMessage(){
       '<input type="text" id="s-fangear" value="'+escAttr(ORG_SETTINGS.fanGearUrl)+'" oninput="ORG_SETTINGS.fanGearUrl=this.value" style="max-width:100%">' +
       '<p class="step-help" style="font-size:.78rem;margin-top:.6rem">Org-level — this same link shows at the bottom of every registration\'s confirmation page, so changing it here changes it everywhere.</p>' +
     '</div>' +
-  '</div>';
+  '</div>' +
+
+  /* External stores — same org-level idea, but a list: team stores on
+     Squad Locker, Rawlings custom shops, whatever else sells CBU gear. */
+  '<div class="preview-section" style="margin-top:1.2rem;max-width:680px"><div class="preview-section-head">Organization Setting — External Stores</div>' +
+    (ORG_SETTINGS.stores.length
+      ? ORG_SETTINGS.stores.map(function(st, i){
+          return '<div class="preview-field"><div><span class="cell-strong">'+esc(st.name)+'</span>' +
+            '<div class="cell-sub">'+(st.desc ? esc(st.desc)+' · ' : '')+esc(st.url)+'</div></div>' +
+            '<button class="link-red" onclick="sRemoveStore('+i+')">Remove</button></div>';
+        }).join('')
+      : '<div class="preview-field" style="justify-content:center;color:var(--muted)">No external stores yet — team stores like Squad Locker or a Rawlings custom shop go here.</div>') +
+  '</div>' +
+  (sAddingStore
+    ? '<div style="background:var(--row-alt);border:1.5px solid var(--line);border-radius:12px;padding:1.2rem 1.3rem;margin-top:1rem;max-width:680px">' +
+        '<div style="display:flex;gap:1.2rem;flex-wrap:wrap">' +
+          '<div style="flex:1;min-width:200px"><label class="field-label" for="s-store-name">Store Name</label>' +
+            '<input type="text" id="s-store-name" placeholder="e.g. CBU Squad Locker" style="max-width:100%"></div>' +
+          '<div style="flex:1;min-width:220px"><label class="field-label" for="s-store-url">Website</label>' +
+            '<input type="text" id="s-store-url" placeholder="https://…" style="max-width:100%"></div>' +
+        '</div>' +
+        '<div class="mt-2"><label class="field-label" for="s-store-desc">Description (optional)</label>' +
+          '<input type="text" id="s-store-desc" placeholder="e.g. Custom CBU apparel — hoodies, polos, and bags" style="max-width:100%"></div>' +
+        '<div style="display:flex;gap:.7rem;margin-top:.9rem">' +
+          '<button class="btn btn-primary btn-sm" onclick="sSaveStore()">Add Store</button>' +
+          '<button class="btn btn-outline-dark btn-sm" onclick="sAddingStore=false;renderSStepPanel()">Cancel</button>' +
+        '</div>' +
+      '</div>'
+    : '<div class="mt-2"><button class="btn btn-outline-dark btn-sm" onclick="sAddingStore=true;renderSStepPanel()">+ Add External Store</button>' +
+      '<span class="step-help" style="display:inline-block;margin-left:.8rem;font-size:.78rem">Org-level like the fan gear link — every store here shows on every confirmation page.</span></div>');
+}
+function sSaveStore(){
+  const name = document.getElementById('s-store-name').value.trim();
+  const url = document.getElementById('s-store-url').value.trim();
+  const desc = document.getElementById('s-store-desc').value.trim();
+  if(!name){ toast('Give the store a name'); return; }
+  if(!url){ toast('Add the store\'s website'); return; }
+  ORG_SETTINGS.stores.push({ name:name, desc:desc, url:url });
+  sAddingStore = false;
+  renderSStepPanel();
+  toast(name + ' added — it now shows on every confirmation page.');
+}
+function sRemoveStore(i){
+  const st = ORG_SETTINGS.stores.splice(i, 1)[0];
+  renderSStepPanel();
+  toast((st ? st.name : 'Store') + ' removed.');
 }
 
 /* ---- Season step 7: review ---- */
@@ -3334,7 +3386,9 @@ function sStepReview(){
     '<dt>Post-Reg. Message</dt><dd>'+(swiz.postMessage.trim()
       ? '<span style="font-size:.85rem"><strong>A Message From [Team Name]</strong> — '+esc(swiz.postMessage.trim())+'</span><div class="cell-sub">Title is automatic per team</div>'
       : '<span style="color:var(--muted)">Standard confirmation</span>')+'</dd>' +
-    '<dt>Fan Gear Link</dt><dd><span style="font-size:.85rem">'+esc(ORG_SETTINGS.fanGearUrl)+'</span><div class="cell-sub">Org-level — shown on every confirmation page</div></dd>' +
+    '<dt>Gear Stores</dt><dd><span style="font-size:.85rem">'+esc(ORG_SETTINGS.fanGearUrl)+'</span>' +
+      ORG_SETTINGS.stores.map(function(st){ return '<div style="font-size:.85rem;margin-top:.2rem">'+esc(st.name)+' — '+esc(st.url)+'</div>'; }).join('') +
+      '<div class="cell-sub">Org-level — the fan gear store and every external store show on every confirmation page</div></dd>' +
   '</dl>';
 }
 
