@@ -233,8 +233,12 @@ function select(item){
 
 items.forEach(item => item.addEventListener('click', () => select(item)));
 
-// Open on Team Management, same as the screenshot
-select(document.querySelector('[data-section="Team Management"]'));
+// Deep link: app-shell.html?open=teams or ?open=admin starts on that section.
+// The demo pages redirect themselves here when opened bare, so the left menu
+// is always present on desktop and phone.
+const openParam = new URLSearchParams(location.search).get('open');
+const startItem = openParam ? document.querySelector('.sb-item[data-src="' + openParam + '.html"]') : null;
+select(startItem || document.querySelector('[data-section="Team Management"]'));
 </script>
 </body>
 </html>

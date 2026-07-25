@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CBU App — Team Management</title>
+<script>
+/* This page always lives inside the app shell. Opened bare, it re-opens
+   itself in app-shell.html so the left menu is there on desktop and phone. */
+if (window.self === window.top) location.replace('app-shell.html?open=teams');
+</script>
 <!--
   ============================================================
   CBU APP — TEAM MANAGEMENT (clickable demo, mock data)

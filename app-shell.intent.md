@@ -9,6 +9,11 @@
   Coach Access, and Settings show a "coming soon" panel until they are mocked up.
 - What happens after: new sections get built and wired into the sidebar one at a
   time, so the whole flow is walkable in one place
+- The sidebar is always present on admin pages: teams.html and admin.html
+  redirect themselves into this shell when opened bare, and the shell accepts
+  ?open=teams or ?open=admin to start on that section. Parent-facing pages
+  (registration, season registration, team schedule) stay standalone on
+  purpose - parents never see the admin menu.
 - Out of scope: the athengine design system (this shell deliberately uses
   Addison's navy look), real routing, permissions per role
 - Note for Ben: the sidebar structure (org header, nav order, active state, user
