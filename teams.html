@@ -2496,7 +2496,8 @@ function renderGames(s, t, e){
           ${res}
           ${gameEditorId === g.id
             ? `<button class="link-muted" onclick="closeGameEditor()">Close</button>`
-            : `<button class="link-red" onclick="openGameEditor(${g.id})">${rot.length || g.jersey ? 'Edit Game Details' : 'Set Rotation'}</button>`}
+            : `<button class="link-red" onclick="openGameEditor(${g.id})">${rot.length ? 'Edit Rotation' : 'Set Rotation'}</button>
+               <button class="link-muted" onclick="openGameEditor(${g.id})">Edit Game Details</button>`}
         </div>
       </div>
       ${gameEditorId === g.id ? renderGameEditor(t, g, jerseys) : ''}`;
