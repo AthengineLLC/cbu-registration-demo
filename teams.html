@@ -611,6 +611,7 @@ let patternEditId = null;    // weekly schedule being edited (null = adding a ne
 let patternRemoveId = null;  // weekly schedule pending its inline remove confirm
 let practiceEditId = null;   // single practice being adjusted inline
 let practiceDraft = null;    // working copy of that practice's fields until a save scope is picked
+let practiceDeleteId = null; // practice pending its inline delete-scope choice
 let calMonth = '2026-06';    // calendar tab month (YYYY-MM)
 let calAddGameOpen = false;  // calendar tab: inline pick-a-tournament panel for Add Game
 let coachDirectory = [];     // org-wide coach system (mock): {id,name,email,phone,registered}
@@ -1572,7 +1573,7 @@ function closeTeam(){ currentTeamId = null; render(); window.scrollTo({top:0}); 
 function setTeamTab(tab){
   teamTab = tab; eventFormOpen = false; editingEventId = null;
   practiceFormOpen = false; patternEditId = null; patternDraft = null; patternRemoveId = null;
-  practiceEditId = null; practiceDraft = null; calAddGameOpen = false;
+  practiceEditId = null; practiceDraft = null; practiceDeleteId = null; calAddGameOpen = false;
   render();
 }
 function viewProfile(pid){
@@ -2887,11 +2888,18 @@ function renderPracticesTab(s, d, t){
       <span class="practice-when">${fmtGameDay(p.date)} · ${fmt12(p.time)}</span>
       <span class="practice-where">${esc([p.complex, p.field, p.city ? p.city + (p.state ? ', ' + p.state : '') : p.state].filter(Boolean).join(' · '))}</span>
       ${p.canceled ? '<span class="pill pill-red">Canceled</span>' : ''}
-      <div class="practice-actions">
-        ${p.canceled
-          ? `<button class="link-red" onclick="togglePracticeCanceled(${p.id})">Restore</button>`
-          : `<button class="link-muted" onclick="openPracticeEdit(${p.id})">${editing ? 'Close' : 'Edit'}</button>
-             <button class="link-muted" onclick="togglePracticeCanceled(${p.id})">Cancel Practice</button>`}
+      <div class="practice-actions" style="flex-wrap:wrap">
+        ${practiceDeleteId === p.id
+          ? `<span style="font-size:.78rem;color:var(--muted)">Delete just this one, or all future on this schedule?</span>
+             <button class="link-red" onclick="deletePractice('one')">This Practice</button>
+             <button class="link-red" onclick="deletePractice('forward')">This + All Future</button>
+             <button class="link-muted" onclick="practiceDeleteId=null;render()">Keep</button>`
+          : (p.canceled
+            ? `<button class="link-red" onclick="togglePracticeCanceled(${p.id})">Restore</button>
+               <button class="link-muted" onclick="practiceDeleteId=${p.id};render()">Delete</button>`
+            : `<button class="link-muted" onclick="openPracticeEdit(${p.id})">${editing ? 'Close' : 'Edit'}</button>
+               <button class="link-muted" onclick="togglePracticeCanceled(${p.id})">Cancel Practice</button>
+               <button class="link-muted" onclick="practiceDeleteId=${p.id};practiceEditId=null;practiceDraft=null;render()">Delete</button>`)}
       </div>
       ${editor}
     </div>`;
@@ -2919,7 +2927,7 @@ function togglePatternDay(i){
 }
 function openPatternForm(id){
   practiceFormOpen = true; patternEditId = id == null ? null : id;
-  patternDraft = null; patternRemoveId = null; practiceEditId = null; practiceDraft = null;
+  patternDraft = null; patternRemoveId = null; practiceEditId = null; practiceDraft = null; practiceDeleteId = null;
   render();
 }
 function savePracticePattern(){
@@ -2958,7 +2966,7 @@ function openPracticeEdit(pid){
   const t = curTeam();
   const p = (t.practices || []).find(x => x.id === pid);
   if (!p) return;
-  practiceEditId = pid;
+  practiceEditId = pid; practiceDeleteId = null;
   practiceDraft = { time: p.time, complex: p.complex, field: p.field, city: p.city, state: p.state, address: p.address };
   render();
 }
@@ -2979,6 +2987,30 @@ function savePracticeEdit(scope){
   }
   sortPractices(t);
   practiceEditId = null; practiceDraft = null;
+  render();
+}
+function deletePractice(scope){
+  const t = curTeam();
+  const p = (t.practices || []).find(x => x.id === practiceDeleteId);
+  if (!p) return;
+  if (scope === 'forward'){
+    const count = (t.practices || []).filter(x => x.patternId === p.patternId && x.date >= p.date).length;
+    t.practices = (t.practices || []).filter(x => !(x.patternId === p.patternId && x.date >= p.date));
+    /* keep the weekly schedule in step: pull its end date back to the last
+       practice that survived, or drop the schedule if none did */
+    const pat = (t.practicePatterns || []).find(x => x.id === p.patternId);
+    if (pat){
+      const left = t.practices.filter(x => x.patternId === p.patternId);
+      if (left.length) pat.end = left[left.length - 1].date;
+      else t.practicePatterns = t.practicePatterns.filter(x => x.id !== pat.id);
+    }
+    toast('Deleted ' + count + ' practices from ' + fmtShortDate(p.date) + ' forward.');
+  } else {
+    t.practices = (t.practices || []).filter(x => x.id !== p.id);
+    toast(fmtGameDay(p.date) + ' practice deleted.');
+  }
+  practiceDeleteId = null;
+  if (practiceEditId === p.id){ practiceEditId = null; practiceDraft = null; }
   render();
 }
 function togglePracticeCanceled(pid){
