@@ -160,7 +160,7 @@ button.pill:hover{filter:brightness(.9);box-shadow:0 0 0 2px rgba(22,32,60,.12)}
 
 /* ============ FORMS ============ */
 .field-label{display:block;font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.14em;font-size:.68rem;font-weight:600;color:var(--muted);margin-bottom:.4rem}
-input[type=text],input[type=number],input[type=date],input[type=email],input[type=tel],select{
+input[type=text],input[type=number],input[type=date],input[type=time],input[type=email],input[type=tel],select{
   width:100%;max-width:420px;padding:.65rem .8rem;border:1.5px solid #c9cfdd;border-radius:8px;
   font-family:'Inter',Arial,sans-serif;font-size:.9rem;color:var(--ink);background:#fff;
 }
@@ -2482,7 +2482,7 @@ function renderGames(s, t, e){
       const res = resStr ? `<span class="game-result${resStr[0]==='L'?' loss':(resStr[0]==='T'?' tie':'')}">${esc(resStr)}</span>` : '';
       return `
       <div class="game-row">
-        <div class="game-time">${esc(g.time)}</div>
+        <div class="game-time">${esc(fmt12(g.time))}</div>
         <div class="game-vs">${g.at ? '@' : 'vs.'}</div>
         <div class="game-main">
           <div class="game-opp">${esc(g.opp)}</div>
@@ -2532,7 +2532,7 @@ function renderGameEditor(t, g, jerseys){
     </div>
     <div class="form-grid" style="margin-top:.9rem">
       <div><label class="field-label">Opponent</label><input type="text" value="${esc(g.opp)}" onchange="setGameField(${g.id},'opp',this.value)"></div>
-      <div><label class="field-label">Start Time</label><input type="text" value="${esc(g.time)}" placeholder="e.g. 9:00 AM" onchange="setGameField(${g.id},'time',this.value)"></div>
+      <div><label class="field-label">Start Time</label><input type="time" value="${esc(g.time)}" onchange="setGameField(${g.id},'time',this.value)"></div>
       <div><label class="field-label">Field Complex</label><input type="text" value="${esc(g.complex)}" placeholder="e.g. East Cobb Complex" onchange="setGameField(${g.id},'complex',this.value)"></div>
       <div><label class="field-label">Field Number or Name</label><input type="text" value="${esc(g.field)}" placeholder="e.g. Field 2 or Foley Field" onchange="setGameField(${g.id},'field',this.value)"></div>
       <div><label class="field-label">City</label><input type="text" value="${esc(g.city)}" onchange="setGameField(${g.id},'city',this.value)"></div>
@@ -2627,7 +2627,33 @@ function genericGames(e){
   return rows;
 }
 function buildGames(rows){
-  return rows.map(r => Object.assign({ id: nid(), us: null, them: null, jersey: null, rotation: [] }, r));
+  return rows.map(r => {
+    const g = Object.assign({ id: nid(), us: null, them: null, jersey: null, rotation: [] }, r);
+    g.time = to24(g.time);
+    return g;
+  });
+}
+/* Times are stored 24-hour ("14:20") so the time picker can edit them, and
+   formatted 12-hour ("2:20 PM") everywhere they display */
+function to24(t){
+  if (!t) return '';
+  const m = t.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+  if (!m) return t;
+  let h = +m[1];
+  if (m[3]){
+    const pm = m[3].toUpperCase() === 'PM';
+    if (pm && h < 12) h += 12;
+    if (!pm && h === 12) h = 0;
+  }
+  return ('0' + h).slice(-2) + ':' + m[2];
+}
+function fmt12(t){
+  if (!t) return 'TBD';
+  const p = t.split(':');
+  let h = +p[0];
+  const ap = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  return h + ':' + p[1] + ' ' + ap;
 }
 function gameVenueLine(g){
   const place = g.city ? g.city + (g.state ? ', ' + g.state : '') : (g.state || '');
