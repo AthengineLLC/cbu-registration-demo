@@ -360,6 +360,52 @@ input[disabled]{background:var(--row-alt);color:var(--muted)}
 .event-name{font-weight:700;color:var(--ink)}
 .event-sub{font-size:.78rem;color:var(--muted);margin-top:.2rem}
 .event-links{display:flex;gap:.9rem;align-items:center}
+
+/* ---------- Event game schedule & pitching rotations ---------- */
+.event-block{border-bottom:1px solid var(--line)}
+.event-block:last-child{border-bottom:none}
+.event-block .event-row{border-bottom:none}
+.game-days{margin:.1rem 0 1rem;border:1.5px solid var(--line);border-radius:10px;overflow:hidden}
+.game-day{
+  background:var(--navy-deep);color:#fff;font-family:'Oswald',Arial,sans-serif;
+  text-transform:uppercase;letter-spacing:.16em;font-size:.66rem;font-weight:600;padding:.5rem .95rem;
+}
+.game-row{display:flex;gap:.9rem;padding:.8rem .95rem;border-bottom:1px solid var(--line);align-items:flex-start;flex-wrap:wrap}
+.game-row:last-child{border-bottom:none}
+.game-time{font-family:'Oswald',Arial,sans-serif;font-weight:600;font-size:.8rem;color:var(--ink);min-width:62px;padding-top:.1rem}
+.game-vs{color:var(--muted);font-size:.78rem;min-width:24px;padding-top:.14rem}
+.game-main{flex:1;min-width:210px}
+.game-opp{font-weight:700;color:var(--ink);font-size:.9rem}
+.game-venue{font-size:.76rem;color:var(--muted);margin-top:.15rem}
+.game-rot{font-size:.76rem;margin-top:.4rem;color:var(--ink)}
+.game-rot .rot-label{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.1em;font-size:.62rem;font-weight:600;color:var(--red);margin-right:.35rem}
+.game-rot.unset{color:var(--muted);font-style:italic}
+.game-side{display:flex;flex-direction:column;align-items:flex-end;gap:.45rem;margin-left:auto}
+.game-result{
+  font-family:'Oswald',Arial,sans-serif;font-weight:600;font-size:.72rem;letter-spacing:.05em;
+  color:#fff;background:var(--green);border-radius:999px;padding:.24rem .7rem;white-space:nowrap;
+}
+.game-result.loss{background:var(--red)}
+.game-result.tie{background:var(--muted)}
+.rot-editor{background:var(--row-alt);border-top:1px solid var(--line);padding:1rem .95rem 1.2rem}
+.rot-editor-head{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap}
+.rot-editor-title{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.12em;font-size:.74rem;font-weight:600;color:var(--navy-deep)}
+.rot-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem 1.6rem;margin-top:.8rem}
+.rot-roster{max-height:250px;overflow-y:auto;border:1.5px solid var(--line);background:#fff;border-radius:8px;padding:.45rem .75rem}
+.rot-check{display:flex;align-items:center;gap:.55rem;padding:.3rem 0;font-size:.85rem;color:var(--ink);cursor:pointer}
+.rot-check input{width:15px;height:15px;accent-color:var(--red);flex:0 0 auto}
+.rot-check .pos{color:var(--muted);font-size:.72rem}
+.rot-order{list-style:none;display:flex;flex-direction:column;gap:.4rem}
+.rot-slot{display:flex;align-items:center;gap:.55rem;background:#fff;border:1.5px solid var(--line);border-radius:8px;padding:.42rem .6rem}
+.rot-num{font-family:'Oswald',Arial,sans-serif;font-weight:700;color:var(--red);min-width:18px;text-align:center}
+.rot-name{flex:1;font-weight:600;font-size:.85rem;color:var(--ink)}
+.rot-btn{background:#fff;border:1.5px solid #c9cfdd;border-radius:6px;width:26px;height:26px;cursor:pointer;color:var(--ink);font-size:.78rem;line-height:1;padding:0}
+.rot-btn:hover{border-color:var(--ink)}
+.rot-btn[disabled]{opacity:.3;cursor:default;pointer-events:none}
+@media (max-width:760px){
+  .rot-grid{grid-template-columns:1fr}
+  .game-side{flex-direction:row;width:100%;margin-left:0;align-items:center}
+}
 .comms-hist li{padding:.6rem .2rem;border-bottom:1px solid var(--line);font-size:.85rem;display:flex;gap:.7rem;flex-wrap:wrap;align-items:baseline}
 .comms-hist li:last-child{border-bottom:none}
 .comms-when{color:var(--muted);font-size:.74rem}
@@ -510,6 +556,8 @@ let commsSel = null;         // playerId -> true; null = initialize from audienc
 let commsDraft = { subject:'', body:'' };  // survives checkbox re-renders
 let eventFormOpen = false;   // events tab add/edit form
 let editingEventId = null;   // event being edited (null = new)
+const openSchedule = {};     // eventId -> true (imported games list expanded)
+let gameEditorId = null;     // game whose details editor (jersey + rotation) is open
 let coachDirectory = [];     // org-wide coach system (mock): {id,name,email,phone,registered}
 let coachSearch = '';        // coaches tab type-ahead text
 let manualCoachOpen = false; // manual coach add form
@@ -2325,17 +2373,23 @@ function renderEventsTab(s, d, t){
     </div>` : '';
 
   const list = evs.map(e => `
-    <div class="event-row">
-      <span class="event-org">${esc(e.org)}</span>
-      <div class="event-main">
-        <div class="event-name">${esc(e.name)}</div>
-        <div class="event-sub">${fmtEventDates(e)}${e.city ? ' · ' + esc(e.city) + (e.state ? ', ' + esc(e.state) : '') : (e.state ? ' · ' + esc(e.state) : '')}</div>
+    <div class="event-block">
+      <div class="event-row">
+        <span class="event-org">${esc(e.org)}</span>
+        <div class="event-main">
+          <div class="event-name">${esc(e.name)}</div>
+          <div class="event-sub">${fmtEventDates(e)}${e.city ? ' · ' + esc(e.city) + (e.state ? ', ' + esc(e.state) : '') : (e.state ? ' · ' + esc(e.state) : '')}${e.games ? '' : ' · Awaiting schedule'}</div>
+        </div>
+        <div class="event-links">
+          ${e.site ? `<a class="link-red" href="${esc(e.site)}" target="_blank" rel="noopener">Website</a>` : ''}
+          ${e.hotel ? `<a class="link-red" href="${esc(e.hotel)}" target="_blank" rel="noopener">Hotel</a>` : ''}
+          ${e.games
+            ? `<button class="link-red" onclick="toggleSchedule(${e.id})">Games (${e.games.length}) ${openSchedule[e.id] ? '&#9652;' : '&#9662;'}</button>`
+            : `<button class="btn btn-primary btn-sm" title="Reads the game schedule from the tournament's website once it is released" onclick="importSchedule(${e.id})">Import Schedule</button>`}
+          <button class="link-muted" onclick="editEvent(${e.id})">Edit</button>
+        </div>
       </div>
-      <div class="event-links">
-        ${e.site ? `<a class="link-red" href="${esc(e.site)}" target="_blank" rel="noopener">Website</a>` : ''}
-        ${e.hotel ? `<a class="link-red" href="${esc(e.hotel)}" target="_blank" rel="noopener">Hotel</a>` : ''}
-        <button class="link-muted" onclick="editEvent(${e.id})">Edit</button>
-      </div>
+      ${e.games && openSchedule[e.id] ? renderGames(s, t, e) : ''}
     </div>`).join('');
 
   return `
@@ -2377,6 +2431,181 @@ function saveEvent(){
     toast(name + ' added to the schedule.');
   }
   eventFormOpen = false; editingEventId = null;
+  render();
+}
+
+/* ---------- Game schedules & pitching rotations ----------
+   Tournaments release their game schedule about a week out. Import Schedule
+   stands in for the future automation that reads the tournament's website
+   (that is why each event stores its site link). Once games exist, coaches
+   open Game Details per game to pick the game jersey and build the pitching
+   rotation: check players from the roster, then order them. The ordered list
+   is what shows publicly as the Probable Pitchers line. */
+const DAYS_FULL = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MONTHS_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+function fmtGameDay(iso){
+  const p = iso.split('-');
+  const d = new Date(+p[0], +p[1]-1, +p[2]);
+  return DAYS_FULL[d.getDay()] + ' · ' + MONTHS_FULL[+p[1]-1] + ' ' + (+p[2]);
+}
+function curTeam(){ const s = season(); return s.teams.find(x => x.id === currentTeamId); }
+function findGame(gid){
+  const t = curTeam();
+  for (const e of (t.events || [])){
+    const g = (e.games || []).find(x => x.id === gid);
+    if (g) return g;
+  }
+  return null;
+}
+function rosterName(t, pid){
+  const p = (t.roster || []).find(x => x.id === pid);
+  return p ? p.name : '';
+}
+function renderGames(s, t, e){
+  const groups = [];
+  (e.games || []).forEach(g => {
+    const last = groups[groups.length - 1];
+    if (last && last.date === g.date) last.games.push(g);
+    else groups.push({ date: g.date, games: [g] });
+  });
+  const jerseys = (s.jerseyItems || []).filter(j => j.type === 'apparel' && /jersey/i.test(j.name));
+  const body = groups.map(gr => `
+    <div class="game-day">${fmtGameDay(gr.date)}</div>
+    ${gr.games.map(g => {
+      const rot = (g.rotation || []).map(pid => esc(rosterName(t, pid))).filter(Boolean);
+      const res = g.result ? `<span class="game-result${g.result[0]==='L'?' loss':(g.result[0]==='T'?' tie':'')}">${esc(g.result)}</span>` : '';
+      return `
+      <div class="game-row">
+        <div class="game-time">${esc(g.time)}</div>
+        <div class="game-vs">${g.at ? '@' : 'vs.'}</div>
+        <div class="game-main">
+          <div class="game-opp">${esc(g.opp)}</div>
+          <div class="game-venue">${esc(g.venue)}</div>
+          <div class="game-rot${rot.length ? '' : ' unset'}">
+            ${rot.length ? '<span class="rot-label">Probable Pitchers</span>' + rot.join(' · ') : 'No pitchers set'}
+          </div>
+        </div>
+        <div class="game-side">
+          ${res}
+          ${g.jersey ? `<span class="pill pill-navy">${esc(g.jersey)}</span>` : ''}
+          ${gameEditorId === g.id
+            ? `<button class="link-muted" onclick="closeGameEditor()">Close</button>`
+            : `<button class="link-red" onclick="openGameEditor(${g.id})">${rot.length || g.jersey ? 'Edit Game Details' : 'Set Rotation'}</button>`}
+        </div>
+      </div>
+      ${gameEditorId === g.id ? renderGameEditor(t, g, jerseys) : ''}`;
+    }).join('')}`).join('');
+  return `<div class="game-days">${body}</div>`;
+}
+function renderGameEditor(t, g, jerseys){
+  /* Pitchers float to the top of the checklist, but any roster player can pitch */
+  const roster = (t.roster || []).slice().sort((a, b) => {
+    const ap = /HP/.test(a.pos) ? 0 : 1, bp = /HP/.test(b.pos) ? 0 : 1;
+    return ap - bp || a.name.localeCompare(b.name);
+  });
+  const rot = g.rotation || [];
+  const checks = roster.map(p => `
+    <label class="rot-check">
+      <input type="checkbox" ${rot.indexOf(p.id) > -1 ? 'checked' : ''} onclick="togglePitcher(${g.id},${p.id})">
+      <span>${esc(p.name)}</span><span class="pos">${esc(p.pos)}</span>
+    </label>`).join('');
+  const order = rot.map((pid, i) => `
+    <li class="rot-slot">
+      <span class="rot-num">${i + 1}</span>
+      <span class="rot-name">${esc(rosterName(t, pid))}</span>
+      <button class="rot-btn" ${i === 0 ? 'disabled' : ''} onclick="movePitcher(${g.id},${i},-1)" aria-label="Move up">&#9650;</button>
+      <button class="rot-btn" ${i === rot.length - 1 ? 'disabled' : ''} onclick="movePitcher(${g.id},${i},1)" aria-label="Move down">&#9660;</button>
+      <button class="rot-btn" onclick="togglePitcher(${g.id},${pid})" aria-label="Remove">&#10005;</button>
+    </li>`).join('');
+  return `
+  <div class="rot-editor">
+    <div class="rot-editor-head">
+      <span class="rot-editor-title">Game Details · ${g.at ? '@' : 'vs.'} ${esc(g.opp)}</span>
+      <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="closeGameEditor()">Done</button>
+    </div>
+    <div class="rot-grid">
+      <div>
+        <label class="field-label">Game Jersey</label>
+        <select onchange="setGameJersey(${g.id}, this.value)">
+          <option value="">Not set</option>
+          ${jerseys.map(j => `<option ${g.jersey === j.name ? 'selected' : ''}>${esc(j.name)}</option>`).join('')}
+        </select>
+        <label class="field-label" style="margin-top:1rem">Pitching Rotation — check to add</label>
+        <div class="rot-roster">${checks || '<p class="hint">No players on the roster yet.</p>'}</div>
+      </div>
+      <div>
+        <label class="field-label">Rotation Order (${rot.length})</label>
+        ${rot.length
+          ? `<ol class="rot-order">${order}</ol>
+             <p class="hint" style="margin-top:.6rem">This order becomes the Probable Pitchers line on the schedule. No limit — check as many arms as the day needs.</p>`
+          : '<p class="hint" style="padding:.4rem 0">Check players on the left and they stack here in order. Use the arrows to set who throws first.</p>'}
+      </div>
+    </div>
+  </div>`;
+}
+function toggleSchedule(evId){ openSchedule[evId] = !openSchedule[evId]; if (!openSchedule[evId]) gameEditorId = null; render(); }
+function openGameEditor(gid){ gameEditorId = gid; render(); }
+function closeGameEditor(){ gameEditorId = null; render(); }
+function togglePitcher(gid, pid){
+  const g = findGame(gid);
+  if (!g) return;
+  g.rotation = g.rotation || [];
+  const i = g.rotation.indexOf(pid);
+  if (i > -1) g.rotation.splice(i, 1);
+  else g.rotation.push(pid);
+  render();
+}
+function movePitcher(gid, i, dir){
+  const g = findGame(gid);
+  const r = g && g.rotation;
+  if (!r || i + dir < 0 || i + dir >= r.length) return;
+  const tmp = r[i]; r[i] = r[i + dir]; r[i + dir] = tmp;
+  render();
+}
+function setGameJersey(gid, val){
+  const g = findGame(gid);
+  if (!g) return;
+  g.jersey = val;
+  render();
+}
+/* Sample schedules per tournament (PG WWBA mirrors the current site). Rows:
+   [date, time, at?, opponent, venue, result] */
+const SAMPLE_GAME_SETS = {
+  'PG WWBA': [
+    ['2026-06-23','10:20 AM',false,"Ghost Nation '27",'East Cobb Complex · Field 2 · Marietta, GA','W 8-2'],
+    ['2026-06-24','9:00 AM',true,'Southside Crew','Georgia State University · Stadium · Atlanta, GA','W 4-0'],
+    ['2026-06-25','11:20 AM',true,'Ninth Inning Prime National 17U','Foley Field · University of Georgia · Athens, GA','W 14-6'],
+    ['2026-06-26','3:00 PM',false,'Marucci Elite Texas Massengale','East Cobb Complex · Field 3 · Marietta, GA','W 5-2'],
+    ['2026-06-27','11:20 AM',false,'Elite Baseball Training West - 17u Halverson','Pickens County High School · Jasper, GA','W 10-3'],
+    ['2026-06-28','8:00 AM',false,'5 Star National West Coast 2027','LakePoint Sports · Field 5 · Emerson, GA','W 11-0']
+  ]
+};
+const GENERIC_OPPONENTS = ['Scorpions Baseball 2027','FTB Rockets','Canes National 17u','Team Elite Prime','643 DP Cougars','Stars Baseball National'];
+const GENERIC_TIMES = ['9:00 AM','11:30 AM','2:00 PM','4:30 PM'];
+function genericGames(e){
+  const start = e.start || '2026-06-01';
+  const p = start.split('-');
+  const rows = [];
+  for (let i = 0; i < 4; i++){
+    const d = new Date(+p[0], +p[1]-1, +p[2] + i);
+    const iso = d.getFullYear() + '-' + ('0' + (d.getMonth()+1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+    const place = (e.city ? e.city + (e.state ? ', ' + e.state : '') : 'TBD');
+    rows.push([iso, GENERIC_TIMES[i % 4], i % 3 === 1, GENERIC_OPPONENTS[(i * 2 + (e.id % 3)) % 6], 'Tournament Complex · Field ' + (i + 1) + ' · ' + place, null]);
+  }
+  return rows;
+}
+function buildGames(rows){
+  return rows.map(r => ({ id: nid(), date: r[0], time: r[1], at: r[2], opp: r[3], venue: r[4], result: r[5] || null, jersey: null, rotation: [] }));
+}
+function importSchedule(evId){
+  const t = curTeam();
+  const e = (t.events || []).find(x => x.id === evId);
+  if (!e) return;
+  e.games = buildGames(SAMPLE_GAME_SETS[e.name] || genericGames(e));
+  openSchedule[evId] = true;
+  let src = 'the tournament site';
+  if (e.site){ try { src = new URL(e.site).hostname.replace('www.',''); } catch(err){} }
+  toast('Schedule imported from ' + src + ' — ' + e.games.length + ' games added. Set your rotations.');
   render();
 }
 
@@ -2977,6 +3206,24 @@ function demoLoadSample(){
     {id:nid(),org:'Perfect Game',name:'PG WWBA',start:'2026-06-23',end:'2026-06-28',city:'Fort Myers',state:'FL',site:'https://www.perfectgame.org',hotel:'https://www.perfectgame.org/hotels'},
     {id:nid(),org:'Prospect Select',name:'PS Boston Invitational',start:'2026-07-06',end:'2026-07-09',city:'Boston',state:'MA',site:'',hotel:''}
   ];
+  /* Palm Beach arrives already imported, with rotations set, to show the
+     finished state. The other events wait on Import Schedule. */
+  const pbc = menendez.events[0];
+  pbc.games = buildGames([
+    ['2026-06-05','10:00 AM',false,'Palm Beach Select 2027','Santaluces Athletic Complex · Field 1 · Lantana, FL','W 8-2'],
+    ['2026-06-06','12:30 PM',true,'South Florida Bandits','The Ballpark of the Palm Beaches · West Palm Beach, FL','L 3-5'],
+    ['2026-06-07','9:30 AM',false,'Treasure Coast Titans','Santaluces Athletic Complex · Field 3 · Lantana, FL','W 10-3'],
+    ['2026-06-08','11:00 AM',false,'Miami Prospects National','The Ballpark of the Palm Beaches · West Palm Beach, FL','W 6-1']
+  ]);
+  const mrot = names => names.map(n => { const p = menendez.roster.find(x => x.name === n); return p ? p.id : null; }).filter(Boolean);
+  pbc.games[0].rotation = mrot(['Bryan Eberly','Ryder Fogler']);
+  pbc.games[0].jersey = 'Red Jersey';
+  pbc.games[1].rotation = mrot(['Alejandro Fernandez','Bryan Eberly','Josiah Guevara']);
+  pbc.games[1].jersey = 'White Jersey';
+  pbc.games[2].rotation = mrot(['Ryder Fogler','Alejandro Fernandez']);
+  pbc.games[2].jersey = 'Navy Pin Jersey';
+  pbc.games[3].rotation = mrot(['Bryan Eberly']);
+  pbc.games[3].jersey = 'Red Jersey';
   const ftY = nid();
   const y10 = nid(), y12 = nid(), y14 = nid();
   const fallYouth = {
