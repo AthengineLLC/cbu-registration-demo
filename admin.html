@@ -1131,7 +1131,7 @@ function teamLinksPanel(r){
       const link = 'cbu.app/register/' + slug + '/' + slugify(tm);
       rowsH += '<div style="display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;padding:.45rem 0;border-bottom:1px solid var(--line)">' +
         '<span class="cell-strong" style="min-width:170px">'+esc(tm)+'</span>' +
-        (prog ? '<span class="pill pill-gold">'+esc(prog)+' jerseys</span>' : '<span class="cell-sub">no program tag</span>') +
+        (prog ? '<span class="pill pill-gold">'+esc(prog)+' jerseys</span>' : '<span class="pill pill-red" title="This team is not under any program tag - tag it on the Jersey Packages page">&#9888; No program tag</span>') +
         '<span class="cell-sub" style="flex:1;min-width:200px">'+esc(link)+'</span>' +
         '<button class="link-red" onclick="copyText(\''+link+'\')">Copy link</button></div>';
     });
@@ -3297,6 +3297,24 @@ function sStepPkg(){
   let html = '' +
   '<div class="step-q display">Jersey Package</div>' +
   '<p class="step-help">Everything you set here powers the family side: the package they can add, the sizing questions they answer after choosing it, and the per-item prices used when they buy extra pieces. All of it is charged with their first payment. Pieces and their photos come from the <strong>Jersey Packages</strong> gear library — pick them from it below, or load the whole library in one click. Whatever is in the library right now is what loads.</p>' +
+
+  /* coverage check: tagged pieces + a team with no program tag = a family
+     that would get no program jersey. Warn here, where it gets fixed. */
+  (function(){
+    const s = tmSeason(swiz.seasonId);
+    if(!s || !pk.offer) return '';
+    const anyTagged = pk.items.some(function(it){ return (it.tags || []).length; });
+    if(!anyTagged) return '';
+    const covered = {};
+    gearTags().forEach(function(t){ (t.teams || []).forEach(function(tm){ covered[tm] = 1; }); });
+    const missing = [];
+    s.divisions.forEach(function(d){ d.teams.forEach(function(tm){ if(!covered[tm]) missing.push(tm); }); });
+    if(!missing.length) return '';
+    return '<div style="background:#fdf3f4;border:1.5px solid #ecc7cc;border-radius:10px;padding:.8rem 1rem;margin-bottom:1rem;font-size:.84rem;line-height:1.55">' +
+      '&#9888; <strong>' + missing.map(esc).join(', ') + (missing.length > 1 ? ' have' : ' has') + ' no program tag.</strong> ' +
+      'This package has program-tagged pieces, so families on ' + (missing.length > 1 ? 'those teams' : 'that team') + ' would get no program jersey. ' +
+      'Tag ' + (missing.length > 1 ? 'them' : 'it') + ' on the <strong>Jersey Packages</strong> page before sharing links.</div>';
+  })() +
 
   '<div class="waiver-item" style="padding:1rem 1.1rem">' +
     '<div style="display:flex;align-items:center;gap:.8rem">' +

@@ -24,3 +24,13 @@
   photos - auto-loads into that affiliate, and the affiliate's registrations
   pick from it. Whether affiliates can add or edit pieces locally, and
   whether org changes re-sync to existing affiliates, are open questions.
+- Coverage rule (important for Ben): when program tags are enabled, EVERY
+  team must belong to a tag - an untagged team's families would get only
+  the all-teams pieces and no program jersey. The primary mechanism in the
+  real app: choosing a program tag is a required field when CREATING a team
+  in Team Management (only when tags are on), so a team added months after
+  setup can never slip through untagged. The warnings mocked here (banner
+  on this page with one-click add-to-tag, warning on the wizard's Jersey
+  Package step, red pill on per-team links) are the safety net, not the
+  primary flow. The "Demo: create a team without a tag" link fakes the
+  new-team scenario so the warning flow can be walked.

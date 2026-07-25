@@ -154,6 +154,9 @@ input:focus{outline:none;border-color:var(--powder-dark)}
   font-family:'Inter',Arial,sans-serif;font-weight:600;
 }
 .team-check.on{background:var(--navy-deep);color:#fff;border-color:var(--navy-deep)}
+/* coverage warning: a team with no program tag would miss its jerseys */
+.warn-banner{background:#fdf3f4;border:1.5px solid #ecc7cc;border-radius:10px;padding:.8rem 1rem;margin-top:.9rem;font-size:.84rem;color:var(--ink);line-height:1.55}
+.warn-banner .warn-team{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;padding:.35rem 0}
 /* yes/no switch for the different-jerseys-per-program question */
 .switch{width:46px;height:25px;border-radius:999px;background:#c9cfdd;border:none;cursor:pointer;position:relative;transition:background .15s;flex:0 0 auto}
 .switch::after{content:'';position:absolute;top:3px;left:3px;width:19px;height:19px;border-radius:50%;background:#fff;transition:left .15s;box-shadow:0 1px 3px rgba(3,7,20,.3)}
@@ -385,6 +388,37 @@ function toggleDraftTag(name){
   render();
 }
 
+/* ---- Coverage: with tags on, every team must belong to a tag, or its
+   families would only get the all-teams pieces and no program jersey.
+   In the real app the tag is chosen when the team is created, so a new
+   team can never slip through - this warning is the safety net. ---- */
+function untaggedTeams(){
+  if(!useTags) return [];
+  var covered = {};
+  tags.forEach(function(t){ (t.teams || []).forEach(function(tm){ covered[tm] = 1; }); });
+  return TEAM_POOL.filter(function(tm){ return !covered[tm]; });
+}
+function quickTagTeam(team, tagName){
+  for(var i = 0; i < tags.length; i++){
+    if(tags[i].name === tagName){
+      tags[i].teams.push(team);
+      persistTags();
+      toast(team + ' added to ' + tagName + ' - its families now get ' + tagName + ' jerseys.');
+      render();
+      return;
+    }
+  }
+}
+/* DEMO ONLY: fakes Team Management creating a team after the initial setup,
+   so the warning and its one-click fix can be seen in action */
+function demoAddTeam(){
+  var n = 2031, name = 'CBU United ' + n;
+  while(TEAM_POOL.indexOf(name) > -1){ n++; name = 'CBU United ' + n; }
+  TEAM_POOL.push(name);
+  toast(name + ' created (demo) - it has no program tag yet. See the warning.');
+  render();
+}
+
 function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function toast(msg){
   var t = document.getElementById('toast');
@@ -610,6 +644,19 @@ function render(){
       '</div>' +
     '</div>';
   }
+
+  /* every team accounted for, or say so loudly - with the fix one click away */
+  var missing = untaggedTeams();
+  if(missing.length){
+    html += '<div class="warn-banner">&#9888; <strong>Every team needs a program tag.</strong> Families on an untagged team would only get the all-teams pieces - no program jersey.' +
+      missing.map(function(tm){
+        return '<div class="warn-team"><strong>' + esc(tm) + '</strong><span class="hint">add to:</span>' +
+          tags.map(function(t){ return '<button class="preset-btn" onclick="quickTagTeam(\'' + esc(tm).replace(/'/g, "\\'") + '\',\'' + esc(t.name).replace(/'/g, "\\'") + '\')">' + esc(t.name) + '</button>'; }).join('') +
+        '</div>';
+      }).join('') +
+    '</div>';
+  }
+  html += '<p class="hint" style="margin-top:.7rem">In the real app, picking a program tag is part of creating a team, so a new team cannot slip through untagged - this warning is the safety net if one ever does. <button class="link-muted" onclick="demoAddTeam()">Demo: create a team without a tag</button></p>';
   html += '</div>';
   }
 
