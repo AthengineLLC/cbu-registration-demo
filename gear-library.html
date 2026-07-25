@@ -268,6 +268,11 @@ function loadStoredTags(){
 var tags = loadStoredTags() || JSON.parse(JSON.stringify(DEFAULT_TAGS));
 function persistTags(){ try{ localStorage.setItem(TAGS_KEY, JSON.stringify(tags)); }catch(e){} }
 persistTags();
+/* teams created in Team Management pick their program at creation and land
+   inside a tag - fold them into the pool so they show in tag editing */
+tags.forEach(function(t){
+  (t.teams || []).forEach(function(tm){ if(TEAM_POOL.indexOf(tm) === -1) TEAM_POOL.push(tm); });
+});
 
 /* The question that gates all of it: does this org use different jerseys
    for different types of teams? Off = every piece goes to every team and

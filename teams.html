@@ -987,6 +987,7 @@ function wizStepTeams(){
           <label class="field-label">Head Coach <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
           <input type="text" id="wt-coach-${d.id}" placeholder="Coach name" style="max-width:100%" value="${esc(dr.coach)}">
         </div>
+        ${programSelectHtml('wt', d.id)}
         <button class="btn btn-primary btn-sm" onclick="wizAddTeam(${d.id})">+ Add Team</button>
       </div>
       ${list ? `<ul class="team-list">${list}</ul>` : ''}
@@ -1000,11 +1001,67 @@ function wizStepTeams(){
   </div>
   ${blocks}`;
 }
+/* ---------- Program tags bridge ----------
+   The org's Jersey Packages page publishes its program tags (United, Scout)
+   to localStorage. Teams usually exist before jerseys, so when NO tags
+   exist yet, team creation stays clean - no extra field. Once tags exist,
+   every new team must pick its program right here, and the pick writes the
+   team into that tag so the jersey system stays complete automatically. */
+function gearTags(){
+  try {
+    if (localStorage.getItem('cbuGearUseTags') === '0') return [];
+    const raw = localStorage.getItem('cbuGearTags');
+    if (raw){
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr) && arr.length && arr[0].name) return arr;
+    }
+  } catch(e){}
+  return [];
+}
+function tagTeamName(teamName, tagName){
+  try {
+    const raw = localStorage.getItem('cbuGearTags');
+    if (!raw) return;
+    const arr = JSON.parse(raw);
+    const t = arr.find(x => x.name === tagName);
+    if (t && t.teams.indexOf(teamName) === -1){
+      t.teams.push(teamName);
+      localStorage.setItem('cbuGearTags', JSON.stringify(arr));
+    }
+  } catch(e){}
+}
+function programSelectHtml(idPrefix, divId){
+  const tagList = gearTags();
+  if (!tagList.length) return '';
+  return `
+        <div style="min-width:150px">
+          <label class="field-label">Program</label>
+          <select id="${idPrefix}-tag-${divId}" style="max-width:100%">
+            <option value="">Choose…</option>
+            ${tagList.map(t => `<option>${esc(t.name)}</option>`).join('')}
+          </select>
+        </div>`;
+}
+/* returns the chosen program name, or null if required and missing */
+function readProgramChoice(idPrefix, divId){
+  const tagList = gearTags();
+  if (!tagList.length) return '';
+  const el = document.getElementById(idPrefix + '-tag-' + divId);
+  const v = el ? el.value : '';
+  if (!v){
+    toast('Pick the team’s program - it decides which jerseys their families get.');
+    return null;
+  }
+  return v;
+}
 function wizAddTeam(divId){
   const nameEl = document.getElementById('wt-name-' + divId);
   const coachEl = document.getElementById('wt-coach-' + divId);
   const name = nameEl.value.trim();
   if (!name){ toast('Type a team name first.'); return; }
+  const prog = readProgramChoice('wt', divId);
+  if (prog === null) return;
+  if (prog) tagTeamName(name, prog);
   wiz.teams.push({ id: nid(), divId: divId, name: name, coach: coachEl.value.trim(), players: 0, overrides: {}, roster: [], comms: [], record: {w:0,l:0,t:0}, finishes: {}, events: [] });
   render();                                   /* capture keeps every other division's typed text */
   if (wiz.teamDrafts) delete wiz.teamDrafts[divId];
@@ -1307,6 +1364,7 @@ function renderDivision(s, d){
           <label class="field-label">Head Coach <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
           <input type="text" id="at-coach-${d.id}" placeholder="Coach name" style="max-width:100%">
         </div>
+        ${programSelectHtml('at', d.id)}
         <div class="editor-actions">
           <button class="btn btn-primary btn-sm" onclick="landingAddTeam(${d.id})">Add Team</button>
           <button class="link-muted" onclick="delete openAddTeam[${d.id}];render()">Cancel</button>
@@ -1416,10 +1474,13 @@ function landingAddTeam(divId){
   const s = season();
   const name = document.getElementById('at-name-' + divId).value.trim();
   if (!name){ toast('Type a team name first.'); return; }
+  const prog = readProgramChoice('at', divId);
+  if (prog === null) return;
   const coach = document.getElementById('at-coach-' + divId).value.trim();
+  if (prog) tagTeamName(name, prog);
   s.teams.push({ id: nid(), divId: divId, name: name, coach: coach, players: 0, overrides: {}, roster: [], comms: [], record: {w:0,l:0,t:0}, finishes: {}, events: [] });
   render();
-  toast(name + ' added.');
+  toast(name + ' added' + (prog ? ' to the ' + prog + ' program - their jerseys are set.' : '.'));
   const el = document.getElementById('at-name-' + divId);
   if (el) el.focus();
 }
