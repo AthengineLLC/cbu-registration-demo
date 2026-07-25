@@ -407,6 +407,49 @@ input[disabled]{background:var(--row-alt);color:var(--muted)}
   font-family:'Inter',Arial,sans-serif;font-size:.9rem;color:var(--ink);background:#fff;
 }
 .score-input:focus{outline:2px solid var(--powder);border-color:var(--powder)}
+
+/* ---------- Practices tab ---------- */
+.pattern-summary{display:flex;align-items:center;gap:.9rem;flex-wrap:wrap;background:var(--row-alt);border:1.5px solid var(--line);border-radius:10px;padding:.85rem 1rem}
+.pattern-days{display:flex;gap:.45rem;flex-wrap:wrap}
+.day-check{
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.06em;font-size:.72rem;font-weight:600;
+  border:1.5px solid #c9cfdd;background:#fff;color:var(--ink);border-radius:8px;padding:.45rem .7rem;cursor:pointer;user-select:none;
+}
+.day-check.on{background:var(--navy-deep);color:#fff;border-color:var(--navy-deep)}
+.practice-row{display:flex;gap:.9rem;padding:.7rem .2rem;border-bottom:1px solid var(--line);align-items:baseline;flex-wrap:wrap}
+.practice-row:last-child{border-bottom:none}
+.practice-row.canceled .practice-when,.practice-row.canceled .practice-where{text-decoration:line-through;color:var(--muted)}
+.practice-when{font-weight:600;color:var(--ink);font-size:.88rem;min-width:190px}
+.practice-where{flex:1;min-width:180px;font-size:.8rem;color:var(--muted)}
+.practice-actions{display:flex;gap:.9rem;align-items:center;margin-left:auto}
+
+/* ---------- Calendar tab (also mirrored on the parent schedule page) ---------- */
+.cal-head{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap}
+.cal-title{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.1em;font-size:1.05rem;font-weight:600;color:var(--ink);min-width:150px;text-align:center}
+.cal-nav{background:#fff;border:1.5px solid #c9cfdd;border-radius:8px;width:32px;height:32px;cursor:pointer;color:var(--ink);font-size:.85rem;line-height:1;padding:0}
+.cal-nav:hover{border-color:var(--ink)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--line);border:1.5px solid var(--line);border-radius:10px;overflow:hidden;margin-top:1rem}
+.cal-dow{background:var(--navy-deep);color:#fff;font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.12em;font-size:.6rem;font-weight:600;padding:.45rem .3rem;text-align:center}
+.cal-cell{background:#fff;min-height:92px;padding:.35rem .4rem;display:flex;flex-direction:column;gap:.28rem;min-width:0}
+.cal-cell.blank{background:var(--row-alt)}
+.cal-daynum{font-size:.68rem;font-weight:600;color:var(--muted)}
+.cal-chip{
+  display:block;width:100%;text-align:left;border:none;cursor:pointer;border-radius:6px;
+  font-family:'Inter',Arial,sans-serif;font-weight:600;font-size:.62rem;line-height:1.3;padding:.24rem .4rem;
+  overflow:hidden;
+}
+.cal-chip.game{background:#f8e3e6;color:var(--red-dark)}
+.cal-chip.practice{background:#e8ebf4;color:var(--navy-deep)}
+.cal-chip.practice.canceled{text-decoration:line-through;opacity:.55}
+.cal-chip.tour{background:#f6ecd2;color:#7a5f14}
+.cal-legend{display:flex;gap:1.1rem;flex-wrap:wrap;margin-top:.8rem;font-size:.74rem;color:var(--muted);align-items:center}
+.cal-legend .swatch{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:.35rem;vertical-align:-1px}
+@media (max-width:760px){
+  .cal-cell{min-height:58px;padding:.22rem .25rem}
+  .cal-chip{font-size:.5rem;padding:.16rem .25rem}
+  .cal-daynum{font-size:.58rem}
+  .practice-when{min-width:0}
+}
 @media (max-width:760px){
   .rot-grid{grid-template-columns:1fr}
   .game-side{flex-direction:row;width:100%;margin-left:0;align-items:center}
@@ -563,6 +606,9 @@ let eventFormOpen = false;   // events tab add/edit form
 let editingEventId = null;   // event being edited (null = new)
 const openSchedule = {};     // eventId -> true (imported games list expanded)
 let gameEditorId = null;     // game whose details editor (jersey + rotation) is open
+let practiceFormOpen = false;// practice pattern builder open
+let practiceEditId = null;   // single practice being adjusted inline
+let calMonth = '2026-06';    // calendar tab month (YYYY-MM)
 let coachDirectory = [];     // org-wide coach system (mock): {id,name,email,phone,registered}
 let coachSearch = '';        // coaches tab type-ahead text
 let manualCoachOpen = false; // manual coach add form
@@ -1544,6 +1590,8 @@ function renderTeamPage(s, t){
   if (teamTab === 'coaches') tabBody = renderCoachesTab(s, d, t);
   if (teamTab === 'payments') tabBody = renderPaymentsTab(s, d, t);
   if (teamTab === 'events') tabBody = renderEventsTab(s, d, t);
+  if (teamTab === 'practices') tabBody = renderPracticesTab(s, d, t);
+  if (teamTab === 'calendar') tabBody = renderCalendarTab(s, d, t);
   if (teamTab === 'comms') tabBody = renderCommsTab(s, d, t);
 
   const fails = (t.roster || []).filter(p => p.payFailed);
@@ -1598,6 +1646,8 @@ function renderTeamPage(s, t){
       <button class="chip filter-chip ${teamTab==='coaches'?'active':''}" onclick="setTeamTab('coaches')">Coaches</button>
       <button class="chip filter-chip ${teamTab==='payments'?'active':''}" onclick="setTeamTab('payments')">Payments</button>
       <button class="chip filter-chip ${teamTab==='events'?'active':''}" onclick="setTeamTab('events')">Events / Schedule</button>
+      <button class="chip filter-chip ${teamTab==='practices'?'active':''}" onclick="setTeamTab('practices')">Practices</button>
+      <button class="chip filter-chip ${teamTab==='calendar'?'active':''}" onclick="setTeamTab('calendar')">Calendar</button>
       <button class="chip filter-chip ${teamTab==='comms'?'active':''}" onclick="setTeamTab('comms')">Communication</button>
     </div>
 
@@ -2690,6 +2740,212 @@ function importSchedule(evId){
   render();
 }
 
+/* ---------- Practices tab ----------
+   Practice schedules are consistent, so coaches set a weekly pattern once
+   (days + time + location + date range) and the practices generate themselves.
+   Any single practice can then be edited or canceled without touching the
+   pattern - life happens. */
+const DAY_LABELS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+let patternDraft = null;   // working copy of the pattern form
+function generatePractices(pat){
+  const out = [];
+  const a = pat.start.split('-'), b = pat.end.split('-');
+  const d = new Date(+a[0], +a[1]-1, +a[2]);
+  const end = new Date(+b[0], +b[1]-1, +b[2]);
+  while (d <= end){
+    if (pat.days.indexOf(d.getDay()) > -1){
+      out.push({ id: nid(),
+        date: d.getFullYear() + '-' + ('0' + (d.getMonth()+1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2),
+        time: pat.time, complex: pat.complex, field: pat.field,
+        city: pat.city, state: pat.state, address: pat.address, canceled: false });
+    }
+    d.setDate(d.getDate() + 1);
+  }
+  return out;
+}
+function patternWords(pat){
+  const days = pat.days.slice().sort().map(i => DAYS_FULL[i]).join(' and ');
+  return 'Every ' + days + ' · ' + fmt12(pat.time) + ' · ' + [pat.complex, pat.field].filter(Boolean).join(' · ');
+}
+function renderPracticesTab(s, d, t){
+  const pat = t.practicePattern;
+  if (practiceFormOpen && !patternDraft){
+    patternDraft = pat ? JSON.parse(JSON.stringify(pat))
+      : { days:[1,3], time:'17:45', complex:'', field:'', city:'', state:'', address:'', start: s.name.indexOf('Fall') > -1 ? '2026-09-01' : '2026-06-01', end: s.name.indexOf('Fall') > -1 ? '2026-11-15' : '2026-07-31' };
+  }
+  const form = practiceFormOpen ? `
+    <div class="section-head red" style="margin-top:0">${pat ? 'Edit Practice Pattern' : 'Set Practice Schedule'}</div>
+    <div class="section-body" style="margin-bottom:1.4rem">
+      <label class="field-label">Practice Days</label>
+      <div class="pattern-days">
+        ${DAY_LABELS.map((lb, i) => `<button class="day-check ${patternDraft.days.indexOf(i) > -1 ? 'on' : ''}" onclick="togglePatternDay(${i})">${lb}</button>`).join('')}
+      </div>
+      <div class="form-grid" style="margin-top:1rem">
+        <div><label class="field-label">Practice Time</label><input type="time" value="${esc(patternDraft.time)}" onchange="patternDraft.time=this.value"></div>
+        <div><label class="field-label">Field Complex</label><input type="text" value="${esc(patternDraft.complex)}" placeholder="e.g. CBU Training Complex" onchange="patternDraft.complex=this.value.trim()"></div>
+        <div><label class="field-label">Field Number or Name</label><input type="text" value="${esc(patternDraft.field)}" onchange="patternDraft.field=this.value.trim()"></div>
+        <div><label class="field-label">City</label><input type="text" value="${esc(patternDraft.city)}" onchange="patternDraft.city=this.value.trim()"></div>
+        <div><label class="field-label">State</label><input type="text" value="${esc(patternDraft.state)}" onchange="patternDraft.state=this.value.trim()"></div>
+        <div><label class="field-label">Street Address</label><input type="text" value="${esc(patternDraft.address)}" placeholder="For the parent map link" onchange="patternDraft.address=this.value.trim()"></div>
+        <div><label class="field-label">First Practice</label><input type="date" value="${esc(patternDraft.start)}" onchange="patternDraft.start=this.value"></div>
+        <div><label class="field-label">Last Practice</label><input type="date" value="${esc(patternDraft.end)}" onchange="patternDraft.end=this.value"></div>
+      </div>
+      <p class="hint" style="margin-top:.7rem">Saving regenerates the schedule from this pattern. One-off changes and cancellations happen on the list below, not here.</p>
+      <div style="margin-top:1rem;display:flex;gap:.7rem;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm" onclick="savePracticePattern()">${pat ? 'Save & Regenerate' : 'Generate Schedule'}</button>
+        <button class="link-muted" onclick="practiceFormOpen=false;patternDraft=null;render()">Cancel</button>
+      </div>
+    </div>` : '';
+
+  const rows = (t.practices || []).map(p => {
+    const editing = practiceEditId === p.id;
+    const editor = editing ? `
+      <div style="flex-basis:100%;background:var(--row-alt);border-radius:8px;padding:.9rem 1rem;margin-top:.3rem">
+        <div class="form-grid">
+          <div><label class="field-label">Time</label><input type="time" value="${esc(p.time)}" onchange="setPracticeField(${p.id},'time',this.value)"></div>
+          <div><label class="field-label">Field Complex</label><input type="text" value="${esc(p.complex)}" onchange="setPracticeField(${p.id},'complex',this.value)"></div>
+          <div><label class="field-label">Field Number or Name</label><input type="text" value="${esc(p.field)}" onchange="setPracticeField(${p.id},'field',this.value)"></div>
+          <div><label class="field-label">City</label><input type="text" value="${esc(p.city)}" onchange="setPracticeField(${p.id},'city',this.value)"></div>
+          <div><label class="field-label">State</label><input type="text" value="${esc(p.state)}" onchange="setPracticeField(${p.id},'state',this.value)"></div>
+          <div><label class="field-label">Street Address</label><input type="text" value="${esc(p.address)}" onchange="setPracticeField(${p.id},'address',this.value)"></div>
+        </div>
+        <div style="margin-top:.8rem"><button class="btn btn-primary btn-sm" onclick="practiceEditId=null;render()">Done</button></div>
+      </div>` : '';
+    return `
+    <div class="practice-row${p.canceled ? ' canceled' : ''}">
+      <span class="practice-when">${fmtGameDay(p.date)} · ${fmt12(p.time)}</span>
+      <span class="practice-where">${esc([p.complex, p.field, p.city ? p.city + (p.state ? ', ' + p.state : '') : p.state].filter(Boolean).join(' · '))}</span>
+      ${p.canceled ? '<span class="pill pill-red">Canceled</span>' : ''}
+      <div class="practice-actions">
+        ${p.canceled
+          ? `<button class="link-red" onclick="togglePracticeCanceled(${p.id})">Restore</button>`
+          : `<button class="link-muted" onclick="practiceEditId=practiceEditId===${p.id}?null:${p.id};render()">${practiceEditId === p.id ? 'Close' : 'Edit'}</button>
+             <button class="link-muted" onclick="togglePracticeCanceled(${p.id})">Cancel Practice</button>`}
+      </div>
+      ${editor}
+    </div>`;
+  }).join('');
+
+  return `
+  <div class="card card-pad">
+    ${form}
+    <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:.8rem">
+      <span class="field-label" style="margin:0">Practice Schedule ${t.practices ? '(' + t.practices.length + ')' : ''}</span>
+      ${practiceFormOpen ? '' : (pat
+        ? `<button class="btn btn-outline-dark btn-sm" onclick="practiceFormOpen=true;render()">Edit Pattern</button>`
+        : `<button class="btn btn-primary btn-sm" onclick="practiceFormOpen=true;render()">Set Practice Schedule</button>`)}
+    </div>
+    ${pat && !practiceFormOpen ? `<div class="pattern-summary" style="margin-bottom:1rem"><span style="font-size:.86rem;font-weight:600;color:var(--ink)">${esc(patternWords(pat))}</span></div>` : ''}
+    ${t.practices && t.practices.length
+      ? rows
+      : (practiceFormOpen ? '' : '<p class="hint" style="padding:.6rem 0">No practices yet. Set the weekly pattern once - days, time, and field - and the whole schedule generates itself. Individual practices can be changed or canceled after.</p>')}
+  </div>`;
+}
+function togglePatternDay(i){
+  const at = patternDraft.days.indexOf(i);
+  if (at > -1) patternDraft.days.splice(at, 1);
+  else patternDraft.days.push(i);
+  render();
+}
+function savePracticePattern(){
+  const t = curTeam();
+  if (!patternDraft.days.length){ toast('Pick at least one practice day.'); return; }
+  if (!patternDraft.start || !patternDraft.end){ toast('Set the first and last practice dates.'); return; }
+  t.practicePattern = patternDraft;
+  t.practices = generatePractices(patternDraft);
+  practiceFormOpen = false; patternDraft = null; practiceEditId = null;
+  toast('Practice schedule generated — ' + t.practices.length + ' practices.');
+  render();
+}
+function setPracticeField(pid, key, val){
+  const t = curTeam();
+  const p = (t.practices || []).find(x => x.id === pid);
+  if (!p) return;
+  p[key] = typeof val === 'string' ? val.trim() : val;
+  render();
+}
+function togglePracticeCanceled(pid){
+  const t = curTeam();
+  const p = (t.practices || []).find(x => x.id === pid);
+  if (!p) return;
+  p.canceled = !p.canceled;
+  if (practiceEditId === pid) practiceEditId = null;
+  toast(p.canceled ? fmtGameDay(p.date) + ' practice canceled.' : fmtGameDay(p.date) + ' practice is back on.');
+  render();
+}
+
+/* ---------- Calendar tab ----------
+   A second lens over data the team already has: tournament spans, imported
+   games, and generated practices on one month grid. Nothing here is new data;
+   clicking through lands on the tab that owns the item. */
+function calShift(dir){
+  let y = +calMonth.slice(0, 4), m = +calMonth.slice(5) + dir;
+  if (m < 1){ m = 12; y--; }
+  if (m > 12){ m = 1; y++; }
+  calMonth = y + '-' + ('0' + m).slice(-2);
+  render();
+}
+function gotoEvent(evId){
+  teamTab = 'events'; openSchedule[evId] = true; gameEditorId = null;
+  render(); window.scrollTo({ top: 0 });
+}
+function gotoPractices(){ teamTab = 'practices'; render(); window.scrollTo({ top: 0 }); }
+function renderCalendarTab(s, d, t){
+  const y = +calMonth.slice(0, 4), m = +calMonth.slice(5);
+  const firstDow = new Date(y, m - 1, 1).getDay();
+  const daysIn = new Date(y, m, 0).getDate();
+  const byDate = {};
+  const add = (iso, html) => { (byDate[iso] = byDate[iso] || []).push(html); };
+  (t.events || []).forEach(e => {
+    if (e.start){
+      /* tournament span tag on each day of the event */
+      const a = e.start.split('-'), b = (e.end || e.start).split('-');
+      const cur = new Date(+a[0], +a[1]-1, +a[2]), stop = new Date(+b[0], +b[1]-1, +b[2]);
+      while (cur <= stop){
+        const iso = cur.getFullYear() + '-' + ('0' + (cur.getMonth()+1)).slice(-2) + '-' + ('0' + cur.getDate()).slice(-2);
+        add(iso, `<button class="cal-chip tour" onclick="gotoEvent(${e.id})">&#127942; ${esc(e.name)}</button>`);
+        cur.setDate(cur.getDate() + 1);
+      }
+    }
+    (e.games || []).forEach(g => {
+      const resStr = gameResult(g);
+      add(g.date, `<button class="cal-chip game" onclick="gotoEvent(${e.id})">${fmt12(g.time)} ${g.at ? '@' : 'vs'} ${esc(g.opp)}${resStr ? ' · ' + esc(resStr) : ''}</button>`);
+    });
+  });
+  (t.practices || []).forEach(p => {
+    add(p.date, `<button class="cal-chip practice${p.canceled ? ' canceled' : ''}" onclick="gotoPractices()">${p.canceled ? 'Canceled' : fmt12(p.time)} Practice</button>`);
+  });
+  let cells = '';
+  for (let i = 0; i < firstDow; i++) cells += '<div class="cal-cell blank"></div>';
+  for (let day = 1; day <= daysIn; day++){
+    const iso = y + '-' + ('0' + m).slice(-2) + '-' + ('0' + day).slice(-2);
+    cells += `<div class="cal-cell"><span class="cal-daynum">${day}</span>${(byDate[iso] || []).join('')}</div>`;
+  }
+  const trailing = (firstDow + daysIn) % 7;
+  if (trailing) for (let i = trailing; i < 7; i++) cells += '<div class="cal-cell blank"></div>';
+  return `
+  <div class="card card-pad">
+    <div class="cal-head">
+      <span class="field-label" style="margin:0">Team Calendar</span>
+      <div style="display:flex;align-items:center;gap:.4rem;margin-left:auto">
+        <button class="cal-nav" onclick="calShift(-1)" aria-label="Previous month">&#9664;</button>
+        <span class="cal-title">${MONTHS_FULL[m-1]} ${y}</span>
+        <button class="cal-nav" onclick="calShift(1)" aria-label="Next month">&#9654;</button>
+      </div>
+    </div>
+    <div class="cal-grid">
+      ${DAY_LABELS.map(dd => `<div class="cal-dow">${dd}</div>`).join('')}
+      ${cells}
+    </div>
+    <div class="cal-legend">
+      <span><span class="swatch" style="background:#f6ecd2"></span>Tournament</span>
+      <span><span class="swatch" style="background:#f8e3e6"></span>Game</span>
+      <span><span class="swatch" style="background:#e8ebf4"></span>Practice</span>
+      <span style="margin-left:auto">Click anything to open it on its own tab.</span>
+    </div>
+  </div>`;
+}
+
 /* ---------- Coaches tab ---------- */
 const COACH_ROLES = { head: 'Head Coach', assistant: 'Assistant Coach' };
 /* Migrate wizard-created teams: coach text field becomes a staff connection */
@@ -3305,6 +3561,12 @@ function demoLoadSample(){
   pbc.games[2].jersey = 'Navy Pin Jersey';
   pbc.games[3].rotation = mrot(['Bryan Eberly']);
   pbc.games[3].jersey = 'Red Jersey';
+  /* Menendez practice pattern: Mon/Wed evenings all summer, one canceled to
+     show the exception state */
+  menendez.practicePattern = { days:[1,3], time:'17:45', complex:'CBU Training Complex', field:'Field 2', city:'Tampa', state:'FL', address:'4302 Gunn Hwy', start:'2026-06-01', end:'2026-07-29' };
+  menendez.practices = generatePractices(menendez.practicePattern);
+  const cp = menendez.practices.find(p => p.date === '2026-06-24');
+  if (cp) cp.canceled = true;
   const ftY = nid();
   const y10 = nid(), y12 = nid(), y14 = nid();
   const fallYouth = {

@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CBU — Team Schedule</title>
+<!--
+  PARENT-FACING TEAM SCHEDULE - navy design system.
+  Read-only view of one team's season: practices, tournaments, and games with
+  jerseys, probable pitchers, results, and map links built from the structured
+  field addresses coaches enter in Team Management.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy-bg:#0c1327;--navy-bg-2:#141d3a;--navy-deep:#0e1730;--card:#ffffff;
+  --row-alt:#f5f6fa;--red:#b91e2d;--red-dark:#8f1622;--powder:#6daed4;--powder-dark:#4d8fb6;
+  --ink:#16203c;--muted:#6b7590;--line:#e3e6ee;--green:#1e7a44;--green-bg:#e2f2e8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;overflow-x:hidden}
+body{
+  font-family:'Inter',-apple-system,'Segoe UI',Arial,sans-serif;
+  background:
+    radial-gradient(1200px 600px at 70% -10%, rgba(185,30,45,.12), transparent 60%),
+    linear-gradient(160deg,var(--navy-bg) 0%,var(--navy-bg-2) 100%);
+  background-attachment:fixed;color:#eef1f8;min-height:100vh;overflow-x:hidden;max-width:100vw;
+}
+.topnav{
+  position:sticky;top:0;z-index:50;background:var(--navy-deep);
+  border-bottom:1px solid rgba(255,255,255,.07);
+  display:flex;align-items:center;justify-content:space-between;padding:.85rem 2rem;
+}
+.brand{display:flex;align-items:center;gap:.9rem}
+.brand-logo{font-family:'Oswald',Arial,sans-serif;font-weight:700;font-size:1.55rem;color:#fff;line-height:1}
+.brand-logo b{color:var(--red)}
+.brand-divider{width:1px;height:26px;background:rgba(255,255,255,.18)}
+.brand-label{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.2em;font-size:.78rem;color:#c6cde0;font-weight:600}
+.page{max-width:1120px;margin:0 auto;padding:2.4rem 2rem 5rem}
+.eyebrow{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.28em;font-size:.72rem;font-weight:600;color:var(--powder)}
+.page-title{font-family:'Oswald','Arial Narrow',Arial,sans-serif;text-transform:uppercase;font-size:2.5rem;font-weight:700;color:#fff;line-height:1.05}
+.title-rule{width:64px;height:4px;background:var(--red);margin-top:.85rem;border-radius:2px}
+.page-title-sub{color:#aab3cc;font-size:.92rem;margin-top:.5rem}
+.card{background:var(--card);border-radius:12px;color:var(--ink);box-shadow:0 18px 40px rgba(3,7,20,.45);overflow:hidden}
+.card-pad{padding:1.8rem 2rem}
+.pill{display:inline-block;font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.1em;font-size:.66rem;font-weight:600;padding:.28rem .65rem;border-radius:999px;white-space:nowrap}
+.pill-red{background:#f8e3e6;color:var(--red)}
+.pill-navy{background:#e8ebf4;color:var(--navy-deep)}
+.chip-row{display:flex;gap:.5rem;flex-wrap:wrap;margin:1.6rem 0 1.2rem}
+.chip{
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.08em;font-size:.72rem;font-weight:600;
+  border:1.5px solid rgba(255,255,255,.35);background:transparent;color:#fff;border-radius:999px;padding:.45rem .95rem;cursor:pointer;
+}
+.chip.active{background:var(--red);color:#fff;border-color:var(--red)}
+.link-red{color:var(--red);font-weight:600;font-size:.8rem;text-decoration:none;cursor:pointer;background:none;border:none;font-family:inherit}
+.link-red:hover{text-decoration:underline}
+
+/* Day-grouped list (mirrors the admin schedule look) */
+.game-days{border:1.5px solid var(--line);border-radius:10px;overflow:hidden}
+.game-day{
+  background:var(--navy-deep);color:#fff;font-family:'Oswald',Arial,sans-serif;
+  text-transform:uppercase;letter-spacing:.16em;font-size:.66rem;font-weight:600;padding:.5rem .95rem;
+}
+.game-row{display:flex;gap:.9rem;padding:.8rem .95rem;border-bottom:1px solid var(--line);align-items:flex-start;flex-wrap:wrap;background:#fff}
+.game-row:last-child{border-bottom:none}
+.game-time{font-family:'Oswald',Arial,sans-serif;font-weight:600;font-size:.8rem;color:var(--ink);min-width:62px;padding-top:.1rem}
+.game-vs{color:var(--muted);font-size:.78rem;min-width:24px;padding-top:.14rem}
+.game-main{flex:1;min-width:210px}
+.game-opp{font-weight:700;color:var(--ink);font-size:.9rem}
+.game-venue{font-size:.76rem;color:var(--muted);margin-top:.15rem}
+.game-rot{font-size:.76rem;margin-top:.4rem;color:var(--ink)}
+.game-rot .rot-label{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.1em;font-size:.62rem;font-weight:600;color:var(--red);margin-right:.35rem}
+.game-side{display:flex;flex-direction:column;align-items:flex-end;gap:.45rem;margin-left:auto}
+.game-result{
+  font-family:'Oswald',Arial,sans-serif;font-weight:600;font-size:.72rem;letter-spacing:.05em;
+  color:#fff;background:var(--green);border-radius:999px;padding:.24rem .7rem;white-space:nowrap;
+}
+.game-result.loss{background:var(--red)}
+.game-result.tie{background:var(--muted)}
+.practice-line{font-weight:700;color:var(--ink);font-size:.9rem}
+.canceled .practice-line,.canceled .game-venue{text-decoration:line-through;color:var(--muted)}
+.tour-banner{
+  display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;background:#f6ecd2;color:#7a5f14;
+  padding:.6rem .95rem;font-size:.8rem;font-weight:600;border-bottom:1px solid var(--line);
+}
+.tour-banner .tb-note{font-weight:400;color:#8a7635}
+
+/* Month calendar (mirrors the admin calendar tab) */
+.cal-head{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap}
+.cal-title{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.1em;font-size:1.05rem;font-weight:600;color:var(--ink);min-width:150px;text-align:center}
+.cal-nav{background:#fff;border:1.5px solid #c9cfdd;border-radius:8px;width:32px;height:32px;cursor:pointer;color:var(--ink);font-size:.85rem;line-height:1;padding:0}
+.cal-nav:hover{border-color:var(--ink)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--line);border:1.5px solid var(--line);border-radius:10px;overflow:hidden;margin-top:1rem}
+.cal-dow{background:var(--navy-deep);color:#fff;font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.12em;font-size:.6rem;font-weight:600;padding:.45rem .3rem;text-align:center}
+.cal-cell{background:#fff;min-height:92px;padding:.35rem .4rem;display:flex;flex-direction:column;gap:.28rem;min-width:0}
+.cal-cell.blank{background:var(--row-alt)}
+.cal-daynum{font-size:.68rem;font-weight:600;color:var(--muted)}
+.cal-chip{
+  display:block;width:100%;text-align:left;border:none;cursor:pointer;border-radius:6px;
+  font-family:'Inter',Arial,sans-serif;font-weight:600;font-size:.62rem;line-height:1.3;padding:.24rem .4rem;overflow:hidden;
+}
+.cal-chip.game{background:#f8e3e6;color:var(--red-dark)}
+.cal-chip.practice{background:#e8ebf4;color:var(--navy-deep)}
+.cal-chip.practice.canceled{text-decoration:line-through;opacity:.55}
+.cal-chip.tour{background:#f6ecd2;color:#7a5f14}
+.cal-legend{display:flex;gap:1.1rem;flex-wrap:wrap;margin-top:.8rem;font-size:.74rem;color:var(--muted);align-items:center}
+.cal-legend .swatch{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:.35rem;vertical-align:-1px}
+.detail-card{background:var(--row-alt);border:1.5px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin-top:1rem}
+.detail-title{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.1em;font-size:.8rem;font-weight:600;color:var(--navy-deep)}
+.detail-line{font-size:.84rem;color:var(--ink);margin-top:.45rem}
+.detail-line b{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.1em;font-size:.64rem;font-weight:600;color:var(--muted);margin-right:.4rem}
+
+@media (max-width:760px){
+  .page{padding:1.6rem 1rem 4rem}
+  .page-title{font-size:1.9rem}
+  .topnav{padding:.7rem .9rem}
+  .card-pad{padding:1.2rem 1rem}
+  .cal-cell{min-height:58px;padding:.22rem .25rem}
+  .cal-chip{font-size:.5rem;padding:.16rem .25rem}
+  .cal-daynum{font-size:.58rem}
+  .game-side{flex-direction:row;width:100%;margin-left:0;align-items:center}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="brand">
+    <div class="brand-logo">CB<b>U</b></div>
+    <div class="brand-divider"></div>
+    <div class="brand-label">Team Schedule</div>
+  </div>
+  <span class="pill pill-red">Menendez</span>
+</nav>
+
+<div class="page">
+  <div class="eyebrow">Menendez · Class of 2027 · Summer 2026</div>
+  <h1 class="page-title">Team Schedule</h1>
+  <div class="title-rule"></div>
+  <p class="page-title-sub">Every practice, tournament, and game in one place. Tap a game for the field, jersey, and pitching plan.</p>
+
+  <div class="chip-row">
+    <button class="chip" id="chip-list" onclick="setView('list')">List</button>
+    <button class="chip" id="chip-cal" onclick="setView('cal')">Calendar</button>
+  </div>
+
+  <div class="card card-pad" id="content"></div>
+</div>
+
+<script>
+/* Mock data mirroring the Menendez team in Team Management. In the real app
+   this all flows from what coaches enter there. */
+const TOURNAMENTS = [
+  { name:'PS Palm Beach Classic', org:'Prospect Select', start:'2026-06-05', end:'2026-06-08', city:'West Palm Beach', state:'FL', released:true },
+  { name:'PS Black Bear', org:'Prospect Select', start:'2026-06-17', end:'2026-06-20', city:'Boone', state:'NC', released:false },
+  { name:'PG WWBA', org:'Perfect Game', start:'2026-06-23', end:'2026-06-28', city:'Fort Myers', state:'FL', released:true },
+  { name:'PS Boston Invitational', org:'Prospect Select', start:'2026-07-06', end:'2026-07-09', city:'Boston', state:'MA', released:false }
+];
+const GAMES = [
+  { date:'2026-06-05', time:'10:00', at:false, opp:'Palm Beach Select 2027', complex:'Santaluces Athletic Complex', field:'Field 1', city:'Lantana', state:'FL', address:'6250 Lawrence Rd', jersey:'Red Jersey', pitchers:['Bryan Eberly','Ryder Fogler'], us:8, them:2 },
+  { date:'2026-06-06', time:'12:30', at:true, opp:'South Florida Bandits', complex:'The Ballpark of the Palm Beaches', field:'', city:'West Palm Beach', state:'FL', address:'5444 Haverhill Rd', jersey:'White Jersey', pitchers:['Alejandro Fernandez','Bryan Eberly','Josiah Guevara'], us:3, them:5 },
+  { date:'2026-06-07', time:'09:30', at:false, opp:'Treasure Coast Titans', complex:'Santaluces Athletic Complex', field:'Field 3', city:'Lantana', state:'FL', address:'6250 Lawrence Rd', jersey:'Navy Pin Jersey', pitchers:['Ryder Fogler','Alejandro Fernandez'], us:10, them:3 },
+  { date:'2026-06-08', time:'11:00', at:false, opp:'Miami Prospects National', complex:'The Ballpark of the Palm Beaches', field:'', city:'West Palm Beach', state:'FL', address:'5444 Haverhill Rd', jersey:'Red Jersey', pitchers:['Bryan Eberly'], us:6, them:1 },
+  { date:'2026-06-23', time:'10:20', at:false, opp:"Ghost Nation '27", complex:'East Cobb Complex', field:'Field 2', city:'Marietta', state:'GA', address:'825 Fontaine Rd SW', jersey:'Red Jersey', pitchers:['Bryan Eberly','Ryder Fogler'], us:8, them:2 },
+  { date:'2026-06-24', time:'09:00', at:true, opp:'Southside Crew', complex:'Georgia State University', field:'Stadium', city:'Atlanta', state:'GA', address:'755 Hank Aaron Dr SE', jersey:'White Jersey', pitchers:['Alejandro Fernandez','Ryder Fogler'], us:4, them:0 },
+  { date:'2026-06-25', time:'11:20', at:true, opp:'Ninth Inning Prime National 17U', complex:'University of Georgia', field:'Foley Field', city:'Athens', state:'GA', address:'1101 E Campus Rd', jersey:'Navy Pin Jersey', pitchers:['Bryan Eberly','Josiah Guevara','Cole Davidson'], us:14, them:6 },
+  { date:'2026-06-26', time:'15:00', at:false, opp:'Marucci Elite Texas Massengale', complex:'East Cobb Complex', field:'Field 3', city:'Marietta', state:'GA', address:'825 Fontaine Rd SW', jersey:'Red Jersey', pitchers:['Ryder Fogler','Alejandro Fernandez'], us:5, them:2 },
+  { date:'2026-06-27', time:'11:20', at:false, opp:'Elite Baseball Training West - 17u Halverson', complex:'Pickens County High School', field:'', city:'Jasper', state:'GA', address:'500 Dragon Dr', jersey:'White Jersey', pitchers:['Bryan Eberly','Ryder Fogler'], us:10, them:3 },
+  { date:'2026-06-28', time:'08:00', at:false, opp:'5 Star National West Coast 2027', complex:'LakePoint Sports', field:'Field 5', city:'Emerson', state:'GA', address:'261 Stars Way', jersey:'Navy Pin Jersey', pitchers:['Alejandro Fernandez','Bryan Eberly'], us:11, them:0 }
+];
+/* Practices: every Monday and Wednesday, 5:45 PM, June 1 - July 29 */
+const PRACTICES = (function(){
+  const out = [];
+  const d = new Date(2026, 5, 1), end = new Date(2026, 6, 29);
+  while (d <= end){
+    if (d.getDay() === 1 || d.getDay() === 3){
+      const iso = d.getFullYear() + '-' + ('0' + (d.getMonth()+1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+      out.push({ date: iso, time:'17:45', complex:'CBU Training Complex', field:'Field 2', city:'Tampa', state:'FL', address:'4302 Gunn Hwy', canceled: iso === '2026-06-24' });
+    }
+    d.setDate(d.getDate() + 1);
+  }
+  return out;
+})();
+
+const DAYS_FULL = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const DAY_LABELS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MONTHS_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+let view = 'list';
+let calMonth = '2026-06';
+let selected = null;   // {kind:'game'|'practice', index} for the calendar detail card
+
+function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmt12(t){
+  const p = t.split(':');
+  let h = +p[0];
+  const ap = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  return h + ':' + p[1] + ' ' + ap;
+}
+function fmtDay(iso){
+  const p = iso.split('-');
+  const d = new Date(+p[0], +p[1]-1, +p[2]);
+  return DAYS_FULL[d.getDay()] + ' · ' + MONTHS_FULL[+p[1]-1] + ' ' + (+p[2]);
+}
+function venueLine(x){
+  const place = x.city ? x.city + (x.state ? ', ' + x.state : '') : (x.state || '');
+  return [x.complex, x.field, place].filter(Boolean).join(' · ');
+}
+function mapUrl(x){
+  return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent([x.address, x.city, x.state].filter(Boolean).join(', '));
+}
+function result(g){
+  if (g.us == null || g.them == null) return null;
+  return (g.us > g.them ? 'W ' : g.us < g.them ? 'L ' : 'T ') + g.us + '-' + g.them;
+}
+function resultPill(g){
+  const r = result(g);
+  if (!r) return '';
+  return '<span class="game-result' + (r[0] === 'L' ? ' loss' : (r[0] === 'T' ? ' tie' : '')) + '">' + esc(r) + '</span>';
+}
+
+function setView(v){ view = v; selected = null; render(); }
+
+function gameRow(g){
+  return '<div class="game-row">' +
+    '<div class="game-time">' + fmt12(g.time) + '</div>' +
+    '<div class="game-vs">' + (g.at ? '@' : 'vs.') + '</div>' +
+    '<div class="game-main">' +
+      '<div class="game-opp">' + esc(g.opp) + '</div>' +
+      '<div class="game-venue">' + esc(venueLine(g)) + ' · <a class="link-red" href="' + mapUrl(g) + '" target="_blank" rel="noopener">Map</a></div>' +
+      (g.pitchers.length ? '<div class="game-rot"><span class="rot-label">Probable Pitchers</span>' + g.pitchers.map(esc).join(' · ') + '</div>' : '') +
+      (g.jersey ? '<div style="margin-top:.4rem"><span class="pill pill-navy">' + esc(g.jersey) + '</span></div>' : '') +
+    '</div>' +
+    '<div class="game-side">' + resultPill(g) + '</div>' +
+  '</div>';
+}
+function practiceRow(p){
+  return '<div class="game-row' + (p.canceled ? ' canceled' : '') + '">' +
+    '<div class="game-time">' + fmt12(p.time) + '</div>' +
+    '<div class="game-vs"></div>' +
+    '<div class="game-main">' +
+      '<div class="practice-line">Practice</div>' +
+      '<div class="game-venue">' + esc(venueLine(p)) + ' · <a class="link-red" href="' + mapUrl(p) + '" target="_blank" rel="noopener">Map</a></div>' +
+    '</div>' +
+    '<div class="game-side">' + (p.canceled ? '<span class="pill pill-red">Canceled</span>' : '') + '</div>' +
+  '</div>';
+}
+function renderList(){
+  /* one chronological stream: tournament banners on their start date, then
+     date groups of games and practices */
+  const items = [];
+  GAMES.forEach(g => items.push({ date: g.date, sort: g.time, kind: 'game', it: g }));
+  PRACTICES.forEach(p => items.push({ date: p.date, sort: p.time, kind: 'practice', it: p }));
+  items.sort((a, b) => (a.date + a.sort) < (b.date + b.sort) ? -1 : 1);
+  let html = '<div class="game-days">';
+  let lastDate = null;
+  items.forEach(x => {
+    if (x.date !== lastDate){
+      TOURNAMENTS.forEach(tr => {
+        if (tr.start > (lastDate || '') && tr.start <= x.date){
+          html += '<div class="tour-banner">&#127942; ' + esc(tr.name) + ' · ' + esc(tr.city) + ', ' + esc(tr.state) +
+                  (tr.released ? '' : ' <span class="tb-note">— game schedule not released yet, check back about a week out</span>') + '</div>';
+        }
+      });
+      html += '<div class="game-day">' + fmtDay(x.date) + '</div>';
+      lastDate = x.date;
+    }
+    html += x.kind === 'game' ? gameRow(x.it) : practiceRow(x.it);
+  });
+  html += '</div>';
+  return html;
+}
+
+function calShift(dir){
+  let y = +calMonth.slice(0, 4), m = +calMonth.slice(5) + dir;
+  if (m < 1){ m = 12; y--; }
+  if (m > 12){ m = 1; y++; }
+  calMonth = y + '-' + ('0' + m).slice(-2);
+  selected = null;
+  render();
+}
+function pick(kind, index){ selected = { kind: kind, index: index }; render(); }
+function renderDetail(){
+  if (!selected) return '<p style="font-size:.8rem;color:var(--muted);margin-top:1rem">Tap anything on the calendar for details.</p>';
+  if (selected.kind === 'game'){
+    const g = GAMES[selected.index];
+    return '<div class="detail-card">' +
+      '<div class="detail-title">' + (g.at ? '@' : 'vs.') + ' ' + esc(g.opp) + ' · ' + fmtDay(g.date) + '</div>' +
+      '<div class="detail-line"><b>First Pitch</b>' + fmt12(g.time) + '</div>' +
+      '<div class="detail-line"><b>Field</b>' + esc(venueLine(g)) + ' · <a class="link-red" href="' + mapUrl(g) + '" target="_blank" rel="noopener">Open In Maps</a></div>' +
+      (g.jersey ? '<div class="detail-line"><b>Jersey</b>' + esc(g.jersey) + '</div>' : '') +
+      (g.pitchers.length ? '<div class="detail-line"><b>Probable Pitchers</b>' + g.pitchers.map(esc).join(' · ') + '</div>' : '') +
+      (result(g) ? '<div class="detail-line"><b>Final</b>' + esc(result(g)) + '</div>' : '') +
+    '</div>';
+  }
+  const p = PRACTICES[selected.index];
+  return '<div class="detail-card">' +
+    '<div class="detail-title">Practice · ' + fmtDay(p.date) + (p.canceled ? ' · Canceled' : '') + '</div>' +
+    '<div class="detail-line"><b>Time</b>' + fmt12(p.time) + '</div>' +
+    '<div class="detail-line"><b>Field</b>' + esc(venueLine(p)) + ' · <a class="link-red" href="' + mapUrl(p) + '" target="_blank" rel="noopener">Open In Maps</a></div>' +
+  '</div>';
+}
+function renderCal(){
+  const y = +calMonth.slice(0, 4), m = +calMonth.slice(5);
+  const firstDow = new Date(y, m - 1, 1).getDay();
+  const daysIn = new Date(y, m, 0).getDate();
+  const byDate = {};
+  const add = (iso, html) => { (byDate[iso] = byDate[iso] || []).push(html); };
+  TOURNAMENTS.forEach(tr => {
+    const a = tr.start.split('-'), b = tr.end.split('-');
+    const cur = new Date(+a[0], +a[1]-1, +a[2]), stop = new Date(+b[0], +b[1]-1, +b[2]);
+    while (cur <= stop){
+      const iso = cur.getFullYear() + '-' + ('0' + (cur.getMonth()+1)).slice(-2) + '-' + ('0' + cur.getDate()).slice(-2);
+      add(iso, '<div class="cal-chip tour">&#127942; ' + esc(tr.name) + '</div>');
+      cur.setDate(cur.getDate() + 1);
+    }
+  });
+  GAMES.forEach((g, i) => {
+    add(g.date, '<button class="cal-chip game" onclick="pick(\'game\',' + i + ')">' + fmt12(g.time) + ' ' + (g.at ? '@' : 'vs') + ' ' + esc(g.opp) + '</button>');
+  });
+  PRACTICES.forEach((p, i) => {
+    add(p.date, '<button class="cal-chip practice' + (p.canceled ? ' canceled' : '') + '" onclick="pick(\'practice\',' + i + ')">' + (p.canceled ? 'Canceled' : fmt12(p.time) + ' Practice') + '</button>');
+  });
+  let cells = '';
+  for (let i = 0; i < firstDow; i++) cells += '<div class="cal-cell blank"></div>';
+  for (let day = 1; day <= daysIn; day++){
+    const iso = y + '-' + ('0' + m).slice(-2) + '-' + ('0' + day).slice(-2);
+    cells += '<div class="cal-cell"><span class="cal-daynum">' + day + '</span>' + (byDate[iso] || []).join('') + '</div>';
+  }
+  const trailing = (firstDow + daysIn) % 7;
+  if (trailing) for (let i = trailing; i < 7; i++) cells += '<div class="cal-cell blank"></div>';
+  return '<div class="cal-head">' +
+      '<div style="display:flex;align-items:center;gap:.4rem;margin-left:auto">' +
+        '<button class="cal-nav" onclick="calShift(-1)" aria-label="Previous month">&#9664;</button>' +
+        '<span class="cal-title">' + MONTHS_FULL[m-1] + ' ' + y + '</span>' +
+        '<button class="cal-nav" onclick="calShift(1)" aria-label="Next month">&#9654;</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="cal-grid">' + DAY_LABELS.map(d => '<div class="cal-dow">' + d + '</div>').join('') + cells + '</div>' +
+    '<div class="cal-legend">' +
+      '<span><span class="swatch" style="background:#f6ecd2"></span>Tournament</span>' +
+      '<span><span class="swatch" style="background:#f8e3e6"></span>Game</span>' +
+      '<span><span class="swatch" style="background:#e8ebf4"></span>Practice</span>' +
+    '</div>' +
+    renderDetail();
+}
+function render(){
+  document.getElementById('chip-list').classList.toggle('active', view === 'list');
+  document.getElementById('chip-cal').classList.toggle('active', view === 'cal');
+  document.getElementById('content').innerHTML = view === 'list' ? renderList() : renderCal();
+}
+render();
+</script>
+</body>
+</html>
