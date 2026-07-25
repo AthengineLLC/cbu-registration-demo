@@ -2676,8 +2676,74 @@ let ORG_SETTINGS = { fanGearUrl:'https://cbubaseball.com/fan-gear',
   ] };
 let sAddingStore = false;   // external-store add form open on the Message step
 
-/* The CBU standard package — one-click starting point in the wizard. Pieces
-   and photos come from the Jersey Packages gear library (img/gear/). */
+/* ---- Gear library bridge ----
+   The Jersey Packages page (gear-library.html) publishes its pieces to
+   localStorage on every change. The wizard reads them live from there, so
+   whatever is in the library is what gets picked and loaded here. The
+   fallback below mirrors the library's standard lineup for when the
+   library page has never been opened. */
+const GEAR_RUN = ['YS','YM','YL','YXL','AS','AM','AL','AXL','AXXL'];
+const GEAR_FALLBACK = [
+  { name:'Navy Pinstripe Jersey', price:'55', photo:'img/gear/navy-pinstripe-jersey.png', sizes:GEAR_RUN },
+  { name:'White Jersey',          price:'55', photo:'img/gear/white-jersey.png',          sizes:GEAR_RUN },
+  { name:'Navy Jersey',           price:'55', photo:'img/gear/navy-jersey.png',           sizes:GEAR_RUN },
+  { name:'Navy Pinstripe Pant',   price:'45', photo:'img/gear/navy-pinstripe-pant.png',   sizes:GEAR_RUN },
+  { name:'White Pant',            price:'45', photo:'img/gear/white-pant.jpg',            sizes:GEAR_RUN },
+  { name:'Game Socks',            price:'12', photo:'img/gear/sock.png',                  sizes:['S','M','L','XL'] },
+  { name:'Game Hat',              price:'30', photo:'img/gear/hat.png',                   sizes:['XS','S/M','M/L','L/XL'] },
+  { name:'Dry Fit — Navy',        price:'25', photo:'img/gear/dryfit-navy.png',           sizes:GEAR_RUN },
+  { name:'Dry Fit — Powder',      price:'25', photo:'img/gear/dryfit-powder.png',         sizes:GEAR_RUN }
+];
+function gearLibrary(){
+  try{
+    const raw = localStorage.getItem('cbuGearLibrary');
+    if(raw){
+      const arr = JSON.parse(raw);
+      if(Array.isArray(arr) && arr.length && arr[0].name && arr[0].sizes) return arr;
+    }
+  }catch(e){}
+  return GEAR_FALLBACK;
+}
+function libToPkgItem(g){
+  return { name:g.name, desc:g.desc || '', price:String(g.price || ''), sizes:(g.sizes || []).join(', '), img:g.photo || '' };
+}
+function sAvailableGear(){
+  const used = {};
+  swiz.pkg.items.concat(swiz.pkg.addons).forEach(function(x){ used[x.name.toLowerCase()] = 1; });
+  return gearLibrary().filter(function(g){ return !used[String(g.name).toLowerCase()]; });
+}
+function sAddLibraryPiece(i, target){
+  const g = sAvailableGear()[i];
+  if(!g) return;
+  const it = libToPkgItem(g);
+  if(target === 'addons') swiz.pkg.addons.push({ name:it.name, desc:it.desc, price:it.price, img:it.img });
+  else swiz.pkg.items.push(it);
+  renderSStepPanel();
+  toast(g.name + (target === 'addons' ? ' added as a season add-on.' : ' added to the package.'));
+}
+/* Rows for the pick-from-library panel, shared by items and add-ons */
+function sGearPickerPanel(target, closeFlag){
+  const avail = sAvailableGear();
+  let html = '<div style="background:var(--row-alt);border:1.5px solid var(--line);border-radius:12px;padding:1rem 1.1rem;margin-top:1rem">' +
+    '<div class="cell-strong" style="margin-bottom:.6rem">Pick From The Gear Library</div>';
+  if(avail.length){
+    avail.forEach(function(g, i){
+      html += '<div style="display:flex;align-items:center;gap:.8rem;padding:.45rem 0;border-bottom:1px solid var(--line)">' +
+        (g.photo ? '<img src="'+escAttr(g.photo)+'" alt="" style="width:44px;height:44px;object-fit:contain;background:#fff;border:1.5px solid var(--line);border-radius:8px;padding:2px;flex:0 0 44px" onerror="this.remove()">' : '') +
+        '<div style="flex:1;min-width:0"><span class="cell-strong">'+esc(g.name)+'</span>' +
+        '<div class="cell-sub">Sizes: '+esc((g.sizes || []).join(' · '))+'</div></div>' +
+        '<span class="pill pill-red">$'+esc(g.price)+'</span>' +
+        '<button class="btn btn-outline-dark btn-sm" onclick="sAddLibraryPiece('+i+',\''+target+'\')">Add</button></div>';
+    });
+  } else {
+    html += '<div class="cell-sub" style="padding:.4rem 0">Every piece in the gear library is already used in this registration. Add new pieces on the Jersey Packages page.</div>';
+  }
+  html += '<div style="margin-top:.8rem"><button class="btn btn-primary btn-sm" onclick="swiz.pkg.'+closeFlag+'=false;renderSStepPanel()">Done</button></div></div>';
+  return html;
+}
+
+/* The CBU standard package — the SEEDED demo registration's snapshot. The
+   wizard's Load button pulls from gearLibrary(), not from this. */
 const RUN_SIZES = 'YS, YM, YL, YXL, AS, AM, AL, AXL, AXXL';
 const STANDARD_PKG = {
   name:'2026 United Jersey Package', price:'150',
@@ -2713,7 +2779,7 @@ function startSeasonWizard(){
     offlineOn:true, offlineHow:'',
     errs:{},
     waivers:null, waiverOpen:{}, addingWaiver:false,
-    pkg:{ offer:true, name:'', price:'', allowSecond:true, deadline:'', ship:false, shipCost:'', items:[], addons:[], addingItem:false, addingAddon:false },
+    pkg:{ offer:true, name:'', price:'', allowSecond:true, deadline:'', ship:false, shipCost:'', items:[], addons:[], addingItem:false, addingAddon:false, pickingItem:false, pickingAddon:false },
     postMessage:'',
     isEdit:false, editIdx:null };
   setAccent('hs');
@@ -2736,6 +2802,8 @@ function editSeasonRegistration(i){
   swiz.waiverOpen = {};
   swiz.pkg.addingItem = false;
   swiz.pkg.addingAddon = false;
+  swiz.pkg.pickingItem = false;
+  swiz.pkg.pickingAddon = false;
   if(swiz.pkg.ship === undefined){ swiz.pkg.ship = false; swiz.pkg.shipCost = ''; }
   swiz.errs = {};
   if(!swiz.plan.mode) swiz.plan.mode = 'monthly';
@@ -3136,7 +3204,7 @@ function sStepPkg(){
   const pk = swiz.pkg;
   let html = '' +
   '<div class="step-q display">Jersey Package</div>' +
-  '<p class="step-help">Everything you set here powers the family side: the package they can add, the sizing questions they answer after choosing it, and the per-item prices used when they buy extra pieces. All of it is charged with their first payment. Pieces and their photos come from the <strong>Jersey Packages</strong> gear library — the standard package below loads the full CBU lineup from it.</p>' +
+  '<p class="step-help">Everything you set here powers the family side: the package they can add, the sizing questions they answer after choosing it, and the per-item prices used when they buy extra pieces. All of it is charged with their first payment. Pieces and their photos come from the <strong>Jersey Packages</strong> gear library — pick them from it below, or load the whole library in one click. Whatever is in the library right now is what loads.</p>' +
 
   '<div class="waiver-item" style="padding:1rem 1.1rem">' +
     '<div style="display:flex;align-items:center;gap:.8rem">' +
@@ -3155,7 +3223,7 @@ function sStepPkg(){
       '<input type="text" id="spk-price" inputmode="decimal" value="'+escAttr(pk.price)+'" oninput="swiz.pkg.price=this.value" style="max-width:130px"></div>' +
     '<div><label class="field-label" for="spk-deadline">Sizing Deadline</label>' +
       '<input type="date" id="spk-deadline" value="'+pk.deadline+'" onchange="swiz.pkg.deadline=this.value" style="max-width:180px"></div>' +
-    (pk.items.length === 0 ? '<button class="btn btn-outline-dark btn-sm" onclick="sLoadStandardPkg()" style="margin-bottom:2px">Load CBU Standard Package</button>' : '') +
+    (pk.items.length === 0 ? '<button class="btn btn-outline-dark btn-sm" onclick="sLoadStandardPkg()" style="margin-bottom:2px">Load The Gear Library</button>' : '') +
   '</div>' +
   '<p class="step-help" style="font-size:.78rem;margin-top:.6rem">The sizing deadline drives the family-side reminders — sizes due by this date to make the first uniform order.</p>';
 
@@ -3197,7 +3265,9 @@ function sStepPkg(){
     });
   }
   html += '</div>';
-  if(pk.addingItem){
+  if(pk.pickingItem){
+    html += sGearPickerPanel('items', 'pickingItem');
+  } else if(pk.addingItem){
     html += '<div style="background:var(--row-alt);border:1.5px solid var(--line);border-radius:12px;padding:1.2rem 1.3rem;margin-top:1rem">' +
       '<div style="display:flex;gap:1.2rem;flex-wrap:wrap">' +
         '<div style="flex:1;min-width:200px"><label class="field-label" for="spi-name">Item Name</label>' +
@@ -3213,10 +3283,13 @@ function sStepPkg(){
         '<button class="btn btn-primary btn-sm" onclick="sSavePkgItem()">Add Item</button>' +
         '<button class="btn btn-outline-dark btn-sm" onclick="swiz.pkg.addingItem=false;renderSStepPanel()">Cancel</button>' +
       '</div>' +
+      '<p class="step-help" style="font-size:.78rem;margin-top:.8rem">One-off items typed here do not go into the gear library — add them on the Jersey Packages page if they should be reusable.</p>' +
     '</div>';
   } else {
-    html += '<div class="mt-2"><button class="btn btn-outline-dark btn-sm" onclick="swiz.pkg.addingItem=true;renderSStepPanel()">+ Add Package Item</button>' +
-      '<span class="step-help" style="display:inline-block;margin-left:.8rem;font-size:.78rem">Families size every item here, and the extra-piece price is what a spare costs.</span></div>';
+    html += '<div class="mt-2" style="display:flex;gap:.7rem;flex-wrap:wrap;align-items:center">' +
+      '<button class="btn btn-primary btn-sm" onclick="swiz.pkg.pickingItem=true;renderSStepPanel()">+ Add From Gear Library</button>' +
+      '<button class="btn btn-outline-dark btn-sm" onclick="swiz.pkg.addingItem=true;renderSStepPanel()">+ Add Custom Item</button>' +
+      '<span class="step-help" style="font-size:.78rem">Families size every item here, and the extra-piece price is what a spare costs.</span></div>';
   }
 
   html += '<div class="preview-section" style="margin-top:1.4rem"><div class="preview-section-head">Season Add-Ons (Optional)</div>';
@@ -3233,34 +3306,40 @@ function sStepPkg(){
     });
   }
   html += '</div>';
-  if(pk.addingAddon){
+  if(pk.pickingAddon){
+    html += sGearPickerPanel('addons', 'pickingAddon');
+  } else if(pk.addingAddon){
     html += '<div style="background:var(--row-alt);border:1.5px solid var(--line);border-radius:12px;padding:1.2rem 1.3rem;margin-top:1rem">' +
       '<div style="display:flex;gap:1.2rem;flex-wrap:wrap">' +
         '<div style="flex:1;min-width:200px"><label class="field-label" for="spa-name">Add-On Name</label>' +
-          '<input type="text" id="spa-name" placeholder="e.g. Practice Pack" style="max-width:100%"></div>' +
+          '<input type="text" id="spa-name" placeholder="e.g. Dry Fit — Navy" style="max-width:100%"></div>' +
         '<div><label class="field-label" for="spa-price">Price ($)</label>' +
-          '<input type="text" id="spa-price" inputmode="decimal" placeholder="60" style="max-width:130px"></div>' +
+          '<input type="text" id="spa-price" inputmode="decimal" placeholder="25" style="max-width:130px"></div>' +
       '</div>' +
       '<div class="mt-2"><label class="field-label" for="spa-desc">Description (optional)</label>' +
-        '<input type="text" id="spa-desc" placeholder="e.g. Two practice tees and a practice hat" style="max-width:100%"></div>' +
+        '<input type="text" id="spa-desc" placeholder="e.g. Practice dry fit, navy" style="max-width:100%"></div>' +
       '<div style="display:flex;gap:.7rem;margin-top:.9rem">' +
         '<button class="btn btn-primary btn-sm" onclick="sSaveAddon()">Add Add-On</button>' +
         '<button class="btn btn-outline-dark btn-sm" onclick="swiz.pkg.addingAddon=false;renderSStepPanel()">Cancel</button>' +
       '</div>' +
     '</div>';
   } else {
-    html += '<div class="mt-2"><button class="btn btn-outline-dark btn-sm" onclick="swiz.pkg.addingAddon=true;renderSStepPanel()">+ Add Season Add-On</button></div>';
+    html += '<div class="mt-2" style="display:flex;gap:.7rem;flex-wrap:wrap">' +
+      '<button class="btn btn-outline-dark btn-sm" onclick="swiz.pkg.pickingAddon=true;renderSStepPanel()">+ Add-On From Gear Library</button>' +
+      '<button class="btn btn-outline-dark btn-sm" onclick="swiz.pkg.addingAddon=true;renderSStepPanel()">+ Custom Add-On</button></div>';
   }
   return html;
 }
 function sLoadStandardPkg(){
-  const std = JSON.parse(JSON.stringify(STANDARD_PKG));
-  swiz.pkg.name = std.name;
-  swiz.pkg.price = std.price;
-  swiz.pkg.items = std.items;
-  swiz.pkg.addons = std.addons;
+  /* Loads whatever is in the gear library RIGHT NOW - every piece, in
+     library order. The library page keeps localStorage current. */
+  const lib = gearLibrary();
+  if(!swiz.pkg.name.trim()) swiz.pkg.name = '2026 United Jersey Package';
+  if(!swiz.pkg.price) swiz.pkg.price = '150';
+  swiz.pkg.items = lib.map(libToPkgItem);
+  swiz.pkg.addons = [];
   renderSStepPanel();
-  toast('CBU standard package loaded — edit anything you need.');
+  toast('All ' + lib.length + ' gear library pieces loaded — remove any, or re-add optional ones as add-ons below.');
 }
 function sSavePkgItem(){
   const name = document.getElementById('spi-name').value.trim();

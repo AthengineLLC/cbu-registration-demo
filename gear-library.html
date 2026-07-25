@@ -203,24 +203,58 @@ var SIZE_PRESETS = [
    exists the emoji placeholder square shows instead. Dragging a photo onto
    the square in the edit form also works and overrides the file. */
 var RUN = ['YS','YM','YL','YXL','AS','AM','AL','AXL','AXXL'];
+var DEFAULT_ITEMS = [
+  { name:'Navy Pinstripe Jersey', price:'55', emoji:'👕', bg:'linear-gradient(135deg,#141d3a,#0c1327)', photo:'img/gear/navy-pinstripe-jersey.png', sizes:RUN.slice() },
+  { name:'White Jersey',          price:'55', emoji:'👕', bg:'linear-gradient(135deg,#f5f6fa,#dfe3ee)', photo:'img/gear/white-jersey.png',          sizes:RUN.slice() },
+  { name:'Navy Jersey',           price:'55', emoji:'👕', bg:'linear-gradient(135deg,#1b2749,#0e1730)', photo:'img/gear/navy-jersey.png',           sizes:RUN.slice() },
+  { name:'Navy Pinstripe Pant',   price:'45', emoji:'👖', bg:'linear-gradient(135deg,#141d3a,#0c1327)', photo:'img/gear/navy-pinstripe-pant.png',   sizes:RUN.slice() },
+  { name:'White Pant',            price:'45', emoji:'👖', bg:'linear-gradient(135deg,#eef1f8,#c9cfdd)', photo:'img/gear/white-pant.jpg',            sizes:RUN.slice() },
+  { name:'Game Socks',            price:'12', emoji:'🧦', bg:'linear-gradient(135deg,#d94b58,#b91e2d)', photo:'img/gear/sock.png',                  sizes:['S','M','L','XL'] },
+  { name:'Game Hat',              price:'30', emoji:'🧢', bg:'linear-gradient(135deg,#b91e2d,#7a1420)', photo:'img/gear/hat.png',                   sizes:['XS','S/M','M/L','L/XL'] },
+  { name:'Dry Fit — Navy',        price:'25', emoji:'👕', bg:'linear-gradient(135deg,#1b2749,#0e1730)', photo:'img/gear/dryfit-navy.png',           sizes:RUN.slice() },
+  { name:'Dry Fit — Powder',      price:'25', emoji:'👕', bg:'linear-gradient(135deg,#6daed4,#4d8fb6)', photo:'img/gear/dryfit-powder.png',         sizes:RUN.slice() }
+];
+
+/* The library is the source of truth for the registration wizard: it is
+   published to localStorage on every change, and admin.html's Jersey
+   Package step reads it from there (falling back to this same lineup).
+   The library also reloads itself from storage, so edits survive refresh. */
+var STORE_KEY = 'cbuGearLibrary';
 var nextId = 1;
 function nid(){ return nextId++; }
-var items = [
-  { id:nid(), name:'Navy Pinstripe Jersey', price:'55', emoji:'👕', bg:'linear-gradient(135deg,#141d3a,#0c1327)', photo:'img/gear/navy-pinstripe-jersey.png', img:null, sizes:RUN.slice() },
-  { id:nid(), name:'White Jersey',          price:'55', emoji:'👕', bg:'linear-gradient(135deg,#f5f6fa,#dfe3ee)', photo:'img/gear/white-jersey.png',          img:null, sizes:RUN.slice() },
-  { id:nid(), name:'Navy Jersey',           price:'55', emoji:'👕', bg:'linear-gradient(135deg,#1b2749,#0e1730)', photo:'img/gear/navy-jersey.png',           img:null, sizes:RUN.slice() },
-  { id:nid(), name:'Navy Pinstripe Pant',   price:'45', emoji:'👖', bg:'linear-gradient(135deg,#141d3a,#0c1327)', photo:'img/gear/navy-pinstripe-pant.png',   img:null, sizes:RUN.slice() },
-  { id:nid(), name:'White Pant',            price:'45', emoji:'👖', bg:'linear-gradient(135deg,#eef1f8,#c9cfdd)', photo:'img/gear/white-pant.jpg',            img:null, sizes:RUN.slice() },
-  { id:nid(), name:'Game Socks',            price:'12', emoji:'🧦', bg:'linear-gradient(135deg,#d94b58,#b91e2d)', photo:'img/gear/sock.png',                  img:null, sizes:['S','M','L','XL'] },
-  { id:nid(), name:'Game Hat',              price:'30', emoji:'🧢', bg:'linear-gradient(135deg,#b91e2d,#7a1420)', photo:'img/gear/hat.png',                   img:null, sizes:['XS','S/M','M/L','L/XL'] },
-  { id:nid(), name:'Dry Fit — Navy',        price:'25', emoji:'👕', bg:'linear-gradient(135deg,#1b2749,#0e1730)', photo:'img/gear/dryfit-navy.png',           img:null, sizes:RUN.slice() },
-  { id:nid(), name:'Dry Fit — Powder',      price:'25', emoji:'👕', bg:'linear-gradient(135deg,#6daed4,#4d8fb6)', photo:'img/gear/dryfit-powder.png',         img:null, sizes:RUN.slice() }
-];
+function loadStored(){
+  try{
+    var raw = localStorage.getItem(STORE_KEY);
+    if(!raw) return null;
+    var arr = JSON.parse(raw);
+    if(!Array.isArray(arr) || !arr.length || !arr[0].name || !arr[0].sizes) return null;
+    return arr;
+  }catch(e){ return null; }
+}
+var items = (loadStored() || DEFAULT_ITEMS).map(function(o){
+  return Object.assign({ img:null, photo:null, emoji:'👕', bg:'linear-gradient(135deg,#eef1f8,#c9cfdd)' }, o, { id: nid() });
+});
+function persist(){
+  try{
+    localStorage.setItem(STORE_KEY, JSON.stringify(items.map(function(it){
+      /* an uploaded photo (data URL) rides along if it is small enough;
+         otherwise keep the file path so storage never overflows */
+      var photo = (it.img && it.img.length < 200000) ? it.img : (it.photo || null);
+      return { name: it.name, price: it.price, emoji: it.emoji, bg: it.bg, photo: photo, sizes: it.sizes };
+    })));
+  }catch(e){}
+}
+persist();
 
 var formOpen = false;
 var editId = null;       /* item being edited, null = adding new */
 var deleteId = null;     /* item pending inline delete confirm */
 var draft = null;        /* {name, price, emoji, bg, img, sizes:[]} */
+var resetConfirm = false;/* inline confirm for Reset Library */
+function resetLibrary(){
+  try{ localStorage.removeItem(STORE_KEY); }catch(e){}
+  location.reload();
+}
 
 function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function toast(msg){
@@ -327,12 +361,14 @@ function saveItem(){
     items.push(draft);
     toast(draft.name + ' added to the gear library.');
   }
+  persist();
   closeForm();
 }
 function deleteItem(id){
   var it = findItem(id);
   items = items.filter(function(x){ return x.id !== id; });
   deleteId = null;
+  persist();
   toast((it ? it.name : 'Piece') + ' removed from the library.');
   render();
 }
@@ -381,8 +417,15 @@ function render(){
   html += '<div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">' +
     '<span class="field-label" style="margin:0">Gear Library (' + items.length + ')</span>' +
     (formOpen ? '' : '<button class="btn btn-primary btn-sm" onclick="openForm(null)">+ Add Gear Piece</button>') +
+    '<span style="margin-left:auto">' +
+    (resetConfirm
+      ? '<span class="hint">Back to the standard CBU lineup? Custom edits are lost. </span>' +
+        '<button class="link-red" onclick="resetLibrary()">Reset</button> ' +
+        '<button class="link-muted" onclick="resetConfirm=false;render()">Keep</button>'
+      : '<button class="link-muted" onclick="resetConfirm=true;render()">Reset Library</button>') +
+    '</span>' +
   '</div>' +
-  '<p class="hint" style="margin-top:.5rem">These pieces are what the season registration wizard picks from when it builds a jersey package — add each piece once here, use it in every season.</p>';
+  '<p class="hint" style="margin-top:.5rem">These pieces are what the season registration wizard picks from when it builds a jersey package — add each piece once here, use it in every season. Changes here save automatically and show up in the registration wizard’s Jersey Package step.</p>';
 
   html += '<div class="gear-grid">' + items.map(function(it){
     var src = it.img || it.photo;
