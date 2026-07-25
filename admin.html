@@ -2676,16 +2676,24 @@ let ORG_SETTINGS = { fanGearUrl:'https://cbubaseball.com/fan-gear',
   ] };
 let sAddingStore = false;   // external-store add form open on the Message step
 
-/* The CBU standard package — one-click starting point in the wizard. */
+/* The CBU standard package — one-click starting point in the wizard. Pieces
+   and photos come from the Jersey Packages gear library (img/gear/). */
+const RUN_SIZES = 'YS, YM, YL, YXL, AS, AM, AL, AXL, AXXL';
 const STANDARD_PKG = {
   name:'2026 United Jersey Package', price:'150',
   items:[
-    { name:'Game Jersey — Red',   desc:'Sublimated game jersey, United red', price:'55', sizes:'YM, YL, YXL, AS, AM, AL, AXL, AXXL' },
-    { name:'Game Jersey — White', desc:'Sublimated game jersey, white',      price:'55', sizes:'YM, YL, YXL, AS, AM, AL, AXL, AXXL' },
-    { name:'Game Hat',            desc:'Official CBU red game hat',          price:'30', sizes:'S/M Fitted, L/XL Fitted' },
-    { name:'Belt & Sock Set',     desc:'Navy belt and game socks',           price:'25', sizes:'S, M, L' }
+    { name:'Navy Pinstripe Jersey', desc:'Sublimated game jersey, navy pinstripe', price:'55', sizes:RUN_SIZES, img:'img/gear/navy-pinstripe-jersey.png' },
+    { name:'White Jersey',          desc:'Sublimated game jersey, white',          price:'55', sizes:RUN_SIZES, img:'img/gear/white-jersey.png' },
+    { name:'Navy Jersey',           desc:'Sublimated game jersey, navy',           price:'55', sizes:RUN_SIZES, img:'img/gear/navy-jersey.png' },
+    { name:'Navy Pinstripe Pant',   desc:'Game pant, navy pinstripe',              price:'45', sizes:RUN_SIZES, img:'img/gear/navy-pinstripe-pant.png' },
+    { name:'White Pant',            desc:'Game pant, white',                       price:'45', sizes:RUN_SIZES, img:'img/gear/white-pant.jpg' },
+    { name:'Game Hat',              desc:'Official CBU game hat',                  price:'30', sizes:'XS, S/M, M/L, L/XL', img:'img/gear/hat.png' },
+    { name:'Game Socks',            desc:'Game socks, navy and red',               price:'12', sizes:'S, M, L, XL', img:'img/gear/sock.png' }
   ],
-  addons:[ { name:'Practice Pack', desc:'Two practice tees and a practice hat', price:'60' } ]
+  addons:[
+    { name:'Dry Fit — Navy',   desc:'Practice dry fit, navy',        price:'25', img:'img/gear/dryfit-navy.png' },
+    { name:'Dry Fit — Powder', desc:'Practice dry fit, powder blue', price:'25', img:'img/gear/dryfit-powder.png' }
+  ]
 };
 
 const S_STEPS = ['Name','Season Link','Payments','Waivers','Jersey Package','Message','Review'];
@@ -3128,7 +3136,7 @@ function sStepPkg(){
   const pk = swiz.pkg;
   let html = '' +
   '<div class="step-q display">Jersey Package</div>' +
-  '<p class="step-help">Everything you set here powers the family side: the package they can add, the sizing questions they answer after choosing it, and the per-item prices used when they buy extra pieces. All of it is charged with their first payment.</p>' +
+  '<p class="step-help">Everything you set here powers the family side: the package they can add, the sizing questions they answer after choosing it, and the per-item prices used when they buy extra pieces. All of it is charged with their first payment. Pieces and their photos come from the <strong>Jersey Packages</strong> gear library — the standard package below loads the full CBU lineup from it.</p>' +
 
   '<div class="waiver-item" style="padding:1rem 1.1rem">' +
     '<div style="display:flex;align-items:center;gap:.8rem">' +
@@ -3180,9 +3188,10 @@ function sStepPkg(){
     html += '<div class="preview-field" style="justify-content:center;color:var(--muted)">No items yet — add each piece families will size, or load the CBU standard package above.</div>';
   } else {
     pk.items.forEach(function(it, i){
-      html += '<div class="preview-field"><div>' +
-        '<span class="cell-strong">'+esc(it.name)+'</span>' +
-        '<div class="cell-sub">'+esc(it.desc || '')+(it.desc?' · ':'')+'Sizes: '+esc(pkgSizes(it).join(' · '))+'</div></div>' +
+      html += '<div class="preview-field"><div style="display:flex;gap:.8rem;align-items:center;min-width:0">' +
+        (it.img ? '<img src="'+esc(it.img)+'" alt="" style="width:48px;height:48px;object-fit:contain;background:#fff;border:1.5px solid var(--line);border-radius:8px;padding:2px;flex:0 0 48px" onerror="this.remove()">' : '') +
+        '<div><span class="cell-strong">'+esc(it.name)+'</span>' +
+        '<div class="cell-sub">'+esc(it.desc || '')+(it.desc?' · ':'')+'Sizes: '+esc(pkgSizes(it).join(' · '))+'</div></div></div>' +
         '<div style="white-space:nowrap"><span class="pill pill-red" style="margin-right:.6rem">Extra: $'+esc(it.price)+'</span>' +
         '<button class="link-red" onclick="sRemovePkgItem('+i+')">Remove</button></div></div>';
     });
@@ -3215,8 +3224,10 @@ function sStepPkg(){
     html += '<div class="preview-field" style="justify-content:center;color:var(--muted)">No add-ons — optional extras like a practice pack, offered alongside the package.</div>';
   } else {
     pk.addons.forEach(function(a, i){
-      html += '<div class="preview-field"><div><span class="cell-strong">'+esc(a.name)+'</span>' +
-        (a.desc?'<div class="cell-sub">'+esc(a.desc)+'</div>':'')+'</div>' +
+      html += '<div class="preview-field"><div style="display:flex;gap:.8rem;align-items:center;min-width:0">' +
+        (a.img ? '<img src="'+esc(a.img)+'" alt="" style="width:48px;height:48px;object-fit:contain;background:#fff;border:1.5px solid var(--line);border-radius:8px;padding:2px;flex:0 0 48px" onerror="this.remove()">' : '') +
+        '<div><span class="cell-strong">'+esc(a.name)+'</span>' +
+        (a.desc?'<div class="cell-sub">'+esc(a.desc)+'</div>':'')+'</div></div>' +
         '<div style="white-space:nowrap"><span class="pill pill-red" style="margin-right:.6rem">$'+esc(a.price)+'</span>' +
         '<button class="link-red" onclick="sRemoveAddon('+i+')">Remove</button></div></div>';
     });

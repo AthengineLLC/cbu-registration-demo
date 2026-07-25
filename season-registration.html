@@ -284,6 +284,13 @@ input.err{border-color:var(--red);background:#fff7f8}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
 /* ============ MOBILE ============ */
+/* Gear photos in the flow: the package card's photo strip, add-on card
+   thumbnails, and the little product shot on each sizing card. All contain,
+   never crop, on white - same treatment as the gear library page. */
+.pkg-strip{display:flex;gap:.45rem;flex-wrap:wrap;margin-top:.9rem}
+.pkg-strip img{width:56px;height:56px;object-fit:contain;background:#fff;border:1.5px solid var(--line);border-radius:8px;padding:3px}
+.gear-thumb{width:64px;height:64px;object-fit:contain;background:#fff;border:1.5px solid var(--line);border-radius:8px;padding:3px;flex:0 0 64px}
+
 /* NEW COMPONENT: addr-suggest — smart street-address search. As the family
    types their street address, matching addresses drop down; tapping one
    fills street, city, state, and zip in one shot. Mocked suggestions here;
@@ -515,10 +522,11 @@ input.err{border-color:var(--red);background:#fff7f8}
           <div class="opt-head">
             <div>
               <div class="opt-title">2026 United Jersey Package</div>
-              <div class="opt-desc">Two game jerseys (red &amp; white), game hat, belt, and sock set. Required for players who don't already have current-season uniforms.</div>
+              <div class="opt-desc">Three game jerseys (navy pinstripe, white &amp; navy), two game pants, game hat, and socks. Required for players who don't already have current-season uniforms.</div>
             </div>
             <div class="opt-price">$150</div>
           </div>
+          <div class="pkg-strip" id="pkgStrip"><!-- filled by JS from PACKAGE.items --></div>
           <div class="opt-actions">
             <button class="btn btn-primary btn-sm" onclick="setJersey(true)">Add To Registration</button>
             <button class="btn btn-outline-dark btn-sm" onclick="setJersey(false)">No Thanks — I Have Uniforms</button>
@@ -535,18 +543,8 @@ input.err{border-color:var(--red);background:#fff7f8}
           </div>
         </div>
 
-        <div class="opt-card" id="optPractice">
-          <div class="opt-head">
-            <div>
-              <div class="opt-title">Practice Pack <span class="pill pill-navy" style="margin-left:.4rem">Optional</span></div>
-              <div class="opt-desc">Two practice tees and a practice hat for team workouts.</div>
-            </div>
-            <div class="opt-price">$60</div>
-          </div>
-          <div class="opt-actions">
-            <button class="btn btn-ghost-red btn-sm" id="practiceBtn" onclick="togglePractice()">Add Practice Pack</button>
-          </div>
-        </div>
+        <!-- Season add-ons — rendered from PACKAGE.addons (the dry fits) -->
+        <div id="addonCards"><!-- filled by JS --></div>
 
         <div class="err-msg" id="err-jersey" style="margin-top:.8rem">Please make a jersey package selection (add it, or choose "No Thanks").</div>
       </div>
@@ -834,16 +832,31 @@ var SEASON = {
    The admin side defines the package price, what's in it, the size options
    per item, AND a price per item (used when families buy extra pieces).
    This object is what the backend will feed this page.                       */
+var RUN = ['YS','YM','YL','YXL','AS','AM','AL','AXL','AXXL'];
 var PACKAGE = {
   name: '2026 United Jersey Package',
   price: 150,
   items: [
-    { id: 'jerseyRed',   name: 'Game Jersey — Red',   desc: 'Sublimated game jersey, United red',   price: 55, sizes: ['YM','YL','YXL','AS','AM','AL','AXL','AXXL'] },
-    { id: 'jerseyWhite', name: 'Game Jersey — White', desc: 'Sublimated game jersey, white',        price: 55, sizes: ['YM','YL','YXL','AS','AM','AL','AXL','AXXL'] },
-    { id: 'hat',         name: 'Game Hat',            desc: 'Official CBU red game hat',            price: 30, sizes: ['S/M Fitted','L/XL Fitted'] },
-    { id: 'beltSocks',   name: 'Belt & Sock Set',     desc: 'Navy belt and game socks',             price: 25, sizes: ['S','M','L'] }
+    { id:'pinJersey',   name:'Navy Pinstripe Jersey', desc:'Sublimated game jersey, navy pinstripe', price:55, img:'img/gear/navy-pinstripe-jersey.png', sizes:RUN },
+    { id:'whiteJersey', name:'White Jersey',          desc:'Sublimated game jersey, white',          price:55, img:'img/gear/white-jersey.png',          sizes:RUN },
+    { id:'navyJersey',  name:'Navy Jersey',           desc:'Sublimated game jersey, navy',           price:55, img:'img/gear/navy-jersey.png',           sizes:RUN },
+    { id:'pinPant',     name:'Navy Pinstripe Pant',   desc:'Game pant, navy pinstripe',              price:45, img:'img/gear/navy-pinstripe-pant.png',   sizes:RUN },
+    { id:'whitePant',   name:'White Pant',            desc:'Game pant, white',                       price:45, img:'img/gear/white-pant.jpg',            sizes:RUN },
+    { id:'hat',         name:'Game Hat',              desc:'Official CBU game hat',                  price:30, img:'img/gear/hat.png',                   sizes:['XS','S/M','M/L','L/XL'] },
+    { id:'socks',       name:'Game Socks',            desc:'Game socks, navy and red',               price:12, img:'img/gear/sock.png',                  sizes:['S','M','L','XL'] }
+  ],
+  /* Optional season add-ons — from the same gear library, sized like everything else */
+  addons: [
+    { id:'dryNavy',   name:'Dry Fit — Navy',   desc:'Practice dry fit, navy',        price:25, img:'img/gear/dryfit-navy.png',   sizes:RUN },
+    { id:'dryPowder', name:'Dry Fit — Powder', desc:'Practice dry fit, powder blue', price:25, img:'img/gear/dryfit-powder.png', sizes:RUN }
   ]
 };
+function addonById(id){
+  for(var i = 0; i < PACKAGE.addons.length; i++){
+    if(PACKAGE.addons[i].id === id) return PACKAGE.addons[i];
+  }
+  return null;
+}
 
 /* Set by the admin in the season registration wizard: ship gear straight to
    players (collect a shipping address before payment, charge the flat fee)
@@ -878,7 +891,7 @@ var state = {
   maxStepReached: 1,
   jersey: null,          /* null = no selection yet, true/false */
   extraPackage: false,   /* second full jersey package */
-  practice: false,
+  addons: {},            /* addonId -> chosen size ('' = added, unsized) */
   payType: null,         /* 'full' | 'plan' | 'offline' */
   sizes: {},             /* '1:itemId' / '2:itemId' -> chosen size */
   extras: {},            /* itemId -> chosen size ('' = added, unsized) for extra single pieces */
@@ -899,12 +912,20 @@ function extrasTotal(){
   Object.keys(state.extras).forEach(function(id){ t += itemById(id).price; });
   return t;
 }
+function addonsTotal(){
+  var t = 0;
+  Object.keys(state.addons).forEach(function(id){ t += addonById(id).price; });
+  return t;
+}
+function anyAddons(){ return Object.keys(state.addons).length > 0; }
 function apparelTotal(){
   return (state.jersey ? PACKAGE.price : 0)
        + (state.extraPackage ? PACKAGE.price : 0)
        + extrasTotal()
-       + (state.practice ? 60 : 0);
+       + addonsTotal();
 }
+/* Sizing applies when there is anything to size - the package or an add-on */
+function needSizing(){ return state.jersey === true || anyAddons(); }
 /* Shipping applies only when the admin turned it on AND there is gear to ship */
 function shippingApplies(){
   return SHIPPING.on && apparelTotal() > 0;
@@ -1067,7 +1088,7 @@ function setJersey(val){
   }
   updateJerseyPill();
   document.getElementById('err-jersey').classList.remove('show');
-  document.getElementById('step3Btn').textContent = val ? 'Continue To Jersey Sizing →' : 'Continue To Payment →';
+  updateStep3Btn();
 }
 function toggleExtraPackage(){
   state.extraPackage = !state.extraPackage;
@@ -1089,12 +1110,42 @@ function updateJerseyPill(){
     pill.textContent = 'No Selection Yet';
   }
 }
-function togglePractice(){
-  state.practice = !state.practice;
-  var card = document.getElementById('optPractice');
-  var btn = document.getElementById('practiceBtn');
-  card.classList.toggle('selected', state.practice);
-  btn.textContent = state.practice ? 'Remove Practice Pack' : 'Add Practice Pack';
+/* Season add-ons (the dry fits) render from PACKAGE.addons with their
+   product shots, and size on the sizing step like everything else */
+function renderAddons(){
+  var html = PACKAGE.addons.map(function(a){
+    var on = Object.prototype.hasOwnProperty.call(state.addons, a.id);
+    return '<div class="opt-card' + (on ? ' selected' : '') + '"' + (a !== PACKAGE.addons[PACKAGE.addons.length-1] ? ' style="margin-bottom:1.1rem"' : '') + '>' +
+      '<div class="opt-head">' +
+        '<div style="display:flex;gap:.9rem;align-items:center;min-width:0">' +
+          '<img class="gear-thumb" src="' + a.img + '" alt="' + a.name + '" onerror="this.remove()">' +
+          '<div><div class="opt-title">' + a.name + ' <span class="pill pill-navy" style="margin-left:.4rem">Optional</span></div>' +
+          '<div class="opt-desc">' + a.desc + '</div></div>' +
+        '</div>' +
+        '<div class="opt-price">' + money(a.price) + '</div>' +
+      '</div>' +
+      '<div class="opt-actions">' +
+        '<button class="btn ' + (on ? 'btn-outline-dark' : 'btn-ghost-red') + ' btn-sm" onclick="toggleAddon(\'' + a.id + '\')">' + (on ? 'Remove' : 'Add ' + a.name) + '</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+  document.getElementById('addonCards').innerHTML = html;
+}
+function toggleAddon(id){
+  var a = addonById(id);
+  if(Object.prototype.hasOwnProperty.call(state.addons, id)){
+    delete state.addons[id];
+    toast(a.name + ' removed.');
+  } else {
+    state.addons[id] = '';
+    toast(a.name + ' added — you’ll pick its size on the next step.');
+  }
+  renderAddons();
+  updateStep3Btn();
+}
+function updateStep3Btn(){
+  if(state.jersey === null && !anyAddons()) return;
+  document.getElementById('step3Btn').textContent = needSizing() ? 'Continue To Jersey Sizing →' : 'Continue To Payment →';
 }
 function submitStep3(){
   if(state.jersey === null){
@@ -1102,10 +1153,10 @@ function submitStep3(){
     toast('Make a jersey package selection to continue.');
     return;
   }
-  if(state.jersey){
+  if(needSizing()){
     advanceTo(4);
   } else {
-    /* No package purchased — sizing step doesn't apply */
+    /* Nothing purchased that needs sizing */
     var chev4 = document.querySelector('[data-step="4"]');
     chev4.classList.add('skipped');
     document.getElementById('chev4Name').textContent = 'Not Needed';
@@ -1127,47 +1178,83 @@ function renderSizing(){
   document.getElementById('sizingReview').style.display = 'none';
 
   var html = '';
-  var groups = state.extraPackage ? [1, 2] : [1];
-  groups.forEach(function(g){
-    if(state.extraPackage){
-      html += '<div class="group-label"><span>Jersey Package ' + g + (g === 2 ? ' (Second Package)' : '') + '</span>';
-      if(g === 2) html += '<button class="btn btn-outline-dark btn-sm" onclick="copyPackage1()">Copy Package 1 Sizes</button>';
-      html += '</div>';
-    }
-    PACKAGE.items.forEach(function(item){
-      var key = g + ':' + item.id;
-      var chosen = state.sizes[key];
-      html += '<div class="size-card' + (chosen ? ' chosen' : '') + '" id="size-' + g + '-' + item.id + '">';
-      html += '<div class="opt-head"><div><div class="opt-title">' + item.name + '</div><div class="opt-desc">' + item.desc + '</div></div>';
-      html += '<span class="pill ' + (chosen ? 'pill-green' : 'pill-navy') + '" id="pill-' + g + '-' + item.id + '">' + (chosen ? chosen : 'Choose Size') + '</span></div>';
-      html += '<div class="chip-row">';
-      item.sizes.forEach(function(sz){
-        html += '<button class="chip' + (chosen === sz ? ' active' : '') + '" onclick="pickSize(' + g + ',\'' + item.id + '\',\'' + sz.replace(/'/g, "\\'") + '\', this)">' + sz + '</button>';
-      });
-      html += '</div>';
+  if(state.jersey){
+    var groups = state.extraPackage ? [1, 2] : [1];
+    groups.forEach(function(g){
+      if(state.extraPackage){
+        html += '<div class="group-label"><span>Jersey Package ' + g + (g === 2 ? ' (Second Package)' : '') + '</span>';
+        if(g === 2) html += '<button class="btn btn-outline-dark btn-sm" onclick="copyPackage1()">Copy Package 1 Sizes</button>';
+        html += '</div>';
+      }
+      PACKAGE.items.forEach(function(item){
+        var key = g + ':' + item.id;
+        var chosen = state.sizes[key];
+        html += '<div class="size-card' + (chosen ? ' chosen' : '') + '" id="size-' + g + '-' + item.id + '">';
+        html += '<div class="opt-head"><div style="display:flex;gap:.9rem;align-items:center;min-width:0">' +
+          (item.img ? '<img class="gear-thumb" src="' + item.img + '" alt="' + item.name + '" onerror="this.remove()">' : '') +
+          '<div><div class="opt-title">' + item.name + '</div><div class="opt-desc">' + item.desc + '</div></div></div>';
+        html += '<span class="pill ' + (chosen ? 'pill-green' : 'pill-navy') + '" id="pill-' + g + '-' + item.id + '">' + (chosen ? chosen : 'Choose Size') + '</span></div>';
+        html += '<div class="chip-row">';
+        item.sizes.forEach(function(sz){
+          html += '<button class="chip' + (chosen === sz ? ' active' : '') + '" onclick="pickSize(' + g + ',\'' + item.id + '\',\'' + sz.replace(/'/g, "\\'") + '\', this)">' + sz + '</button>';
+        });
+        html += '</div>';
 
-      /* Extra single pieces are offered once (under Package 1 items) */
-      if(g === 1){
-        var hasExtra = Object.prototype.hasOwnProperty.call(state.extras, item.id);
-        html += '<div class="extra-piece">';
-        if(!hasExtra){
-          html += '<button class="btn btn-ghost-red btn-sm" onclick="addExtra(\'' + item.id + '\')">+ Add An Extra ' + item.name.split(' — ')[0] + ' — ' + money(item.price) + '</button>';
-          html += '<span class="note-line" style="margin-left:.6rem">Spares are added to your total and charged with your first payment.</span>';
-        } else {
-          html += '<div class="opt-head"><div class="opt-title" style="font-size:.82rem">Extra ' + item.name + ' <span class="pill pill-red" style="margin-left:.4rem">+' + money(item.price) + '</span></div>';
-          html += '<button class="link-red" onclick="removeExtra(\'' + item.id + '\')">Remove</button></div>';
-          html += '<div class="chip-row">';
-          item.sizes.forEach(function(sz){
-            html += '<button class="chip' + (state.extras[item.id] === sz ? ' active' : '') + '" onclick="pickExtraSize(\'' + item.id + '\',\'' + sz.replace(/'/g, "\\'") + '\', this)">' + sz + '</button>';
-          });
+        /* Extra single pieces are offered once (under Package 1 items) */
+        if(g === 1){
+          var hasExtra = Object.prototype.hasOwnProperty.call(state.extras, item.id);
+          html += '<div class="extra-piece">';
+          if(!hasExtra){
+            html += '<button class="btn btn-ghost-red btn-sm" onclick="addExtra(\'' + item.id + '\')">+ Add An Extra ' + item.name.split(' — ')[0] + ' — ' + money(item.price) + '</button>';
+            html += '<span class="note-line" style="margin-left:.6rem">Spares are added to your total and charged with your first payment.</span>';
+          } else {
+            html += '<div class="opt-head"><div class="opt-title" style="font-size:.82rem">Extra ' + item.name + ' <span class="pill pill-red" style="margin-left:.4rem">+' + money(item.price) + '</span></div>';
+            html += '<button class="link-red" onclick="removeExtra(\'' + item.id + '\')">Remove</button></div>';
+            html += '<div class="chip-row">';
+            item.sizes.forEach(function(sz){
+              html += '<button class="chip' + (state.extras[item.id] === sz ? ' active' : '') + '" onclick="pickExtraSize(\'' + item.id + '\',\'' + sz.replace(/'/g, "\\'") + '\', this)">' + sz + '</button>';
+            });
+            html += '</div>';
+          }
           html += '</div>';
         }
         html += '</div>';
-      }
-      html += '</div>';
+      });
     });
-  });
+  }
+
+  /* Season add-ons size here too - same cards, their own group */
+  var addonIds = Object.keys(state.addons);
+  if(addonIds.length){
+    html += '<div class="group-label"><span>Season Add-Ons</span></div>';
+    addonIds.forEach(function(id){
+      var a = addonById(id);
+      var chosenA = state.addons[id];
+      html += '<div class="size-card' + (chosenA ? ' chosen' : '') + '" id="size-a-' + id + '">';
+      html += '<div class="opt-head"><div style="display:flex;gap:.9rem;align-items:center;min-width:0">' +
+        '<img class="gear-thumb" src="' + a.img + '" alt="' + a.name + '" onerror="this.remove()">' +
+        '<div><div class="opt-title">' + a.name + ' <span class="pill pill-red" style="margin-left:.4rem">+' + money(a.price) + '</span></div><div class="opt-desc">' + a.desc + '</div></div></div>';
+      html += '<span class="pill ' + (chosenA ? 'pill-green' : 'pill-navy') + '" id="pill-a-' + id + '">' + (chosenA ? chosenA : 'Choose Size') + '</span></div>';
+      html += '<div class="chip-row">';
+      a.sizes.forEach(function(sz){
+        html += '<button class="chip' + (chosenA === sz ? ' active' : '') + '" onclick="pickAddonSize(\'' + id + '\',\'' + sz.replace(/'/g, "\\'") + '\', this)">' + sz + '</button>';
+      });
+      html += '</div></div>';
+    });
+  }
   document.getElementById('sizingItems').innerHTML = html;
+}
+function pickAddonSize(id, sz, btn){
+  state.addons[id] = sz;
+  var card = document.getElementById('size-a-' + id);
+  card.classList.add('chosen');
+  card.classList.remove('needs');
+  card.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('active'); });
+  btn.classList.add('active');
+  var pill = document.getElementById('pill-a-' + id);
+  pill.className = 'pill pill-green';
+  pill.textContent = sz;
+  document.getElementById('err-sizing').classList.remove('show');
 }
 function pickSize(g, itemId, sz, btn){
   state.sizes[g + ':' + itemId] = sz;
@@ -1211,22 +1298,31 @@ function copyPackage1(){
 }
 function reviewSizes(){
   var missing = false;
-  var groups = state.extraPackage ? [1, 2] : [1];
-  groups.forEach(function(g){
-    PACKAGE.items.forEach(function(item){
-      var card = document.getElementById('size-' + g + '-' + item.id);
-      if(!state.sizes[g + ':' + item.id]){
-        card.classList.add('needs');
+  if(state.jersey){
+    var groups = state.extraPackage ? [1, 2] : [1];
+    groups.forEach(function(g){
+      PACKAGE.items.forEach(function(item){
+        var card = document.getElementById('size-' + g + '-' + item.id);
+        if(!state.sizes[g + ':' + item.id]){
+          card.classList.add('needs');
+          missing = true;
+        } else {
+          card.classList.remove('needs');
+        }
+      });
+    });
+    /* Extras that were added must be sized too */
+    Object.keys(state.extras).forEach(function(id){
+      if(!state.extras[id]){
+        document.getElementById('size-1-' + id).classList.add('needs');
         missing = true;
-      } else {
-        card.classList.remove('needs');
       }
     });
-  });
-  /* Extras that were added must be sized too */
-  Object.keys(state.extras).forEach(function(id){
-    if(!state.extras[id]){
-      document.getElementById('size-1-' + id).classList.add('needs');
+  }
+  /* Add-ons must be sized too */
+  Object.keys(state.addons).forEach(function(id){
+    if(!state.addons[id]){
+      document.getElementById('size-a-' + id).classList.add('needs');
       missing = true;
     }
   });
@@ -1236,16 +1332,22 @@ function reviewSizes(){
     return;
   }
   var rows = '';
-  var groups2 = state.extraPackage ? [1, 2] : [1];
-  groups2.forEach(function(g){
-    PACKAGE.items.forEach(function(item){
-      var label = (state.extraPackage ? 'Pkg ' + g + ' — ' : '') + item.name;
-      rows += '<div class="sum-row"><span class="sr-l">' + label + '</span><span class="sr-r">' + state.sizes[g + ':' + item.id] + '</span></div>';
+  if(state.jersey){
+    var groups2 = state.extraPackage ? [1, 2] : [1];
+    groups2.forEach(function(g){
+      PACKAGE.items.forEach(function(item){
+        var label = (state.extraPackage ? 'Pkg ' + g + ' — ' : '') + item.name;
+        rows += '<div class="sum-row"><span class="sr-l">' + label + '</span><span class="sr-r">' + state.sizes[g + ':' + item.id] + '</span></div>';
+      });
     });
-  });
-  Object.keys(state.extras).forEach(function(id){
-    var item = itemById(id);
-    rows += '<div class="sum-row"><span class="sr-l">Extra — ' + item.name + ' (+' + money(item.price) + ')</span><span class="sr-r">' + state.extras[id] + '</span></div>';
+    Object.keys(state.extras).forEach(function(id){
+      var item = itemById(id);
+      rows += '<div class="sum-row"><span class="sr-l">Extra — ' + item.name + ' (+' + money(item.price) + ')</span><span class="sr-r">' + state.extras[id] + '</span></div>';
+    });
+  }
+  Object.keys(state.addons).forEach(function(id){
+    var a = addonById(id);
+    rows += '<div class="sum-row"><span class="sr-l">' + a.name + ' (+' + money(a.price) + ')</span><span class="sr-r">' + state.addons[id] + '</span></div>';
   });
   document.getElementById('reviewRows').innerHTML = rows;
   document.getElementById('sizesConfirm').checked = false;
@@ -1298,7 +1400,7 @@ function doSkip(){
 
 /* ================= STEP 5 — PAYMENT ================= */
 function backFromPayment(){
-  if(state.jersey && state.sizingStatus !== 'skipped'){
+  if(needSizing() && state.sizingStatus !== 'skipped' && state.sizingStatus !== 'na'){
     goStep(4);
   } else {
     goStep(3);
@@ -1326,7 +1428,10 @@ function renderPayment(){
     var item = itemById(id);
     rows += '<div class="sum-row"><span class="sr-l">Extra — ' + item.name + ' (' + state.extras[id] + ')</span><span class="sr-r">' + money(item.price) + '</span></div>';
   });
-  if(state.practice) rows += '<div class="sum-row"><span class="sr-l">Practice Pack</span><span class="sr-r">' + money(60) + '</span></div>';
+  Object.keys(state.addons).forEach(function(id){
+    var a = addonById(id);
+    rows += '<div class="sum-row"><span class="sr-l">' + a.name + (state.addons[id] ? ' (' + state.addons[id] + ')' : '') + '</span><span class="sr-r">' + money(a.price) + '</span></div>';
+  });
   if(shippingApplies()) rows += '<div class="sum-row"><span class="sr-l">Gear Shipping — ships to your door</span><span class="sr-r">' + money(SHIPPING.cost) + '</span></div>';
   rows += '<div class="sum-row total"><span class="sr-l">Season Total</span><span class="sr-r">' + money(grandTotal()) + '</span></div>';
   document.getElementById('orderSummary').innerHTML = rows;
@@ -1515,7 +1620,9 @@ function renderConfirmation(){
     var item = itemById(id);
     rows += '<div class="sum-row"><span class="sr-l">Extra — ' + item.name + '</span><span class="sr-r">' + state.extras[id] + '</span></div>';
   });
-  if(state.practice) rows += '<div class="sum-row"><span class="sr-l">Practice Pack</span><span class="sr-r">Added</span></div>';
+  Object.keys(state.addons).forEach(function(id){
+    rows += '<div class="sum-row"><span class="sr-l">' + addonById(id).name + '</span><span class="sr-r">' + (state.addons[id] || 'Added — size pending') + '</span></div>';
+  });
   if(shippingApplies()){
     var shipApt = document.getElementById('shipApt').value.trim();
     var shipAddr = document.getElementById('shipStreet').value.trim() +
@@ -1567,22 +1674,27 @@ function renderConfirmation(){
   var pendingBlock = document.getElementById('confirmSizesPending');
   sizesBlock.style.display = 'none';
   pendingBlock.style.display = 'none';
-  if(state.jersey && state.sizingStatus === 'done'){
+  if(needSizing() && state.sizingStatus === 'done'){
     var srows = '';
-    var groups = state.extraPackage ? [1, 2] : [1];
-    groups.forEach(function(g){
-      PACKAGE.items.forEach(function(item){
-        var label = (state.extraPackage ? 'Pkg ' + g + ' — ' : '') + item.name;
-        srows += '<div class="sum-row"><span class="sr-l">' + label + '</span><span class="sr-r">' + state.sizes[g + ':' + item.id] + '</span></div>';
+    if(state.jersey){
+      var groups = state.extraPackage ? [1, 2] : [1];
+      groups.forEach(function(g){
+        PACKAGE.items.forEach(function(item){
+          var label = (state.extraPackage ? 'Pkg ' + g + ' — ' : '') + item.name;
+          srows += '<div class="sum-row"><span class="sr-l">' + label + '</span><span class="sr-r">' + state.sizes[g + ':' + item.id] + '</span></div>';
+        });
       });
-    });
-    Object.keys(state.extras).forEach(function(id){
-      var item = itemById(id);
-      srows += '<div class="sum-row"><span class="sr-l">Extra — ' + item.name + '</span><span class="sr-r">' + state.extras[id] + '</span></div>';
+      Object.keys(state.extras).forEach(function(id){
+        var item = itemById(id);
+        srows += '<div class="sum-row"><span class="sr-l">Extra — ' + item.name + '</span><span class="sr-r">' + state.extras[id] + '</span></div>';
+      });
+    }
+    Object.keys(state.addons).forEach(function(id){
+      srows += '<div class="sum-row"><span class="sr-l">' + addonById(id).name + '</span><span class="sr-r">' + state.addons[id] + '</span></div>';
     });
     document.getElementById('confirmSizesRows').innerHTML = srows;
     sizesBlock.style.display = 'block';
-  } else if(state.jersey && state.sizingStatus === 'skipped'){
+  } else if(needSizing() && state.sizingStatus === 'skipped'){
     document.getElementById('pendDeadline').textContent = SEASON.sizingDeadline;
     pendingBlock.style.display = 'block';
   }
@@ -1592,6 +1704,13 @@ function renderConfirmation(){
 function resetDemo(){
   window.location.reload();
 }
+
+/* ================= BOOT ================= */
+/* The package card's photo strip - one thumbnail per piece, from the gear library shots */
+document.getElementById('pkgStrip').innerHTML = PACKAGE.items.map(function(item){
+  return item.img ? '<img src="' + item.img + '" alt="' + item.name + '" title="' + item.name + '" onerror="this.remove()">' : '';
+}).join('');
+renderAddons();
 </script>
 </body>
 </html>
