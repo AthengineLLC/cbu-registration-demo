@@ -6,6 +6,15 @@ build step, no dependencies. Deployed on Vercel.
 These mockups feed the real app (athengine). They exist so Ben can wire up a
 designed screen instead of rebuilding it from scratch.
 
+## Account hierarchy
+
+**Read `ACCOUNT-HIERARCHY.md` before wiring any mockup into the app.** The
+product sells to travel organizations: Developer > Organization > Affiliate >
+Team. The gear library and org settings live at the organization level and
+auto-load into new affiliates; the current mockups blend the organization and
+affiliate views because CBU is playing both roles. The full rules and the
+mockup-to-level mapping are in that file.
+
 ## Design system
 
 **Read `CHEATSHEET.md` before writing any markup.** It is the complete list of

@@ -1,6 +1,7 @@
 # Screen: Jersey Packages (gear library)
 
-- Who uses it: Addison or an org admin, on desktop, setting up the season's gear
+- Who uses it: an ORGANIZATION-level admin (see ACCOUNT-HIERARCHY.md), on
+  desktop, setting up the org's gear. This is the "host jersey account."
 - What they are doing: managing the org's gear shop - every piece that can go
   in a jersey package, entered once as its own line item
 - What they see: a grid of gear cards (square photo, piece title, extra-piece
@@ -18,3 +19,8 @@
   Addison has not decided where gear management finally lives. Size presets
   matter: jerseys and pants share the youth+adult run, socks and hats have
   their own shorter runs, and any custom size can be added besides.
+- Hierarchy note (see ACCOUNT-HIERARCHY.md): this library is organization
+  level. When a new affiliate is created, the org's library - pieces AND
+  photos - auto-loads into that affiliate, and the affiliate's registrations
+  pick from it. Whether affiliates can add or edit pieces locally, and
+  whether org changes re-sync to existing affiliates, are open questions.
