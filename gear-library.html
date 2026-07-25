@@ -329,6 +329,7 @@ function resetLibrary(){
 /* ---- Program tag manager ---- */
 function openTagForm(idx){
   tagFormIdx = idx;
+  tagDeleteIdx = null;
   tagDraft = idx >= 0 ? JSON.parse(JSON.stringify(tags[idx])) : { name:'', teams:[] };
   render();
 }
@@ -361,8 +362,8 @@ function saveTag(){
   tagFormIdx = null; tagDraft = null;
   render();
 }
-function deleteTag(){
-  var t = tags.splice(tagFormIdx, 1)[0];
+function deleteTagAt(i){
+  var t = tags.splice(i, 1)[0];
   if(t){
     items.forEach(function(it){
       var at = (it.tags || []).indexOf(t.name);
@@ -371,10 +372,12 @@ function deleteTag(){
     persist();
   }
   persistTags();
-  tagFormIdx = null; tagDraft = null;
+  tagFormIdx = null; tagDraft = null; tagDeleteIdx = null;
   toast((t ? t.name : 'Tag') + ' deleted - its pieces now go to all teams unless tagged otherwise.');
   render();
 }
+function deleteTag(){ deleteTagAt(tagFormIdx); }
+var tagDeleteIdx = null;   /* tag row pending its inline delete confirm */
 function toggleDraftTag(name){
   var at = draft.tags.indexOf(name);
   if(at > -1) draft.tags.splice(at, 1);
@@ -578,9 +581,16 @@ function render(){
     '<p class="hint" style="margin:.45rem 0 .3rem">Teams come first in Team Management, then a tag names each program and attaches its teams. A piece tagged United only reaches United families; untagged pieces reach everyone.</p>';
   if(tagFormIdx == null){
     html += tags.length ? tags.map(function(t, i){
+      var tagged = items.filter(function(it){ return (it.tags || []).indexOf(t.name) > -1; }).length;
+      var acts = tagDeleteIdx === i
+        ? '<span class="hint">' + (tagged ? 'Its ' + tagged + ' tagged piece' + (tagged > 1 ? 's go' : ' goes') + ' to all teams.' : 'Delete this tag?') + '</span> ' +
+          '<button class="link-red" onclick="deleteTagAt(' + i + ')">Delete</button> ' +
+          '<button class="link-muted" onclick="tagDeleteIdx=null;render()">Keep</button>'
+        : '<button class="link-muted" onclick="openTagForm(' + i + ')">Edit</button> ' +
+          '<button class="link-muted" onclick="tagDeleteIdx=' + i + ';render()">Delete</button>';
       return '<div class="tag-row"><span class="tag-chip">' + esc(t.name) + '</span>' +
         '<span class="hint">' + (t.teams.length ? t.teams.map(esc).join(' · ') : 'No teams attached yet') + '</span>' +
-        '<button class="link-muted" style="margin-left:auto" onclick="openTagForm(' + i + ')">Edit</button></div>';
+        '<span style="margin-left:auto;display:flex;gap:.8rem;align-items:center;flex-wrap:wrap">' + acts + '</span></div>';
     }).join('') : '<p class="hint">No tags yet - add one per program (United, Scout, Elite, whatever this org calls its levels).</p>';
   } else {
     html += '<div style="margin-top:.6rem">' +
