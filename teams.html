@@ -604,6 +604,7 @@ let commsSel = null;         // playerId -> true; null = initialize from audienc
 let commsDraft = { subject:'', body:'' };  // survives checkbox re-renders
 let eventFormOpen = false;   // events tab add/edit form
 let editingEventId = null;   // event being edited (null = new)
+let eventDeleteId = null;    // event pending its inline delete confirm
 const openSchedule = {};     // eventId -> true (imported games list expanded)
 let gameEditorId = null;     // game whose details editor (jersey + rotation) is open
 let practiceFormOpen = false;// practice schedule builder open
@@ -1571,7 +1572,7 @@ function openTeam(id){
 }
 function closeTeam(){ currentTeamId = null; render(); window.scrollTo({top:0}); }
 function setTeamTab(tab){
-  teamTab = tab; eventFormOpen = false; editingEventId = null;
+  teamTab = tab; eventFormOpen = false; editingEventId = null; eventDeleteId = null;
   practiceFormOpen = false; patternEditId = null; patternDraft = null; patternRemoveId = null;
   practiceEditId = null; practiceDraft = null; practiceDeleteId = null; calAddGameOpen = false;
   render();
@@ -2446,11 +2447,16 @@ function renderEventsTab(s, d, t){
           <div class="event-sub">${fmtEventDates(e)}${e.city ? ' · ' + esc(e.city) + (e.state ? ', ' + esc(e.state) : '') : (e.state ? ' · ' + esc(e.state) : '')}${e.games ? '' : ' · Awaiting schedule'}</div>
         </div>
         <div class="event-links">
-          ${e.site ? `<a class="link-red" href="${esc(e.site)}" target="_blank" rel="noopener">Website</a>` : ''}
-          ${e.hotel ? `<a class="link-red" href="${esc(e.hotel)}" target="_blank" rel="noopener">Hotel</a>` : ''}
-          ${e.games ? `<button class="link-red" onclick="toggleSchedule(${e.id})">Games (${e.games.length}) ${openSchedule[e.id] ? '&#9652;' : '&#9662;'}</button>` : ''}
-          ${e.imported ? '' : `<button class="btn btn-primary btn-sm" title="Reads the game schedule from the tournament's website once it is released" onclick="importSchedule(${e.id})">Import Schedule</button>`}
-          <button class="link-muted" onclick="editEvent(${e.id})">Edit</button>
+          ${eventDeleteId === e.id
+            ? `<span style="font-size:.78rem;color:var(--muted)">Delete this event${e.games && e.games.length ? ' and its ' + e.games.length + ' games' : ''}?</span>
+               <button class="link-red" onclick="deleteEvent(${e.id})">Delete Event</button>
+               <button class="link-muted" onclick="eventDeleteId=null;render()">Keep</button>`
+            : `${e.site ? `<a class="link-red" href="${esc(e.site)}" target="_blank" rel="noopener">Website</a>` : ''}
+               ${e.hotel ? `<a class="link-red" href="${esc(e.hotel)}" target="_blank" rel="noopener">Hotel</a>` : ''}
+               ${e.games ? `<button class="link-red" onclick="toggleSchedule(${e.id})">Games (${e.games.length}) ${openSchedule[e.id] ? '&#9652;' : '&#9662;'}</button>` : ''}
+               ${e.imported ? '' : `<button class="btn btn-primary btn-sm" title="Reads the game schedule from the tournament's website once it is released" onclick="importSchedule(${e.id})">Import Schedule</button>`}
+               <button class="link-muted" onclick="editEvent(${e.id})">Edit</button>
+               <button class="link-muted" onclick="eventDeleteId=${e.id};render()">Delete</button>`}
         </div>
       </div>
       ${e.games && openSchedule[e.id] ? renderGames(s, t, e) : ''}
@@ -2466,8 +2472,20 @@ function renderEventsTab(s, d, t){
     ${evs.length ? list : '<p class="hint" style="padding:.6rem 0">No events yet — coaches add the summer\u2019s tournaments here so the whole team schedule lives in one place.</p>'}
   </div>`;
 }
-function openEventForm(){ eventFormOpen = true; editingEventId = null; render(); }
-function editEvent(id){ eventFormOpen = true; editingEventId = id; render(); window.scrollTo({top:0}); }
+function openEventForm(){ eventFormOpen = true; editingEventId = null; eventDeleteId = null; render(); }
+function editEvent(id){ eventFormOpen = true; editingEventId = id; eventDeleteId = null; render(); window.scrollTo({top:0}); }
+function deleteEvent(id){
+  const t = curTeam();
+  const e = (t.events || []).find(x => x.id === id);
+  const name = e ? e.name : 'Event';
+  t.events = (t.events || []).filter(x => x.id !== id);
+  delete openSchedule[id];
+  if (gameEditorId != null && !findGame(gameEditorId)) gameEditorId = null;
+  eventDeleteId = null;
+  if (editingEventId === id){ eventFormOpen = false; editingEventId = null; }
+  toast(name + ' deleted.');
+  render();
+}
 function saveEvent(){
   const s = season();
   const t = s.teams.find(x => x.id === currentTeamId);
