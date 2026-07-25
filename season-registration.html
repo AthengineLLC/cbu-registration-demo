@@ -524,7 +524,7 @@ input.err{border-color:var(--red);background:#fff7f8}
               <div class="opt-title">2026 United Jersey Package</div>
               <div class="opt-desc">Three game jerseys (navy pinstripe, white &amp; navy), two game pants, game hat, and socks. Required for players who don't already have current-season uniforms.</div>
             </div>
-            <div class="opt-price">$150</div>
+            <div class="opt-price" id="pkgPrice"></div>
           </div>
           <div class="pkg-strip" id="pkgStrip"><!-- filled by JS from PACKAGE.items --></div>
           <div class="opt-actions">
@@ -537,7 +537,7 @@ input.err{border-color:var(--red);background:#fff7f8}
           <div class="extra-pkg-row" id="extraPkgRow" style="display:none">
             <button class="toggle" id="extraToggle" onclick="toggleExtraPackage()" aria-label="Add a second jersey package"></button>
             <div class="extra-pkg-text">
-              <span class="mut-strong">"I hate laundry" — add a second full jersey package (+$150).</span><br>
+              <span class="mut-strong">"I hate laundry" — add a second full jersey package (+<span id="extraPkgPrice"></span>).</span><br>
               Two of everything, sized separately on the next step. Rare, but some families swear by it.
             </div>
           </div>
@@ -835,7 +835,7 @@ var SEASON = {
 var RUN = ['YS','YM','YL','YXL','AS','AM','AL','AXL','AXXL'];
 var PACKAGE = {
   name: '2026 United Jersey Package',
-  price: 150,
+  price: 0,   /* computed below: the sum of the pieces (admin can override in the wizard) */
   items: [
     { id:'pinJersey',   name:'Navy Pinstripe Jersey', desc:'Sublimated game jersey, navy pinstripe', price:55, img:'img/gear/navy-pinstripe-jersey.png', sizes:RUN },
     { id:'whiteJersey', name:'White Jersey',          desc:'Sublimated game jersey, white',          price:55, img:'img/gear/white-jersey.png',          sizes:RUN },
@@ -857,6 +857,8 @@ function addonById(id){
   }
   return null;
 }
+/* Package price = sum of its pieces, matching the wizard's auto pricing */
+PACKAGE.price = PACKAGE.items.reduce(function(t, item){ return t + item.price; }, 0);
 
 /* Set by the admin in the season registration wizard: ship gear straight to
    players (collect a shipping address before payment, charge the flat fee)
@@ -1710,6 +1712,9 @@ function resetDemo(){
 document.getElementById('pkgStrip').innerHTML = PACKAGE.items.map(function(item){
   return item.img ? '<img src="' + item.img + '" alt="' + item.name + '" title="' + item.name + '" onerror="this.remove()">' : '';
 }).join('');
+/* Package price displays come from the computed price, never hardcoded */
+document.getElementById('pkgPrice').textContent = money(PACKAGE.price);
+document.getElementById('extraPkgPrice').textContent = money(PACKAGE.price);
 renderAddons();
 </script>
 </body>

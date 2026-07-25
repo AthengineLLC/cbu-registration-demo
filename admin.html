@@ -2707,6 +2707,16 @@ function gearLibrary(){
 function libToPkgItem(g){
   return { name:g.name, desc:g.desc || '', price:String(g.price || ''), sizes:(g.sizes || []).join(', '), img:g.photo || '' };
 }
+/* Package price defaults to the sum of its pieces; the admin can override.
+   priceAuto !== false means auto (sum), false means the typed override. */
+function sPkgAutoPrice(pk){
+  let t = 0;
+  pk.items.forEach(function(it){ t += parseFloat(it.price) || 0; });
+  return Math.round(t * 100) / 100;
+}
+function sPkgPriceStr(pk){
+  return pk.priceAuto === false ? (pk.price || '0') : String(sPkgAutoPrice(pk));
+}
 function sAvailableGear(){
   const used = {};
   swiz.pkg.items.concat(swiz.pkg.addons).forEach(function(x){ used[x.name.toLowerCase()] = 1; });
@@ -2779,7 +2789,7 @@ function startSeasonWizard(){
     offlineOn:true, offlineHow:'',
     errs:{},
     waivers:null, waiverOpen:{}, addingWaiver:false,
-    pkg:{ offer:true, name:'', price:'', allowSecond:true, deadline:'', ship:false, shipCost:'', items:[], addons:[], addingItem:false, addingAddon:false, pickingItem:false, pickingAddon:false },
+    pkg:{ offer:true, name:'', price:'', priceAuto:true, allowSecond:true, deadline:'', ship:false, shipCost:'', items:[], addons:[], addingItem:false, addingAddon:false, pickingItem:false, pickingAddon:false },
     postMessage:'',
     isEdit:false, editIdx:null };
   setAccent('hs');
@@ -2805,6 +2815,8 @@ function editSeasonRegistration(i){
   swiz.pkg.pickingItem = false;
   swiz.pkg.pickingAddon = false;
   if(swiz.pkg.ship === undefined){ swiz.pkg.ship = false; swiz.pkg.shipCost = ''; }
+  /* registrations saved before auto-pricing keep their typed price as an override */
+  if(swiz.pkg.priceAuto === undefined) swiz.pkg.priceAuto = false;
   swiz.errs = {};
   if(!swiz.plan.mode) swiz.plan.mode = 'monthly';
   if(!swiz.plan.customDates) swiz.plan.customDates = [];
@@ -2895,7 +2907,7 @@ function validateSStep(){
     case 4:
       if(swiz.pkg.offer){
         if(!swiz.pkg.name.trim()){ toast('Name the jersey package'); return false; }
-        if(!swiz.pkg.price || isNaN(parseFloat(swiz.pkg.price))){ toast('Enter the package price'); return false; }
+        if(swiz.pkg.priceAuto === false && (!swiz.pkg.price || isNaN(parseFloat(swiz.pkg.price)))){ toast('Enter the package price, or switch back to the sum'); return false; }
         if(swiz.pkg.items.length === 0){ toast('Add at least one item to the package'); return false; }
         for(let i=0;i<swiz.pkg.items.length;i++){
           if(pkgSizes(swiz.pkg.items[i]).length === 0){ toast('"'+swiz.pkg.items[i].name+'" needs size options'); return false; }
@@ -3220,7 +3232,12 @@ function sStepPkg(){
     '<div style="flex:1;min-width:240px"><label class="field-label" for="spk-name">Package Name</label>' +
       '<input type="text" id="spk-name" placeholder="e.g. 2026 United Jersey Package" value="'+escAttr(pk.name)+'" oninput="swiz.pkg.name=this.value" style="max-width:100%"></div>' +
     '<div><label class="field-label" for="spk-price">Package Price ($)</label>' +
-      '<input type="text" id="spk-price" inputmode="decimal" value="'+escAttr(pk.price)+'" oninput="swiz.pkg.price=this.value" style="max-width:130px"></div>' +
+      (pk.priceAuto !== false
+        ? '<div class="cell-strong" style="font-size:1.15rem;padding:.35rem 0">$'+sPkgAutoPrice(pk).toLocaleString()+'</div>' +
+          '<div class="cell-sub">Sum of the pieces below · <button class="link-red" onclick="swiz.pkg.priceAuto=false;swiz.pkg.price=String(sPkgAutoPrice(swiz.pkg));renderSStepPanel()">Override</button></div>'
+        : '<input type="text" id="spk-price" inputmode="decimal" value="'+escAttr(pk.price)+'" oninput="swiz.pkg.price=this.value" style="max-width:130px">' +
+          '<div class="cell-sub" style="margin-top:.3rem">Overridden · pieces add up to $'+sPkgAutoPrice(pk).toLocaleString()+' · <button class="link-red" onclick="swiz.pkg.priceAuto=true;renderSStepPanel()">Use The Sum</button></div>') +
+    '</div>' +
     '<div><label class="field-label" for="spk-deadline">Sizing Deadline</label>' +
       '<input type="date" id="spk-deadline" value="'+pk.deadline+'" onchange="swiz.pkg.deadline=this.value" style="max-width:180px"></div>' +
     (pk.items.length === 0 ? '<button class="btn btn-outline-dark btn-sm" onclick="sLoadStandardPkg()" style="margin-bottom:2px">Load The Gear Library</button>' : '') +
@@ -3231,7 +3248,7 @@ function sStepPkg(){
     '<div style="display:flex;align-items:center;gap:.8rem">' +
       '<button class="toggle'+(pk.allowSecond?' on':'')+'" onclick="swiz.pkg.allowSecond=!swiz.pkg.allowSecond;renderSStepPanel()" aria-label="Allow a second package"></button>' +
       '<div><div class="cell-strong">Allow a Second Package</div>' +
-      '<div class="cell-sub">Shows the "I hate laundry" toggle so families can buy two full packages at '+(pk.price?('$'+esc(pk.price)+' '):'')+'each. Rare, but some families swear by it.</div></div>' +
+      '<div class="cell-sub">Shows the "I hate laundry" toggle so families can buy two full packages at $'+esc(sPkgPriceStr(pk))+' each. Rare, but some families swear by it.</div></div>' +
     '</div>' +
   '</div>';
 
@@ -3335,7 +3352,7 @@ function sLoadStandardPkg(){
      library order. The library page keeps localStorage current. */
   const lib = gearLibrary();
   if(!swiz.pkg.name.trim()) swiz.pkg.name = '2026 United Jersey Package';
-  if(!swiz.pkg.price) swiz.pkg.price = '150';
+  swiz.pkg.priceAuto = true;
   swiz.pkg.items = lib.map(libToPkgItem);
   swiz.pkg.addons = [];
   renderSStepPanel();
@@ -3468,7 +3485,7 @@ function sStepReview(){
         '<div class="cell-sub" style="margin-top:.35rem">Must be agreed to before payment</div>'
       : '<span style="color:var(--muted)">None</span>')+'</dd>' +
     '<dt>Jersey Package</dt><dd>'+(pk.offer
-      ? '<span class="cell-strong">'+esc(pk.name)+'</span> — $'+esc(pk.price)+' · '+pk.items.length+' items' +
+      ? '<span class="cell-strong">'+esc(pk.name)+'</span> — $'+esc(sPkgPriceStr(pk))+(pk.priceAuto !== false ? ' (sum of pieces)' : ' (overridden)')+' · '+pk.items.length+' items' +
         (pk.allowSecond ? ' · second package allowed' : '') +
         (pk.ship ? ' · ships to players ($'+esc(pk.shipCost)+' flat shipping)' : ' · handed out at practice') +
         '<div class="cell-sub">Sizing deadline '+fmtDate(pk.deadline)+(pk.addons.length? ' · Add-ons: '+pk.addons.map(function(a){return esc(a.name)+' ($'+esc(a.price)+')';}).join(', ') : '')+(pk.ship ? ' · Families enter a shipping address before payment' : '')+'</div>'
@@ -3644,18 +3661,20 @@ function renderSeasonRegistrants(){
 registrations.push({
   name:'Summer 2026 Season Registration', kind:'season', type:'hs',
   opens:'Live now', closes:'With season', signups:'12',
+  /* Totals = season fee + $297 package (sum of the pieces) where the family
+     bought it. Plan rows: $300 down + package charged up front, then thirds. */
   registrants:[
-    {player:'Jaxon Rivera',   team:'CBU United 2027', ticket:'Position Player & Pitcher', total:2100, paid:2100, pay:'full',    pkg:'sized',    status:'Paid in Full'},
+    {player:'Jaxon Rivera',   team:'CBU United 2027', ticket:'Position Player & Pitcher', total:2247, paid:2247, pay:'full',    pkg:'sized',    status:'Paid in Full'},
     {player:'Cole Whitfield', team:'CBU United 2027', ticket:'Pitcher Only',              total:1400, paid:667,  pay:'plan',    planNote:'1 of 3 payments made', pkg:'declined', status:'On Plan'},
-    {player:'Miles Carter',   team:'CBU United 2028', ticket:'Position Player & Pitcher', total:2160, paid:1060, pay:'plan',    planNote:'1 of 3 payments made', pkg:'sized',    status:'On Plan'},
-    {player:'Hudson Blake',   team:'CBU United 2028', ticket:'Pitcher Only',              total:1550, paid:1550, pay:'full',    pkg:'sized',    status:'Paid in Full'},
+    {player:'Miles Carter',   team:'CBU United 2028', ticket:'Position Player & Pitcher', total:2247, paid:1147, pay:'plan',    planNote:'1 of 3 payments made', pkg:'sized',    status:'On Plan'},
+    {player:'Hudson Blake',   team:'CBU United 2028', ticket:'Pitcher Only',              total:1697, paid:1697, pay:'full',    pkg:'sized',    status:'Paid in Full'},
     {player:'Ryder Simmons',  team:'CBU United 2028', ticket:'Position Player',           total:1800, paid:0,    pay:'offline', pkg:'declined', status:'Payment Pending'},
-    {player:'Xavier Boone',   team:'CBU Scout 2028',  ticket:'Position Player & Pitcher', total:2100, paid:1550, pay:'plan',    planNote:'2 of 3 payments made', pkg:'sized',    status:'On Plan'},
-    {player:'Nolan Petrucci', team:'CBU Scout 2028',  ticket:'Position Player',           total:1950, paid:450,  pay:'plan',    planNote:'0 of 3 payments made', pkg:'sized',    status:'Payment Failed', note:'Card declined — Payment 1 (Aug 20)'},
-    {player:'Brooks Hamilton',team:'CBU United 2029', ticket:'Position Player',           total:1950, paid:1950, pay:'full',    pkg:'sized',    status:'Paid in Full'},
-    {player:'Eli Vasquez',    team:'CBU United 2029', ticket:'Pitcher Only',              total:1550, paid:450,  pay:'plan',    planNote:'0 of 3 payments made', pkg:'pending',  status:'On Plan'},
-    {player:'Tanner Reyes',   team:'CBU United 2029', ticket:'Pitcher Only',              total:1550, paid:0,    pay:'offline', pkg:'sized',    status:'Payment Pending'},
-    {player:'Grant Osborne',  team:'CBU United 2030', ticket:'Position Player & Pitcher', total:2100, paid:2100, pay:'full',    pkg:'sized',    status:'Paid in Full'},
+    {player:'Xavier Boone',   team:'CBU Scout 2028',  ticket:'Position Player & Pitcher', total:2247, paid:1697, pay:'plan',    planNote:'2 of 3 payments made', pkg:'sized',    status:'On Plan'},
+    {player:'Nolan Petrucci', team:'CBU Scout 2028',  ticket:'Position Player',           total:2097, paid:597,  pay:'plan',    planNote:'0 of 3 payments made', pkg:'sized',    status:'Payment Failed', note:'Card declined — Payment 1 (Aug 20)'},
+    {player:'Brooks Hamilton',team:'CBU United 2029', ticket:'Position Player',           total:2097, paid:2097, pay:'full',    pkg:'sized',    status:'Paid in Full'},
+    {player:'Eli Vasquez',    team:'CBU United 2029', ticket:'Pitcher Only',              total:1697, paid:597,  pay:'plan',    planNote:'0 of 3 payments made', pkg:'pending',  status:'On Plan'},
+    {player:'Tanner Reyes',   team:'CBU United 2029', ticket:'Pitcher Only',              total:1697, paid:0,    pay:'offline', pkg:'sized',    status:'Payment Pending'},
+    {player:'Grant Osborne',  team:'CBU United 2030', ticket:'Position Player & Pitcher', total:2247, paid:2247, pay:'full',    pkg:'sized',    status:'Paid in Full'},
     {player:'Beckett Lowry',  team:'CBU United 2030', ticket:'Position Player',           total:1800, paid:1300, pay:'plan',    planNote:'2 of 3 payments made', pkg:'declined', status:'On Plan'}
   ],
   status:'Published', link:'cbuapp.app/season/summer-2026',
@@ -3665,7 +3684,7 @@ registrations.push({
     offlineHow:'Bring a check made out to CBU Baseball to the front desk at the CBU training facility, or hand it to your head coach at the first workout. Include your player\'s name and team in the memo line.',
     errs:{},
     waivers:[], waiverOpen:{}, addingWaiver:false,
-    pkg:{ offer:true, name:STANDARD_PKG.name, price:STANDARD_PKG.price, allowSecond:true, deadline:'2026-08-01',
+    pkg:{ offer:true, name:STANDARD_PKG.name, price:'', priceAuto:true, allowSecond:true, deadline:'2026-08-01',
       ship:true, shipCost:'12.50',
       items:JSON.parse(JSON.stringify(STANDARD_PKG.items)), addons:JSON.parse(JSON.stringify(STANDARD_PKG.addons)),
       addingItem:false, addingAddon:false },
