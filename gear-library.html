@@ -97,8 +97,11 @@ input:focus{outline:none;border-color:var(--powder-dark)}
 .gear-photo{
   aspect-ratio:1/1;width:100%;display:flex;align-items:center;justify-content:center;
   font-size:3.4rem;background:var(--row-alt);border-bottom:1.5px solid var(--line);overflow:hidden;
+  position:relative;
 }
-.gear-photo img{width:100%;height:100%;object-fit:cover;display:block}
+/* the image sits over the emoji placeholder; if the file is missing the img
+   removes itself and the emoji shows through */
+.gear-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;background:#fff}
 .gear-body{padding:.8rem .9rem 1rem;display:flex;flex-direction:column;gap:.5rem;flex:1}
 .gear-name{font-weight:700;font-size:.92rem;color:var(--ink)}
 .gear-price{font-family:'Oswald',Arial,sans-serif;font-weight:600;font-size:.78rem;color:var(--red);letter-spacing:.05em}
@@ -141,6 +144,8 @@ input:focus{outline:none;border-color:var(--powder-dark)}
 }
 .size-edit-chip button{background:none;border:none;color:#9aa5c2;cursor:pointer;font-size:.72rem;line-height:1;padding:.1rem .25rem}
 .size-edit-chip button:hover{color:#fff}
+.size-edit-chip button:disabled{opacity:.25;cursor:default}
+.size-edit-chip button:disabled:hover{color:#9aa5c2}
 
 .toast{
   position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(8px);
@@ -191,17 +196,24 @@ var SIZE_PRESETS = [
   { key:'hats',  label:'Hat Sizes',          sizes:['XS','S/M','M/L','L/XL'] }
 ];
 
-/* Mock gear pieces. Photos are emoji placeholders standing in for uploaded
-   product shots — dragging a real photo onto the square replaces them. */
+/* The real CBU gear lineup, in Addison's order. Each piece points at its
+   product shot in img/gear/ (see the README there for the exact filenames) -
+   drop the photo files in that folder and they appear here; until a file
+   exists the emoji placeholder square shows instead. Dragging a photo onto
+   the square in the edit form also works and overrides the file. */
+var RUN = ['YS','YM','YL','YXL','AS','AM','AL','AXL','AXXL'];
 var nextId = 1;
 function nid(){ return nextId++; }
 var items = [
-  { id:nid(), name:'Game Jersey — Red',   price:'55', emoji:'👕', bg:'linear-gradient(135deg,#b91e2d,#8f1622)', img:null, sizes:['YS','YM','YL','YXL','AS','AM','AL','AXL','AXXL'] },
-  { id:nid(), name:'Game Jersey — White', price:'55', emoji:'👕', bg:'linear-gradient(135deg,#f5f6fa,#dfe3ee)', img:null, sizes:['YS','YM','YL','YXL','AS','AM','AL','AXL','AXXL'] },
-  { id:nid(), name:'Game Pants — White',  price:'45', emoji:'👖', bg:'linear-gradient(135deg,#eef1f8,#c9cfdd)', img:null, sizes:['YS','YM','YL','YXL','AS','AM','AL','AXL','AXXL'] },
-  { id:nid(), name:'Game Hat — Red',      price:'30', emoji:'🧢', bg:'linear-gradient(135deg,#b91e2d,#7a1420)', img:null, sizes:['XS','S/M','M/L','L/XL'] },
-  { id:nid(), name:'Game Socks — Red',    price:'12', emoji:'🧦', bg:'linear-gradient(135deg,#d94b58,#b91e2d)', img:null, sizes:['S','M','L','XL'] },
-  { id:nid(), name:'Belt — Navy',         price:'13', emoji:'⚾', bg:'linear-gradient(135deg,#141d3a,#0c1327)', img:null, sizes:['S','M','L'] }
+  { id:nid(), name:'Navy Pinstripe Jersey', price:'55', emoji:'👕', bg:'linear-gradient(135deg,#141d3a,#0c1327)', photo:'img/gear/navy-pinstripe-jersey.png', img:null, sizes:RUN.slice() },
+  { id:nid(), name:'White Jersey',          price:'55', emoji:'👕', bg:'linear-gradient(135deg,#f5f6fa,#dfe3ee)', photo:'img/gear/white-jersey.png',          img:null, sizes:RUN.slice() },
+  { id:nid(), name:'Navy Jersey',           price:'55', emoji:'👕', bg:'linear-gradient(135deg,#1b2749,#0e1730)', photo:'img/gear/navy-jersey.png',           img:null, sizes:RUN.slice() },
+  { id:nid(), name:'Navy Pinstripe Pant',   price:'45', emoji:'👖', bg:'linear-gradient(135deg,#141d3a,#0c1327)', photo:'img/gear/navy-pinstripe-pant.png',   img:null, sizes:RUN.slice() },
+  { id:nid(), name:'White Pant',            price:'45', emoji:'👖', bg:'linear-gradient(135deg,#eef1f8,#c9cfdd)', photo:'img/gear/white-pant.png',            img:null, sizes:RUN.slice() },
+  { id:nid(), name:'Game Socks',            price:'12', emoji:'🧦', bg:'linear-gradient(135deg,#d94b58,#b91e2d)', photo:'img/gear/sock.png',                  img:null, sizes:['S','M','L','XL'] },
+  { id:nid(), name:'Game Hat',              price:'30', emoji:'🧢', bg:'linear-gradient(135deg,#b91e2d,#7a1420)', photo:'img/gear/hat.png',                   img:null, sizes:['XS','S/M','M/L','L/XL'] },
+  { id:nid(), name:'Dry Fit — Navy',        price:'25', emoji:'👕', bg:'linear-gradient(135deg,#1b2749,#0e1730)', photo:'img/gear/dryfit-navy.png',           img:null, sizes:RUN.slice() },
+  { id:nid(), name:'Dry Fit — Powder',      price:'25', emoji:'👕', bg:'linear-gradient(135deg,#6daed4,#4d8fb6)', photo:'img/gear/dryfit-powder.png',         img:null, sizes:RUN.slice() }
 ];
 
 var formOpen = false;
@@ -227,7 +239,7 @@ function openForm(id){
   var it = id != null ? findItem(id) : null;
   draft = it
     ? JSON.parse(JSON.stringify(it))
-    : { name:'', price:'', emoji:'👕', bg:'linear-gradient(135deg,#eef1f8,#c9cfdd)', img:null, sizes:[] };
+    : { name:'', price:'', emoji:'👕', bg:'linear-gradient(135deg,#eef1f8,#c9cfdd)', photo:null, img:null, sizes:[] };
   render();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -238,8 +250,9 @@ function closeForm(){
 
 /* ---- Photo drop square ---- */
 function photoZoneHtml(){
-  var inner = draft.img
-    ? '<img src="' + draft.img + '" alt="Piece photo"><span class="drop-swap">Drop or click to swap</span>'
+  var src = draft.img || draft.photo;
+  var inner = src
+    ? '<img src="' + src + '" alt="Piece photo" onerror="this.remove()"><span class="drop-swap">Drop or click to swap</span>'
     : '<span class="drop-emoji">' + draft.emoji + '</span><span><strong>Drag a photo here</strong><br>or click to browse.<br>Square shots look best.</span>';
   return '<div class="drop" id="dropZone"' +
     ' ondragover="event.preventDefault();this.classList.add(\'over\')"' +
@@ -290,6 +303,14 @@ function removeSize(i){
   draft.sizes.splice(i, 1);
   render();
 }
+function moveSize(i, dir){
+  var j = i + dir;
+  if(j < 0 || j >= draft.sizes.length) return;
+  var tmp = draft.sizes[i];
+  draft.sizes[i] = draft.sizes[j];
+  draft.sizes[j] = tmp;
+  render();
+}
 
 function saveItem(){
   draft.name = document.getElementById('gearName').value.trim();
@@ -334,9 +355,15 @@ function render(){
           '</div>' +
           '<div class="size-edit-chips">' +
             (draft.sizes.length
-              ? draft.sizes.map(function(s, i){ return '<span class="size-edit-chip">' + esc(s) + '<button onclick="removeSize(' + i + ')" aria-label="Remove size">&#10005;</button></span>'; }).join('')
+              ? draft.sizes.map(function(s, i){
+                  return '<span class="size-edit-chip">' + esc(s) +
+                    '<button onclick="moveSize(' + i + ',-1)" ' + (i === 0 ? 'disabled' : '') + ' aria-label="Move size left">&#9664;</button>' +
+                    '<button onclick="moveSize(' + i + ',1)" ' + (i === draft.sizes.length - 1 ? 'disabled' : '') + ' aria-label="Move size right">&#9654;</button>' +
+                    '<button onclick="removeSize(' + i + ')" aria-label="Remove size">&#10005;</button></span>';
+                }).join('')
               : '<span class="hint">No sizes yet — load a preset above, or add your own below.</span>') +
           '</div>' +
+          '<p class="hint" style="margin-top:.4rem">Arrows reorder — this is the order families see when they pick a size.</p>' +
           '<div style="display:flex;gap:.6rem;margin-top:.7rem;flex-wrap:wrap;align-items:center">' +
             '<input type="text" id="newSize" placeholder="Custom size, e.g. AXXXL" style="max-width:200px" onkeydown="if(event.key===\'Enter\')addSize()">' +
             '<button class="btn btn-outline-dark btn-sm" onclick="addSize()">+ Add Size</button>' +
@@ -357,8 +384,9 @@ function render(){
   '<p class="hint" style="margin-top:.5rem">These pieces are what the season registration wizard picks from when it builds a jersey package — add each piece once here, use it in every season.</p>';
 
   html += '<div class="gear-grid">' + items.map(function(it){
-    var photo = it.img
-      ? '<div class="gear-photo"><img src="' + it.img + '" alt="' + esc(it.name) + '"></div>'
+    var src = it.img || it.photo;
+    var photo = src
+      ? '<div class="gear-photo" style="background:' + it.bg + '">' + it.emoji + '<img src="' + src + '" alt="' + esc(it.name) + '" onerror="this.remove()"></div>'
       : '<div class="gear-photo" style="background:' + it.bg + '">' + it.emoji + '</div>';
     var actions = deleteId === it.id
       ? '<span class="hint">Remove from the library?</span>' +
