@@ -170,14 +170,17 @@ const GAMES = [
   { date:'2026-06-27', time:'11:20', at:false, opp:'Elite Baseball Training West - 17u Halverson', complex:'Pickens County High School', field:'', city:'Jasper', state:'GA', address:'500 Dragon Dr', jersey:'White Jersey', pitchers:['Bryan Eberly','Ryder Fogler'], us:10, them:3 },
   { date:'2026-06-28', time:'08:00', at:false, opp:'5 Star National West Coast 2027', complex:'LakePoint Sports', field:'Field 5', city:'Emerson', state:'GA', address:'261 Stars Way', jersey:'Navy Pin Jersey', pitchers:['Alejandro Fernandez','Bryan Eberly'], us:11, them:0 }
 ];
-/* Practices: every Monday and Wednesday, 5:45 PM, June 1 - July 29 */
+/* Practices, from the team's two weekly schedules: Mondays 5:45 PM at the
+   training complex, Wednesdays 6:30 PM at Northdale Park, June 1 - July 29 */
 const PRACTICES = (function(){
   const out = [];
   const d = new Date(2026, 5, 1), end = new Date(2026, 6, 29);
   while (d <= end){
-    if (d.getDay() === 1 || d.getDay() === 3){
-      const iso = d.getFullYear() + '-' + ('0' + (d.getMonth()+1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
-      out.push({ date: iso, time:'17:45', complex:'CBU Training Complex', field:'Field 2', city:'Tampa', state:'FL', address:'4302 Gunn Hwy', canceled: iso === '2026-06-24' });
+    const iso = d.getFullYear() + '-' + ('0' + (d.getMonth()+1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+    if (d.getDay() === 1){
+      out.push({ date: iso, time:'17:45', complex:'CBU Training Complex', field:'Field 2', city:'Tampa', state:'FL', address:'4302 Gunn Hwy', canceled: false });
+    } else if (d.getDay() === 3){
+      out.push({ date: iso, time:'18:30', complex:'Northdale Park', field:'Field 4', city:'Tampa', state:'FL', address:'15550 Spring Pine Dr', canceled: iso === '2026-06-24' });
     }
     d.setDate(d.getDate() + 1);
   }
