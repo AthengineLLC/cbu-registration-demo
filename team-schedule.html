@@ -96,6 +96,9 @@ body{
 .cal-cell{background:#fff;min-height:92px;padding:.35rem .4rem;display:flex;flex-direction:column;gap:.28rem;min-width:0}
 .cal-cell.blank{background:var(--row-alt)}
 .cal-daynum{font-size:.68rem;font-weight:600;color:var(--muted)}
+/* today: red ring on the cell, day number in a red badge */
+.cal-cell.today{box-shadow:inset 0 0 0 2px var(--red)}
+.cal-cell.today .cal-daynum{background:var(--red);color:#fff;border-radius:999px;padding:.08rem .4rem;align-self:flex-start}
 .cal-chip{
   display:block;width:100%;text-align:left;border:none;cursor:pointer;border-radius:6px;
   font-family:'Inter',Arial,sans-serif;font-weight:600;font-size:.62rem;line-height:1.3;padding:.24rem .4rem;overflow:hidden;
@@ -151,12 +154,21 @@ body{
 
 <script>
 /* Mock data mirroring the Menendez team in Team Management. In the real app
-   this all flows from what coaches enter there. */
+   this all flows from what coaches enter there. Fixed June dates are the
+   season's history; the offIso() entries are dated relative to the real today
+   so there is always a "next" tournament, games, and practices to show. */
+function offIso(days){
+  const d = new Date(); d.setDate(d.getDate() + days);
+  return d.getFullYear() + '-' + ('0' + (d.getMonth()+1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+}
+function todayIso(){ return offIso(0); }
 const TOURNAMENTS = [
   { name:'PS Palm Beach Classic', org:'Prospect Select', start:'2026-06-05', end:'2026-06-08', city:'West Palm Beach', state:'FL', released:true },
   { name:'PS Black Bear', org:'Prospect Select', start:'2026-06-17', end:'2026-06-20', city:'Boone', state:'NC', released:false },
   { name:'PG WWBA', org:'Perfect Game', start:'2026-06-23', end:'2026-06-28', city:'Fort Myers', state:'FL', released:true },
-  { name:'PS Boston Invitational', org:'Prospect Select', start:'2026-07-06', end:'2026-07-09', city:'Boston', state:'MA', released:false }
+  { name:'PS Boston Invitational', org:'Prospect Select', start:'2026-07-06', end:'2026-07-09', city:'Boston', state:'MA', released:false },
+  { name:'PS Sunshine State Championship', org:'Prospect Select', start: offIso(5), end: offIso(8), city:'Orlando', state:'FL', released:true },
+  { name:'PS Gulf Coast Invite', org:'Prospect Select', start: offIso(19), end: offIso(22), city:'Sarasota', state:'FL', released:false }
 ];
 const GAMES = [
   { date:'2026-06-05', time:'10:00', at:false, opp:'Palm Beach Select 2027', complex:'Santaluces Athletic Complex', field:'Field 1', city:'Lantana', state:'FL', address:'6250 Lawrence Rd', jersey:'Red Jersey', pitchers:['Bryan Eberly','Ryder Fogler'], us:8, them:2 },
@@ -168,22 +180,31 @@ const GAMES = [
   { date:'2026-06-25', time:'11:20', at:true, opp:'Ninth Inning Prime National 17U', complex:'University of Georgia', field:'Foley Field', city:'Athens', state:'GA', address:'1101 E Campus Rd', jersey:'Navy Pin Jersey', pitchers:['Bryan Eberly','Josiah Guevara','Cole Davidson'], us:14, them:6 },
   { date:'2026-06-26', time:'15:00', at:false, opp:'Marucci Elite Texas Massengale', complex:'East Cobb Complex', field:'Field 3', city:'Marietta', state:'GA', address:'825 Fontaine Rd SW', jersey:'Red Jersey', pitchers:['Ryder Fogler','Alejandro Fernandez'], us:5, them:2 },
   { date:'2026-06-27', time:'11:20', at:false, opp:'Elite Baseball Training West - 17u Halverson', complex:'Pickens County High School', field:'', city:'Jasper', state:'GA', address:'500 Dragon Dr', jersey:'White Jersey', pitchers:['Bryan Eberly','Ryder Fogler'], us:10, them:3 },
-  { date:'2026-06-28', time:'08:00', at:false, opp:'5 Star National West Coast 2027', complex:'LakePoint Sports', field:'Field 5', city:'Emerson', state:'GA', address:'261 Stars Way', jersey:'Navy Pin Jersey', pitchers:['Alejandro Fernandez','Bryan Eberly'], us:11, them:0 }
+  { date:'2026-06-28', time:'08:00', at:false, opp:'5 Star National West Coast 2027', complex:'LakePoint Sports', field:'Field 5', city:'Emerson', state:'GA', address:'261 Stars Way', jersey:'Navy Pin Jersey', pitchers:['Alejandro Fernandez','Bryan Eberly'], us:11, them:0 },
+  /* Sunshine State: the next tournament - rotations and jerseys set, no scores yet */
+  { date: offIso(5), time:'09:00', at:false, opp:'Orlando Scorpions 2027', complex:'Boombah Sports Complex', field:'Field 7', city:'Sanford', state:'FL', address:'3450 E Lake Mary Blvd', jersey:'Red Jersey', pitchers:['Bryan Eberly','Ryder Fogler'], us:null, them:null },
+  { date: offIso(5), time:'14:30', at:true, opp:'FTB Rockets 17U', complex:'Boombah Sports Complex', field:'Field 2', city:'Sanford', state:'FL', address:'3450 E Lake Mary Blvd', jersey:'White Jersey', pitchers:['Alejandro Fernandez','Josiah Guevara'], us:null, them:null },
+  { date: offIso(6), time:'11:00', at:false, opp:'Central Florida Gators', complex:'Sylvan Lake Park', field:'Field 1', city:'Sanford', state:'FL', address:'845 Lake Markham Rd', jersey:'', pitchers:[], us:null, them:null }
 ];
 /* Practices, from the team's two weekly schedules: Mondays 5:45 PM at the
-   training complex, Wednesdays 6:30 PM at Northdale Park, June 1 - July 29 */
+   training complex, Wednesdays 6:30 PM at Northdale Park. About 7 weeks of
+   history through 4 weeks ahead, relative to the real today, with the next
+   Wednesday canceled to show the exception state. */
 const PRACTICES = (function(){
   const out = [];
-  const d = new Date(2026, 5, 1), end = new Date(2026, 6, 29);
+  const d = new Date(); d.setDate(d.getDate() - 49);
+  const end = new Date(); end.setDate(end.getDate() + 28);
   while (d <= end){
     const iso = d.getFullYear() + '-' + ('0' + (d.getMonth()+1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
     if (d.getDay() === 1){
       out.push({ date: iso, time:'17:45', complex:'CBU Training Complex', field:'Field 2', city:'Tampa', state:'FL', address:'4302 Gunn Hwy', canceled: false });
     } else if (d.getDay() === 3){
-      out.push({ date: iso, time:'18:30', complex:'Northdale Park', field:'Field 4', city:'Tampa', state:'FL', address:'15550 Spring Pine Dr', canceled: iso === '2026-06-24' });
+      out.push({ date: iso, time:'18:30', complex:'Northdale Park', field:'Field 4', city:'Tampa', state:'FL', address:'15550 Spring Pine Dr', canceled: false });
     }
     d.setDate(d.getDate() + 1);
   }
+  const nextWed = out.find(p => p.complex === 'Northdale Park' && p.date >= todayIso());
+  if (nextWed) nextWed.canceled = true;
   return out;
 })();
 
@@ -191,8 +212,9 @@ const DAYS_FULL = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','
 const DAY_LABELS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const MONTHS_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 let view = 'list';
-let calMonth = '2026-06';
+let calMonth = todayIso().slice(0, 7);  // calendar always opens on the real current month
 let selected = null;   // {kind:'game'|'practice', index} for the calendar detail card
+let showPast = false;  // list view: past items collapsed behind Show Previous
 
 function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function fmt12(t){
@@ -252,16 +274,28 @@ function practiceRow(p){
 }
 function renderList(){
   /* one chronological stream: tournament banners on their start date, then
-     date groups of games and practices */
+     date groups of games and practices. What is next is always on top -
+     everything before today stays behind Show Previous. */
+  const tIso = todayIso();
   const items = [];
   GAMES.forEach(g => items.push({ date: g.date, sort: g.time, kind: 'game', it: g }));
   PRACTICES.forEach(p => items.push({ date: p.date, sort: p.time, kind: 'practice', it: p }));
   items.sort((a, b) => (a.date + a.sort) < (b.date + b.sort) ? -1 : 1);
-  let html = '<div class="game-days">';
+  const pastCount = items.filter(x => x.date < tIso).length;
+  const shown = showPast ? items : items.filter(x => x.date >= tIso);
+  /* only banner tournaments that belong to the visible stretch */
+  const banners = showPast ? TOURNAMENTS : TOURNAMENTS.filter(tr => tr.end >= tIso);
+  let html = '';
+  if (pastCount){
+    html += '<div style="margin-bottom:.9rem"><button class="link-red" onclick="showPast=!showPast;render()">' +
+      (showPast ? 'Hide Previous &#9652;' : 'Show Previous (' + pastCount + ') · past games, scores, and results &#9662;') +
+      '</button></div>';
+  }
+  html += '<div class="game-days">';
   let lastDate = null;
-  items.forEach(x => {
+  shown.forEach(x => {
     if (x.date !== lastDate){
-      TOURNAMENTS.forEach(tr => {
+      banners.forEach(tr => {
         if (tr.start > (lastDate || '') && tr.start <= x.date){
           html += '<div class="tour-banner">&#127942; ' + esc(tr.name) + ' · ' + esc(tr.city) + ', ' + esc(tr.state) +
                   (tr.released ? '' : ' <span class="tb-note">— game schedule not released yet, check back about a week out</span>') + '</div>';
@@ -327,10 +361,11 @@ function renderCal(){
     add(p.date, '<button class="cal-chip practice' + (p.canceled ? ' canceled' : '') + '" onclick="pick(\'practice\',' + i + ')">' + (p.canceled ? 'Canceled' : fmt12(p.time) + ' Practice') + '</button>');
   });
   let cells = '';
+  const tIso = todayIso();
   for (let i = 0; i < firstDow; i++) cells += '<div class="cal-cell blank"></div>';
   for (let day = 1; day <= daysIn; day++){
     const iso = y + '-' + ('0' + m).slice(-2) + '-' + ('0' + day).slice(-2);
-    cells += '<div class="cal-cell"><span class="cal-daynum">' + day + '</span>' + (byDate[iso] || []).join('') + '</div>';
+    cells += '<div class="cal-cell' + (iso === tIso ? ' today' : '') + '"><span class="cal-daynum">' + day + '</span>' + (byDate[iso] || []).join('') + '</div>';
   }
   const trailing = (firstDow + daysIn) % 7;
   if (trailing) for (let i = trailing; i < 7; i++) cells += '<div class="cal-cell blank"></div>';

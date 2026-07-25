@@ -438,6 +438,9 @@ input[disabled]{background:var(--row-alt);color:var(--muted)}
 .cal-cell{background:#fff;min-height:92px;padding:.35rem .4rem;display:flex;flex-direction:column;gap:.28rem;min-width:0}
 .cal-cell.blank{background:var(--row-alt)}
 .cal-daynum{font-size:.68rem;font-weight:600;color:var(--muted)}
+/* today: red ring on the cell, day number in a red badge */
+.cal-cell.today{box-shadow:inset 0 0 0 2px var(--red)}
+.cal-cell.today .cal-daynum{background:var(--red);color:#fff;border-radius:999px;padding:.08rem .4rem;align-self:flex-start}
 .cal-chip{
   display:block;width:100%;text-align:left;border:none;cursor:pointer;border-radius:6px;
   font-family:'Inter',Arial,sans-serif;font-weight:600;font-size:.62rem;line-height:1.3;padding:.24rem .4rem;
@@ -629,7 +632,8 @@ let patternRemoveId = null;  // weekly schedule pending its inline remove confir
 let practiceEditId = null;   // single practice being adjusted inline
 let practiceDraft = null;    // working copy of that practice's fields until a save scope is picked
 let practiceDeleteId = null; // practice pending its inline delete-scope choice
-let calMonth = '2026-06';    // calendar tab month (YYYY-MM)
+let calMonth = todayIso().slice(0, 7); // calendar tab month (YYYY-MM), always starts on the real current month
+let showPastPractices = false;         // practices list: past practices collapsed behind Show Previous
 let calModal = null;         // calendar edit-in-place popup: {kind:'game'|'practice'|'event'|'addevent'|'addpractice'|'addgame', id}
 let coachDirectory = [];     // org-wide coach system (mock): {id,name,email,phone,registered}
 let coachSearch = '';        // coaches tab type-ahead text
@@ -2856,6 +2860,13 @@ function fmtShortDate(iso){
   const p = iso.split('-');
   return MONTHS_FULL[+p[1]-1].slice(0, 3) + ' ' + (+p[2]);
 }
+/* Real current date - the calendar always opens on this month with today
+   highlighted, and lists lead with whatever is next */
+function offIso(days){
+  const d = new Date(); d.setDate(d.getDate() + days);
+  return d.getFullYear() + '-' + ('0' + (d.getMonth()+1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+}
+function todayIso(){ return offIso(0); }
 function renderPracticesTab(s, d, t){
   const pats = t.practicePatterns || [];
   if (practiceFormOpen && !patternDraft){
@@ -2881,7 +2892,14 @@ function renderPracticesTab(s, d, t){
       </div>
     </div>`).join('') : '';
 
-  const rows = (t.practices || []).map(p => {
+  /* What is next comes first: past practices stay collapsed behind a toggle */
+  const tIso = todayIso();
+  const allP = t.practices || [];
+  const pastP = allP.filter(p => p.date < tIso);
+  const shownP = showPastPractices ? allP : allP.filter(p => p.date >= tIso);
+  const pastToggle = pastP.length ? `
+    <div style="padding:.1rem 0 .7rem"><button class="link-muted" onclick="showPastPractices=!showPastPractices;render()">${showPastPractices ? 'Hide Previous Practices &#9652;' : 'Show Previous Practices (' + pastP.length + ') &#9662;'}</button></div>` : '';
+  const rows = shownP.map(p => {
     const editing = practiceEditId === p.id;
     const editor = (editing && practiceDraft) ? `
       <div style="flex-basis:100%;background:var(--row-alt);border-radius:8px;padding:.9rem 1rem;margin-top:.3rem">${renderPracticeEditFormBody(p, false)}</div>` : '';
@@ -2916,8 +2934,8 @@ function renderPracticesTab(s, d, t){
     </div>
     ${patternRows}
     ${patternRows ? '<div style="height:.5rem"></div>' : ''}
-    ${t.practices && t.practices.length
-      ? rows
+    ${allP.length
+      ? pastToggle + rows
       : (practiceFormOpen ? '' : '<p class="hint" style="padding:.6rem 0">No practices yet. Add a weekly schedule - day or days, time, and field - and the practices generate themselves. Teams that practice at different facilities on different days just add one schedule per day.</p>')}
   </div>`;
 }
@@ -3206,10 +3224,11 @@ function renderCalendarTab(s, d, t){
     add(p.date, `<button class="cal-chip practice${p.canceled ? ' canceled' : ''}" onclick="openCalModal('practice',${p.id})">${p.canceled ? 'Canceled' : fmt12(p.time)} Practice</button>`);
   });
   let cells = '';
+  const tIso = todayIso();
   for (let i = 0; i < firstDow; i++) cells += '<div class="cal-cell blank"></div>';
   for (let day = 1; day <= daysIn; day++){
     const iso = y + '-' + ('0' + m).slice(-2) + '-' + ('0' + day).slice(-2);
-    cells += `<div class="cal-cell"><span class="cal-daynum">${day}</span>${(byDate[iso] || []).join('')}</div>`;
+    cells += `<div class="cal-cell${iso === tIso ? ' today' : ''}"><span class="cal-daynum">${day}</span>${(byDate[iso] || []).join('')}</div>`;
   }
   const trailing = (firstDow + daysIn) % 7;
   if (trailing) for (let i = trailing; i < 7; i++) cells += '<div class="cal-cell blank"></div>';
@@ -3837,7 +3856,12 @@ function demoLoadSample(){
     {id:nid(),org:'Prospect Select',name:'PS Palm Beach Classic',start:'2026-06-05',end:'2026-06-08',city:'West Palm Beach',state:'FL',site:'https://www.prospectselectbaseball.com',hotel:''},
     {id:nid(),org:'Prospect Select',name:'PS Black Bear',start:'2026-06-17',end:'2026-06-20',city:'Boone',state:'NC',site:'',hotel:''},
     {id:nid(),org:'Perfect Game',name:'PG WWBA',start:'2026-06-23',end:'2026-06-28',city:'Fort Myers',state:'FL',site:'https://www.perfectgame.org',hotel:'https://www.perfectgame.org/hotels'},
-    {id:nid(),org:'Prospect Select',name:'PS Boston Invitational',start:'2026-07-06',end:'2026-07-09',city:'Boston',state:'MA',site:'',hotel:''}
+    {id:nid(),org:'Prospect Select',name:'PS Boston Invitational',start:'2026-07-06',end:'2026-07-09',city:'Boston',state:'MA',site:'',hotel:''},
+    /* Dated relative to the real today so there is always a next tournament:
+       Sunshine State is days out with its schedule imported, Gulf Coast is
+       further out and still awaiting its schedule */
+    {id:nid(),org:'Prospect Select',name:'PS Sunshine State Championship',start:offIso(5),end:offIso(8),city:'Orlando',state:'FL',site:'https://www.prospectselectbaseball.com',hotel:''},
+    {id:nid(),org:'Prospect Select',name:'PS Gulf Coast Invite',start:offIso(19),end:offIso(22),city:'Sarasota',state:'FL',site:'https://www.prospectselectbaseball.com',hotel:''}
   ];
   /* Palm Beach arrives already imported, with rotations set, to show the
      finished state. The other events wait on Import Schedule. */
@@ -3858,17 +3882,32 @@ function demoLoadSample(){
   pbc.games[2].jersey = 'Navy Pin Jersey';
   pbc.games[3].rotation = mrot(['Bryan Eberly']);
   pbc.games[3].jersey = 'Red Jersey';
+  /* The upcoming Sunshine State event arrives imported with rotations set but
+     no scores yet - the "what is next" state on every schedule view */
+  const ssc = menendez.events[4];
+  ssc.imported = true;
+  ssc.games = buildGames([
+    {date: offIso(5), time:'9:00 AM', at:false, opp:'Orlando Scorpions 2027', complex:'Boombah Sports Complex', field:'Field 7', city:'Sanford', state:'FL', address:'3450 E Lake Mary Blvd'},
+    {date: offIso(5), time:'2:30 PM', at:true, opp:'FTB Rockets 17U', complex:'Boombah Sports Complex', field:'Field 2', city:'Sanford', state:'FL', address:'3450 E Lake Mary Blvd'},
+    {date: offIso(6), time:'11:00 AM', at:false, opp:'Central Florida Gators', complex:'Sylvan Lake Park', field:'Field 1', city:'Sanford', state:'FL', address:'845 Lake Markham Rd'}
+  ]);
+  ssc.games[0].rotation = mrot(['Bryan Eberly','Ryder Fogler']);
+  ssc.games[0].jersey = 'Red Jersey';
+  ssc.games[1].rotation = mrot(['Alejandro Fernandez','Josiah Guevara']);
+  ssc.games[1].jersey = 'White Jersey';
   /* Menendez practices: two weekly schedules to show they can differ -
-     Mondays at the training complex, Wednesdays later at Northdale Park -
-     with one canceled to show the exception state */
+     Mondays at the training complex, Wednesdays later at Northdale Park.
+     Dated relative to the real today (about 7 weeks back to 4 weeks out) so
+     the list always has history behind Show Previous and practices ahead,
+     with the next Wednesday canceled to show the exception state */
   menendez.practicePatterns = [
-    { id: nid(), days:[1], time:'17:45', complex:'CBU Training Complex', field:'Field 2', city:'Tampa', state:'FL', address:'4302 Gunn Hwy', start:'2026-06-01', end:'2026-07-27' },
-    { id: nid(), days:[3], time:'18:30', complex:'Northdale Park', field:'Field 4', city:'Tampa', state:'FL', address:'15550 Spring Pine Dr', start:'2026-06-03', end:'2026-07-29' }
+    { id: nid(), days:[1], time:'17:45', complex:'CBU Training Complex', field:'Field 2', city:'Tampa', state:'FL', address:'4302 Gunn Hwy', start: offIso(-49), end: offIso(28) },
+    { id: nid(), days:[3], time:'18:30', complex:'Northdale Park', field:'Field 4', city:'Tampa', state:'FL', address:'15550 Spring Pine Dr', start: offIso(-49), end: offIso(28) }
   ];
   menendez.practices = [];
   menendez.practicePatterns.forEach(pp => { menendez.practices = menendez.practices.concat(generatePractices(pp)); });
   sortPractices(menendez);
-  const cp = menendez.practices.find(p => p.date === '2026-06-24');
+  const cp = menendez.practices.find(p => p.patternId === menendez.practicePatterns[1].id && p.date >= todayIso());
   if (cp) cp.canceled = true;
   const ftY = nid();
   const y10 = nid(), y12 = nid(), y14 = nid();

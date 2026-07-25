@@ -10,6 +10,10 @@
   city + state that coaches entered in Team Management.
 - What happens after: nothing to submit - this page is read-only. Tournaments
   whose schedule is not released yet say so and tell parents when to check back.
+- Next first, always: the list opens on today with whatever is next at the
+  top; everything earlier sits behind a Show Previous button (that is where
+  past scores and results live). The calendar opens on the real current month
+  with today highlighted.
 - Out of scope: arrival times (later), RSVPs / availability, editing anything,
   multi-team households, notifications
 - Note for Ben: this is the payoff page for the structured game data (complex /
