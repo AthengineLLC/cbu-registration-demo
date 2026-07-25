@@ -100,8 +100,9 @@ input:focus{outline:none;border-color:var(--powder-dark)}
   position:relative;
 }
 /* the image sits over the emoji placeholder; if the file is missing the img
-   removes itself and the emoji shows through */
-.gear-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;background:#fff}
+   removes itself and the emoji shows through. Contain, never crop - product
+   shots on white keep their whole silhouette. */
+.gear-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block;background:#fff;padding:.5rem}
 .gear-body{padding:.8rem .9rem 1rem;display:flex;flex-direction:column;gap:.5rem;flex:1}
 .gear-name{font-weight:700;font-size:.92rem;color:var(--ink)}
 .gear-price{font-family:'Oswald',Arial,sans-serif;font-weight:600;font-size:.78rem;color:var(--red);letter-spacing:.05em}
@@ -120,7 +121,7 @@ input:focus{outline:none;border-color:var(--powder-dark)}
   font-size:.74rem;line-height:1.45;overflow:hidden;flex:0 0 auto;position:relative;
 }
 .drop.over{border-color:var(--red);color:var(--red);background:#fdf3f4}
-.drop img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.drop img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#fff;padding:.4rem}
 .drop .drop-emoji{font-size:2.2rem;line-height:1}
 .drop .drop-swap{
   position:absolute;bottom:.5rem;left:50%;transform:translateX(-50%);
