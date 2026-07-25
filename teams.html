@@ -2538,9 +2538,9 @@ function renderGameEditor(t, g, jerseys){
       <div><label class="field-label">City</label><input type="text" value="${esc(g.city)}" onchange="setGameField(${g.id},'city',this.value)"></div>
       <div><label class="field-label">State</label><input type="text" value="${esc(g.state)}" onchange="setGameField(${g.id},'state',this.value)"></div>
       <div class="full">
-        <label class="field-label">Field Address</label>
-        <input type="text" value="${esc(g.address)}" placeholder="Street, city, state, zip" onchange="setGameField(${g.id},'address',this.value)" style="max-width:100%">
-        <p class="hint" style="margin-top:.35rem">Not shown on this page — it powers the map link on the parent-facing schedule.</p>
+        <label class="field-label">Street Address</label>
+        <input type="text" value="${esc(g.address)}" placeholder="e.g. 825 Fontaine Rd SW" onchange="setGameField(${g.id},'address',this.value)" style="max-width:100%">
+        <p class="hint" style="margin-top:.35rem">Street only — it joins the city and state above to power the map link on the parent-facing schedule. Not shown on this page.</p>
       </div>
     </div>
     <div style="display:flex;align-items:flex-end;gap:1rem;flex-wrap:wrap;margin-top:1rem">
@@ -2600,12 +2600,12 @@ function setGameJersey(gid, val){
    multiple cities in the same state, so city lives on the game, not the event. */
 const SAMPLE_GAME_SETS = {
   'PG WWBA': [
-    {date:'2026-06-23',time:'10:20 AM',at:false,opp:"Ghost Nation '27",complex:'East Cobb Complex',field:'Field 2',city:'Marietta',state:'GA',address:'825 Fontaine Rd SW, Marietta, GA 30060',us:8,them:2},
-    {date:'2026-06-24',time:'9:00 AM',at:true,opp:'Southside Crew',complex:'Georgia State University',field:'Stadium',city:'Atlanta',state:'GA',address:'755 Hank Aaron Dr SE, Atlanta, GA 30315',us:4,them:0},
-    {date:'2026-06-25',time:'11:20 AM',at:true,opp:'Ninth Inning Prime National 17U',complex:'University of Georgia',field:'Foley Field',city:'Athens',state:'GA',address:'1101 E Campus Rd, Athens, GA 30602',us:14,them:6},
-    {date:'2026-06-26',time:'3:00 PM',at:false,opp:'Marucci Elite Texas Massengale',complex:'East Cobb Complex',field:'Field 3',city:'Marietta',state:'GA',address:'825 Fontaine Rd SW, Marietta, GA 30060',us:5,them:2},
-    {date:'2026-06-27',time:'11:20 AM',at:false,opp:'Elite Baseball Training West - 17u Halverson',complex:'Pickens County High School',field:'',city:'Jasper',state:'GA',address:'500 Dragon Dr, Jasper, GA 30143',us:10,them:3},
-    {date:'2026-06-28',time:'8:00 AM',at:false,opp:'5 Star National West Coast 2027',complex:'LakePoint Sports',field:'Field 5',city:'Emerson',state:'GA',address:'261 Stars Way, Emerson, GA 30137',us:11,them:0}
+    {date:'2026-06-23',time:'10:20 AM',at:false,opp:"Ghost Nation '27",complex:'East Cobb Complex',field:'Field 2',city:'Marietta',state:'GA',address:'825 Fontaine Rd SW',us:8,them:2},
+    {date:'2026-06-24',time:'9:00 AM',at:true,opp:'Southside Crew',complex:'Georgia State University',field:'Stadium',city:'Atlanta',state:'GA',address:'755 Hank Aaron Dr SE',us:4,them:0},
+    {date:'2026-06-25',time:'11:20 AM',at:true,opp:'Ninth Inning Prime National 17U',complex:'University of Georgia',field:'Foley Field',city:'Athens',state:'GA',address:'1101 E Campus Rd',us:14,them:6},
+    {date:'2026-06-26',time:'3:00 PM',at:false,opp:'Marucci Elite Texas Massengale',complex:'East Cobb Complex',field:'Field 3',city:'Marietta',state:'GA',address:'825 Fontaine Rd SW',us:5,them:2},
+    {date:'2026-06-27',time:'11:20 AM',at:false,opp:'Elite Baseball Training West - 17u Halverson',complex:'Pickens County High School',field:'',city:'Jasper',state:'GA',address:'500 Dragon Dr',us:10,them:3},
+    {date:'2026-06-28',time:'8:00 AM',at:false,opp:'5 Star National West Coast 2027',complex:'LakePoint Sports',field:'Field 5',city:'Emerson',state:'GA',address:'261 Stars Way',us:11,them:0}
   ]
 };
 const GENERIC_OPPONENTS = ['Scorpions Baseball 2027','FTB Rockets','Canes National 17u','Team Elite Prime','643 DP Cougars','Stars Baseball National'];
@@ -2621,7 +2621,7 @@ function genericGames(e){
       opp: GENERIC_OPPONENTS[(i * 2 + (e.id % 3)) % 6],
       complex: 'Tournament Complex', field: 'Field ' + (i + 1),
       city: e.city || '', state: e.state || '',
-      address: e.city ? '123 Tournament Way, ' + e.city + (e.state ? ', ' + e.state : '') : '',
+      address: '123 Tournament Way',
       us: null, them: null });
   }
   return rows;
@@ -3290,10 +3290,10 @@ function demoLoadSample(){
      finished state. The other events wait on Import Schedule. */
   const pbc = menendez.events[0];
   pbc.games = buildGames([
-    {date:'2026-06-05',time:'10:00 AM',at:false,opp:'Palm Beach Select 2027',complex:'Santaluces Athletic Complex',field:'Field 1',city:'Lantana',state:'FL',address:'6250 Lawrence Rd, Lantana, FL 33462',us:8,them:2},
-    {date:'2026-06-06',time:'12:30 PM',at:true,opp:'South Florida Bandits',complex:'The Ballpark of the Palm Beaches',field:'',city:'West Palm Beach',state:'FL',address:'5444 Haverhill Rd, West Palm Beach, FL 33407',us:3,them:5},
-    {date:'2026-06-07',time:'9:30 AM',at:false,opp:'Treasure Coast Titans',complex:'Santaluces Athletic Complex',field:'Field 3',city:'Lantana',state:'FL',address:'6250 Lawrence Rd, Lantana, FL 33462',us:10,them:3},
-    {date:'2026-06-08',time:'11:00 AM',at:false,opp:'Miami Prospects National',complex:'The Ballpark of the Palm Beaches',field:'',city:'West Palm Beach',state:'FL',address:'5444 Haverhill Rd, West Palm Beach, FL 33407',us:6,them:1}
+    {date:'2026-06-05',time:'10:00 AM',at:false,opp:'Palm Beach Select 2027',complex:'Santaluces Athletic Complex',field:'Field 1',city:'Lantana',state:'FL',address:'6250 Lawrence Rd',us:8,them:2},
+    {date:'2026-06-06',time:'12:30 PM',at:true,opp:'South Florida Bandits',complex:'The Ballpark of the Palm Beaches',field:'',city:'West Palm Beach',state:'FL',address:'5444 Haverhill Rd',us:3,them:5},
+    {date:'2026-06-07',time:'9:30 AM',at:false,opp:'Treasure Coast Titans',complex:'Santaluces Athletic Complex',field:'Field 3',city:'Lantana',state:'FL',address:'6250 Lawrence Rd',us:10,them:3},
+    {date:'2026-06-08',time:'11:00 AM',at:false,opp:'Miami Prospects National',complex:'The Ballpark of the Palm Beaches',field:'',city:'West Palm Beach',state:'FL',address:'5444 Haverhill Rd',us:6,them:1}
   ]);
   const mrot = names => names.map(n => { const p = menendez.roster.find(x => x.name === n); return p ? p.id : null; }).filter(Boolean);
   pbc.games[0].rotation = mrot(['Bryan Eberly','Ryder Fogler']);
