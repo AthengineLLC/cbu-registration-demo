@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CBU App — Jersey Packages</title>
+<script>
+/* This page always lives inside the app shell. Opened bare, it re-opens
+   itself in app-shell.html so the left menu is there on desktop and phone. */
+if (window.self === window.top) location.replace('app-shell.html?open=gear-library');
+</script>
+<!--
+  ============================================================
+  CBU APP — JERSEY PACKAGES / GEAR LIBRARY (clickable demo)
+  ============================================================
+  The org's gear shop: every piece that can go in a jersey
+  package lives here as its own line item — square photo
+  (drag & drop), piece title, price for extra pieces, and its
+  size run. The season registration wizard picks FROM this
+  library when building a package, instead of typing items in
+  by hand each time.
+  Size presets: jerseys/pants get the youth+adult run, socks
+  get S-XL, hats get XS / S/M / M/L / L/XL — and any custom
+  size can be typed in besides.
+  Navy design system, same conventions as teams.html.
+  ============================================================
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy-bg:#0c1327;--navy-bg-2:#141d3a;--navy-deep:#0e1730;--card:#ffffff;
+  --row-alt:#f5f6fa;--red:#b91e2d;--red-dark:#8f1622;--powder:#6daed4;--powder-dark:#4d8fb6;
+  --ink:#16203c;--muted:#6b7590;--line:#e3e6ee;--green:#1e7a44;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;overflow-x:hidden}
+body{
+  font-family:'Inter',-apple-system,'Segoe UI',Arial,sans-serif;
+  background:
+    radial-gradient(1200px 600px at 70% -10%, rgba(185,30,45,.12), transparent 60%),
+    linear-gradient(160deg,var(--navy-bg) 0%,var(--navy-bg-2) 100%);
+  background-attachment:fixed;color:#eef1f8;min-height:100vh;overflow-x:hidden;max-width:100vw;
+}
+.topnav{
+  position:sticky;top:0;z-index:50;background:var(--navy-deep);
+  border-bottom:1px solid rgba(255,255,255,.07);
+  display:flex;align-items:center;justify-content:space-between;padding:.85rem 2rem;
+}
+.brand{display:flex;align-items:center;gap:.9rem}
+.brand-logo{font-family:'Oswald',Arial,sans-serif;font-weight:700;font-size:1.55rem;color:#fff;line-height:1}
+.brand-logo b{color:var(--red)}
+.brand-divider{width:1px;height:26px;background:rgba(255,255,255,.18)}
+.brand-label{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.2em;font-size:.78rem;color:#c6cde0;font-weight:600}
+.page{max-width:1120px;margin:0 auto;padding:2.4rem 2rem 5rem}
+.eyebrow{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.28em;font-size:.72rem;font-weight:600;color:var(--powder)}
+.page-title{font-family:'Oswald','Arial Narrow',Arial,sans-serif;text-transform:uppercase;font-size:2.5rem;font-weight:700;color:#fff;line-height:1.05}
+.title-rule{width:64px;height:4px;background:var(--red);margin-top:.85rem;border-radius:2px}
+.page-title-sub{color:#aab3cc;font-size:.92rem;margin-top:.5rem;max-width:640px}
+.card{background:var(--card);border-radius:12px;color:var(--ink);box-shadow:0 18px 40px rgba(3,7,20,.45)}
+.card-pad{padding:1.8rem 2rem}
+.section-head{
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.12em;
+  font-size:.86rem;font-weight:600;color:#fff;background:var(--navy-deep);
+  padding:.6rem 1rem;border-radius:8px;margin:1.6rem 0 1rem;
+}
+.section-head.red{background:var(--red)}
+.field-label{
+  display:block;font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;
+  letter-spacing:.12em;font-size:.66rem;font-weight:600;color:var(--muted);margin-bottom:.35rem;
+}
+input[type=text],input[type=number]{
+  width:100%;max-width:420px;padding:.55rem .7rem;border:1.5px solid #c9cfdd;border-radius:8px;
+  font-family:'Inter',Arial,sans-serif;font-size:.9rem;color:var(--ink);background:#fff;
+}
+input:focus{outline:none;border-color:var(--powder-dark)}
+.btn{
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.1em;
+  font-weight:600;border-radius:8px;cursor:pointer;border:1.5px solid transparent;
+  transition:transform .12s,box-shadow .12s;font-size:.8rem;padding:.6rem 1.2rem;
+}
+.btn:hover{transform:translateY(-1px)}
+.btn-primary{background:var(--red);color:#fff}
+.btn-primary:hover{background:var(--red-dark)}
+.btn-outline-dark{background:#fff;color:var(--ink);border-color:#c9cfdd}
+.btn-outline-dark:hover{border-color:var(--ink)}
+.btn-sm{font-size:.7rem;padding:.42rem .85rem}
+.link-red{color:var(--red);font-weight:600;font-size:.8rem;background:none;border:none;cursor:pointer;font-family:inherit;padding:0}
+.link-red:hover{text-decoration:underline}
+.link-muted{color:var(--muted);font-weight:600;font-size:.8rem;background:none;border:none;cursor:pointer;font-family:inherit;padding:0}
+.link-muted:hover{color:var(--ink);text-decoration:underline}
+.hint{font-size:.78rem;color:var(--muted);line-height:1.55}
+
+/* Gear grid: one card per piece, square photo on top */
+.gear-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:1.1rem;margin-top:1rem}
+.gear-card{border:1.5px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;display:flex;flex-direction:column}
+.gear-photo{
+  aspect-ratio:1/1;width:100%;display:flex;align-items:center;justify-content:center;
+  font-size:3.4rem;background:var(--row-alt);border-bottom:1.5px solid var(--line);overflow:hidden;
+}
+.gear-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.gear-body{padding:.8rem .9rem 1rem;display:flex;flex-direction:column;gap:.5rem;flex:1}
+.gear-name{font-weight:700;font-size:.92rem;color:var(--ink)}
+.gear-price{font-family:'Oswald',Arial,sans-serif;font-weight:600;font-size:.78rem;color:var(--red);letter-spacing:.05em}
+.size-chips{display:flex;flex-wrap:wrap;gap:.3rem}
+.size-chip{
+  font-family:'Oswald',Arial,sans-serif;font-size:.62rem;font-weight:600;letter-spacing:.06em;
+  background:#e8ebf4;color:var(--navy-deep);border-radius:6px;padding:.2rem .45rem;white-space:nowrap;
+}
+.gear-actions{display:flex;gap:.9rem;align-items:center;margin-top:auto;padding-top:.5rem;flex-wrap:wrap}
+
+/* Photo drop square: drag a photo in, or click to browse */
+.drop{
+  width:200px;aspect-ratio:1/1;border:2px dashed #c9cfdd;border-radius:12px;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4rem;
+  background:var(--row-alt);color:var(--muted);text-align:center;padding:.8rem;
+  font-size:.74rem;line-height:1.45;overflow:hidden;flex:0 0 auto;position:relative;
+}
+.drop.over{border-color:var(--red);color:var(--red);background:#fdf3f4}
+.drop img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.drop .drop-emoji{font-size:2.2rem;line-height:1}
+.drop .drop-swap{
+  position:absolute;bottom:.5rem;left:50%;transform:translateX(-50%);
+  background:rgba(12,19,39,.78);color:#fff;border-radius:999px;padding:.22rem .7rem;
+  font-family:'Oswald',Arial,sans-serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:600;
+}
+
+/* Size builder: preset loaders + removable chips + custom add */
+.preset-row{display:flex;gap:.5rem;flex-wrap:wrap}
+.preset-btn{
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.08em;
+  font-size:.64rem;font-weight:600;background:#fff;color:var(--ink);
+  border:1.5px solid #c9cfdd;border-radius:999px;padding:.35rem .8rem;cursor:pointer;
+}
+.preset-btn:hover{border-color:var(--red);color:var(--red)}
+.size-edit-chips{display:flex;flex-wrap:wrap;gap:.35rem;min-height:1.8rem;margin-top:.7rem}
+.size-edit-chip{
+  display:inline-flex;align-items:center;gap:.35rem;
+  font-family:'Oswald',Arial,sans-serif;font-size:.68rem;font-weight:600;letter-spacing:.06em;
+  background:var(--navy-deep);color:#fff;border-radius:6px;padding:.28rem .3rem .28rem .55rem;
+}
+.size-edit-chip button{background:none;border:none;color:#9aa5c2;cursor:pointer;font-size:.72rem;line-height:1;padding:.1rem .25rem}
+.size-edit-chip button:hover{color:#fff}
+
+.toast{
+  position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(8px);
+  background:var(--navy-deep);color:#fff;font-size:.84rem;font-weight:600;
+  padding:.7rem 1.2rem;border-radius:10px;box-shadow:0 14px 30px rgba(3,7,20,.5);
+  opacity:0;pointer-events:none;transition:all .25s ease;z-index:99;border:1px solid rgba(255,255,255,.15);max-width:90vw;text-align:center;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@media (max-width:760px){
+  .page{padding:1.6rem 1rem 4rem}
+  .page-title{font-size:1.9rem}
+  .topnav{padding:.7rem .9rem}
+  .card-pad{padding:1.2rem 1rem}
+  .gear-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  .drop{width:100%;max-width:220px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="brand">
+    <div class="brand-logo">CB<b>U</b></div>
+    <div class="brand-divider"></div>
+    <div class="brand-label">Jersey Packages</div>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="eyebrow">Team Management</div>
+  <h1 class="page-title">Jersey Packages</h1>
+  <div class="title-rule"></div>
+  <p class="page-title-sub">The org's gear shop. Every piece lives here as its own line item — photo, title, price, and size run. Season registrations build their jersey packages by picking from this library instead of typing items in each time.</p>
+
+  <div class="card card-pad" style="margin-top:1.8rem" id="content"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* Size presets. Jerseys and pants share the youth + adult run; socks and
+   hats each have their own. Custom sizes can always be typed in besides. */
+var SIZE_PRESETS = [
+  { key:'run',   label:'Jersey / Pants Run', sizes:['YS','YM','YL','YXL','AS','AM','AL','AXL','AXXL'] },
+  { key:'socks', label:'Sock Sizes',         sizes:['S','M','L','XL'] },
+  { key:'hats',  label:'Hat Sizes',          sizes:['XS','S/M','M/L','L/XL'] }
+];
+
+/* Mock gear pieces. Photos are emoji placeholders standing in for uploaded
+   product shots — dragging a real photo onto the square replaces them. */
+var nextId = 1;
+function nid(){ return nextId++; }
+var items = [
+  { id:nid(), name:'Game Jersey — Red',   price:'55', emoji:'👕', bg:'linear-gradient(135deg,#b91e2d,#8f1622)', img:null, sizes:['YS','YM','YL','YXL','AS','AM','AL','AXL','AXXL'] },
+  { id:nid(), name:'Game Jersey — White', price:'55', emoji:'👕', bg:'linear-gradient(135deg,#f5f6fa,#dfe3ee)', img:null, sizes:['YS','YM','YL','YXL','AS','AM','AL','AXL','AXXL'] },
+  { id:nid(), name:'Game Pants — White',  price:'45', emoji:'👖', bg:'linear-gradient(135deg,#eef1f8,#c9cfdd)', img:null, sizes:['YS','YM','YL','YXL','AS','AM','AL','AXL','AXXL'] },
+  { id:nid(), name:'Game Hat — Red',      price:'30', emoji:'🧢', bg:'linear-gradient(135deg,#b91e2d,#7a1420)', img:null, sizes:['XS','S/M','M/L','L/XL'] },
+  { id:nid(), name:'Game Socks — Red',    price:'12', emoji:'🧦', bg:'linear-gradient(135deg,#d94b58,#b91e2d)', img:null, sizes:['S','M','L','XL'] },
+  { id:nid(), name:'Belt — Navy',         price:'13', emoji:'⚾', bg:'linear-gradient(135deg,#141d3a,#0c1327)', img:null, sizes:['S','M','L'] }
+];
+
+var formOpen = false;
+var editId = null;       /* item being edited, null = adding new */
+var deleteId = null;     /* item pending inline delete confirm */
+var draft = null;        /* {name, price, emoji, bg, img, sizes:[]} */
+
+function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function toast(msg){
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._h);
+  t._h = setTimeout(function(){ t.classList.remove('show'); }, 2400);
+}
+function findItem(id){
+  for(var i = 0; i < items.length; i++){ if(items[i].id === id) return items[i]; }
+  return null;
+}
+
+function openForm(id){
+  formOpen = true; editId = id == null ? null : id; deleteId = null;
+  var it = id != null ? findItem(id) : null;
+  draft = it
+    ? JSON.parse(JSON.stringify(it))
+    : { name:'', price:'', emoji:'👕', bg:'linear-gradient(135deg,#eef1f8,#c9cfdd)', img:null, sizes:[] };
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function closeForm(){
+  formOpen = false; editId = null; draft = null;
+  render();
+}
+
+/* ---- Photo drop square ---- */
+function photoZoneHtml(){
+  var inner = draft.img
+    ? '<img src="' + draft.img + '" alt="Piece photo"><span class="drop-swap">Drop or click to swap</span>'
+    : '<span class="drop-emoji">' + draft.emoji + '</span><span><strong>Drag a photo here</strong><br>or click to browse.<br>Square shots look best.</span>';
+  return '<div class="drop" id="dropZone"' +
+    ' ondragover="event.preventDefault();this.classList.add(\'over\')"' +
+    ' ondragleave="this.classList.remove(\'over\')"' +
+    ' ondrop="dropPhoto(event)"' +
+    ' onclick="document.getElementById(\'photoFile\').click()">' + inner + '</div>' +
+    '<input type="file" id="photoFile" accept="image/*" style="display:none" onchange="pickPhoto(this)">';
+}
+function dropPhoto(ev){
+  ev.preventDefault();
+  document.getElementById('dropZone').classList.remove('over');
+  var f = ev.dataTransfer.files && ev.dataTransfer.files[0];
+  if(f) readPhoto(f);
+}
+function pickPhoto(input){
+  var f = input.files && input.files[0];
+  if(f) readPhoto(f);
+}
+function readPhoto(f){
+  if(!/^image\//.test(f.type)){ toast('That file is not an image.'); return; }
+  var r = new FileReader();
+  r.onload = function(){ draft.img = r.result; render(); toast('Photo added.'); };
+  r.readAsDataURL(f);
+}
+
+/* ---- Size builder ---- */
+function loadPreset(key){
+  for(var i = 0; i < SIZE_PRESETS.length; i++){
+    if(SIZE_PRESETS[i].key === key){
+      draft.sizes = SIZE_PRESETS[i].sizes.slice();
+      render();
+      toast(SIZE_PRESETS[i].label + ' loaded — remove or add sizes as needed.');
+      return;
+    }
+  }
+}
+function addSize(){
+  var el = document.getElementById('newSize');
+  var v = el.value.trim();
+  if(!v) return;
+  if(draft.sizes.indexOf(v) > -1){ toast(v + ' is already in the list.'); el.value = ''; return; }
+  draft.sizes.push(v);
+  render();
+  var again = document.getElementById('newSize');
+  if(again) again.focus();
+}
+function removeSize(i){
+  draft.sizes.splice(i, 1);
+  render();
+}
+
+function saveItem(){
+  draft.name = document.getElementById('gearName').value.trim();
+  draft.price = document.getElementById('gearPrice').value.trim();
+  if(!draft.name){ toast('Give this piece a title.'); return; }
+  if(!draft.sizes.length){ toast('Add at least one size — load a preset or type your own.'); return; }
+  if(editId != null){
+    var it = findItem(editId);
+    Object.assign(it, draft, { id: editId });
+    toast(draft.name + ' updated.');
+  } else {
+    draft.id = nid();
+    items.push(draft);
+    toast(draft.name + ' added to the gear library.');
+  }
+  closeForm();
+}
+function deleteItem(id){
+  var it = findItem(id);
+  items = items.filter(function(x){ return x.id !== id; });
+  deleteId = null;
+  toast((it ? it.name : 'Piece') + ' removed from the library.');
+  render();
+}
+
+function render(){
+  var html = '';
+
+  if(formOpen){
+    html += '<div class="section-head red" style="margin-top:0">' + (editId != null ? 'Edit Gear Piece' : 'Add A Gear Piece') + '</div>' +
+    '<div style="display:flex;gap:1.6rem;flex-wrap:wrap;margin-bottom:1.6rem">' +
+      '<div>' + photoZoneHtml() + '</div>' +
+      '<div style="flex:1;min-width:260px">' +
+        '<label class="field-label">Piece Title</label>' +
+        '<input type="text" id="gearName" placeholder="e.g. Game Jersey — Red" value="' + esc(draft.name) + '">' +
+        '<div style="margin-top:.9rem"><label class="field-label">Extra-Piece Price ($)</label>' +
+        '<input type="text" id="gearPrice" inputmode="decimal" placeholder="55" value="' + esc(draft.price) + '" style="max-width:130px">' +
+        '<p class="hint" style="margin-top:.35rem">What a spare costs when a family buys this piece on its own.</p></div>' +
+        '<div style="margin-top:1.1rem"><label class="field-label">Sizes</label>' +
+          '<div class="preset-row">' +
+            SIZE_PRESETS.map(function(p){ return '<button class="preset-btn" onclick="loadPreset(\'' + p.key + '\')">' + p.label + '</button>'; }).join('') +
+          '</div>' +
+          '<div class="size-edit-chips">' +
+            (draft.sizes.length
+              ? draft.sizes.map(function(s, i){ return '<span class="size-edit-chip">' + esc(s) + '<button onclick="removeSize(' + i + ')" aria-label="Remove size">&#10005;</button></span>'; }).join('')
+              : '<span class="hint">No sizes yet — load a preset above, or add your own below.</span>') +
+          '</div>' +
+          '<div style="display:flex;gap:.6rem;margin-top:.7rem;flex-wrap:wrap;align-items:center">' +
+            '<input type="text" id="newSize" placeholder="Custom size, e.g. AXXXL" style="max-width:200px" onkeydown="if(event.key===\'Enter\')addSize()">' +
+            '<button class="btn btn-outline-dark btn-sm" onclick="addSize()">+ Add Size</button>' +
+          '</div>' +
+        '</div>' +
+        '<div style="margin-top:1.3rem;display:flex;gap:.7rem;flex-wrap:wrap">' +
+          '<button class="btn btn-primary btn-sm" onclick="saveItem()">' + (editId != null ? 'Save Changes' : 'Add To Library') + '</button>' +
+          '<button class="link-muted" onclick="closeForm()">Cancel</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  html += '<div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">' +
+    '<span class="field-label" style="margin:0">Gear Library (' + items.length + ')</span>' +
+    (formOpen ? '' : '<button class="btn btn-primary btn-sm" onclick="openForm(null)">+ Add Gear Piece</button>') +
+  '</div>' +
+  '<p class="hint" style="margin-top:.5rem">These pieces are what the season registration wizard picks from when it builds a jersey package — add each piece once here, use it in every season.</p>';
+
+  html += '<div class="gear-grid">' + items.map(function(it){
+    var photo = it.img
+      ? '<div class="gear-photo"><img src="' + it.img + '" alt="' + esc(it.name) + '"></div>'
+      : '<div class="gear-photo" style="background:' + it.bg + '">' + it.emoji + '</div>';
+    var actions = deleteId === it.id
+      ? '<span class="hint">Remove from the library?</span>' +
+        '<button class="link-red" onclick="deleteItem(' + it.id + ')">Delete</button>' +
+        '<button class="link-muted" onclick="deleteId=null;render()">Keep</button>'
+      : '<button class="link-red" onclick="openForm(' + it.id + ')">Edit</button>' +
+        '<button class="link-muted" onclick="deleteId=' + it.id + ';formOpen=false;render()">Delete</button>';
+    return '<div class="gear-card">' + photo +
+      '<div class="gear-body">' +
+        '<div class="gear-name">' + esc(it.name) + '</div>' +
+        (it.price ? '<div class="gear-price">Extra: $' + esc(it.price) + '</div>' : '') +
+        '<div class="size-chips">' + it.sizes.map(function(s){ return '<span class="size-chip">' + esc(s) + '</span>'; }).join('') + '</div>' +
+        '<div class="gear-actions">' + actions + '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('') + '</div>';
+
+  document.getElementById('content').innerHTML = html;
+}
+render();
+</script>
+</body>
+</html>
