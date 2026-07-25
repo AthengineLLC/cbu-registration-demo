@@ -402,6 +402,11 @@ input[disabled]{background:var(--row-alt);color:var(--muted)}
 .rot-btn{background:#fff;border:1.5px solid #c9cfdd;border-radius:6px;width:26px;height:26px;cursor:pointer;color:var(--ink);font-size:.78rem;line-height:1;padding:0}
 .rot-btn:hover{border-color:var(--ink)}
 .rot-btn[disabled]{opacity:.3;cursor:default;pointer-events:none}
+.score-input{
+  width:100px;padding:.65rem .8rem;border:1.5px solid #c9cfdd;border-radius:8px;
+  font-family:'Inter',Arial,sans-serif;font-size:.9rem;color:var(--ink);background:#fff;
+}
+.score-input:focus{outline:2px solid var(--powder);border-color:var(--powder)}
 @media (max-width:760px){
   .rot-grid{grid-template-columns:1fr}
   .game-side{flex-direction:row;width:100%;margin-left:0;align-items:center}
@@ -2473,21 +2478,22 @@ function renderGames(s, t, e){
     <div class="game-day">${fmtGameDay(gr.date)}</div>
     ${gr.games.map(g => {
       const rot = (g.rotation || []).map(pid => esc(rosterName(t, pid))).filter(Boolean);
-      const res = g.result ? `<span class="game-result${g.result[0]==='L'?' loss':(g.result[0]==='T'?' tie':'')}">${esc(g.result)}</span>` : '';
+      const resStr = gameResult(g);
+      const res = resStr ? `<span class="game-result${resStr[0]==='L'?' loss':(resStr[0]==='T'?' tie':'')}">${esc(resStr)}</span>` : '';
       return `
       <div class="game-row">
         <div class="game-time">${esc(g.time)}</div>
         <div class="game-vs">${g.at ? '@' : 'vs.'}</div>
         <div class="game-main">
           <div class="game-opp">${esc(g.opp)}</div>
-          <div class="game-venue">${esc(g.venue)}</div>
+          <div class="game-venue">${esc(gameVenueLine(g))}</div>
           <div class="game-rot${rot.length ? '' : ' unset'}">
             ${rot.length ? '<span class="rot-label">Probable Pitchers</span>' + rot.join(' · ') : 'No pitchers set'}
           </div>
+          ${g.jersey ? `<div style="margin-top:.4rem"><span class="pill pill-navy">${esc(g.jersey)}</span></div>` : ''}
         </div>
         <div class="game-side">
           ${res}
-          ${g.jersey ? `<span class="pill pill-navy">${esc(g.jersey)}</span>` : ''}
           ${gameEditorId === g.id
             ? `<button class="link-muted" onclick="closeGameEditor()">Close</button>`
             : `<button class="link-red" onclick="openGameEditor(${g.id})">${rot.length || g.jersey ? 'Edit Game Details' : 'Set Rotation'}</button>`}
@@ -2517,11 +2523,30 @@ function renderGameEditor(t, g, jerseys){
       <button class="rot-btn" ${i === rot.length - 1 ? 'disabled' : ''} onclick="movePitcher(${g.id},${i},1)" aria-label="Move down">&#9660;</button>
       <button class="rot-btn" onclick="togglePitcher(${g.id},${pid})" aria-label="Remove">&#10005;</button>
     </li>`).join('');
+  const resStr = gameResult(g);
   return `
   <div class="rot-editor">
     <div class="rot-editor-head">
       <span class="rot-editor-title">Game Details · ${g.at ? '@' : 'vs.'} ${esc(g.opp)}</span>
       <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="closeGameEditor()">Done</button>
+    </div>
+    <div class="form-grid" style="margin-top:.9rem">
+      <div><label class="field-label">Opponent</label><input type="text" value="${esc(g.opp)}" onchange="setGameField(${g.id},'opp',this.value)"></div>
+      <div><label class="field-label">Start Time</label><input type="text" value="${esc(g.time)}" placeholder="e.g. 9:00 AM" onchange="setGameField(${g.id},'time',this.value)"></div>
+      <div><label class="field-label">Field Complex</label><input type="text" value="${esc(g.complex)}" placeholder="e.g. East Cobb Complex" onchange="setGameField(${g.id},'complex',this.value)"></div>
+      <div><label class="field-label">Field Number or Name</label><input type="text" value="${esc(g.field)}" placeholder="e.g. Field 2 or Foley Field" onchange="setGameField(${g.id},'field',this.value)"></div>
+      <div><label class="field-label">City</label><input type="text" value="${esc(g.city)}" onchange="setGameField(${g.id},'city',this.value)"></div>
+      <div><label class="field-label">State</label><input type="text" value="${esc(g.state)}" onchange="setGameField(${g.id},'state',this.value)"></div>
+      <div class="full">
+        <label class="field-label">Field Address</label>
+        <input type="text" value="${esc(g.address)}" placeholder="Street, city, state, zip" onchange="setGameField(${g.id},'address',this.value)" style="max-width:100%">
+        <p class="hint" style="margin-top:.35rem">Not shown on this page — it powers the map link on the parent-facing schedule.</p>
+      </div>
+    </div>
+    <div style="display:flex;align-items:flex-end;gap:1rem;flex-wrap:wrap;margin-top:1rem">
+      <div><label class="field-label">Final Score — CBU</label><input class="score-input" type="number" min="0" value="${g.us == null ? '' : g.us}" onchange="setGameScore(${g.id},'us',this.value)"></div>
+      <div><label class="field-label">Opponent</label><input class="score-input" type="number" min="0" value="${g.them == null ? '' : g.them}" onchange="setGameScore(${g.id},'them',this.value)"></div>
+      ${resStr ? `<span class="game-result${resStr[0]==='L'?' loss':(resStr[0]==='T'?' tie':'')}" style="margin-bottom:.5rem">${esc(resStr)}</span>` : '<p class="hint" style="margin-bottom:.6rem">Leave blank until the game is played — the result pill fills in from the score.</p>'}
     </div>
     <div class="rot-grid">
       <div>
@@ -2568,16 +2593,19 @@ function setGameJersey(gid, val){
   g.jersey = val;
   render();
 }
-/* Sample schedules per tournament (PG WWBA mirrors the current site). Rows:
-   [date, time, at?, opponent, venue, result] */
+/* Sample schedules per tournament (PG WWBA mirrors the current site). Games
+   carry structured location data: complex, field number or name, city, state,
+   and the full address. The address never shows on this page - it is stored so
+   the parent-facing schedule can map every game. Big tournaments spread across
+   multiple cities in the same state, so city lives on the game, not the event. */
 const SAMPLE_GAME_SETS = {
   'PG WWBA': [
-    ['2026-06-23','10:20 AM',false,"Ghost Nation '27",'East Cobb Complex · Field 2 · Marietta, GA','W 8-2'],
-    ['2026-06-24','9:00 AM',true,'Southside Crew','Georgia State University · Stadium · Atlanta, GA','W 4-0'],
-    ['2026-06-25','11:20 AM',true,'Ninth Inning Prime National 17U','Foley Field · University of Georgia · Athens, GA','W 14-6'],
-    ['2026-06-26','3:00 PM',false,'Marucci Elite Texas Massengale','East Cobb Complex · Field 3 · Marietta, GA','W 5-2'],
-    ['2026-06-27','11:20 AM',false,'Elite Baseball Training West - 17u Halverson','Pickens County High School · Jasper, GA','W 10-3'],
-    ['2026-06-28','8:00 AM',false,'5 Star National West Coast 2027','LakePoint Sports · Field 5 · Emerson, GA','W 11-0']
+    {date:'2026-06-23',time:'10:20 AM',at:false,opp:"Ghost Nation '27",complex:'East Cobb Complex',field:'Field 2',city:'Marietta',state:'GA',address:'825 Fontaine Rd SW, Marietta, GA 30060',us:8,them:2},
+    {date:'2026-06-24',time:'9:00 AM',at:true,opp:'Southside Crew',complex:'Georgia State University',field:'Stadium',city:'Atlanta',state:'GA',address:'755 Hank Aaron Dr SE, Atlanta, GA 30315',us:4,them:0},
+    {date:'2026-06-25',time:'11:20 AM',at:true,opp:'Ninth Inning Prime National 17U',complex:'University of Georgia',field:'Foley Field',city:'Athens',state:'GA',address:'1101 E Campus Rd, Athens, GA 30602',us:14,them:6},
+    {date:'2026-06-26',time:'3:00 PM',at:false,opp:'Marucci Elite Texas Massengale',complex:'East Cobb Complex',field:'Field 3',city:'Marietta',state:'GA',address:'825 Fontaine Rd SW, Marietta, GA 30060',us:5,them:2},
+    {date:'2026-06-27',time:'11:20 AM',at:false,opp:'Elite Baseball Training West - 17u Halverson',complex:'Pickens County High School',field:'',city:'Jasper',state:'GA',address:'500 Dragon Dr, Jasper, GA 30143',us:10,them:3},
+    {date:'2026-06-28',time:'8:00 AM',at:false,opp:'5 Star National West Coast 2027',complex:'LakePoint Sports',field:'Field 5',city:'Emerson',state:'GA',address:'261 Stars Way, Emerson, GA 30137',us:11,them:0}
   ]
 };
 const GENERIC_OPPONENTS = ['Scorpions Baseball 2027','FTB Rockets','Canes National 17u','Team Elite Prime','643 DP Cougars','Stars Baseball National'];
@@ -2589,13 +2617,39 @@ function genericGames(e){
   for (let i = 0; i < 4; i++){
     const d = new Date(+p[0], +p[1]-1, +p[2] + i);
     const iso = d.getFullYear() + '-' + ('0' + (d.getMonth()+1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
-    const place = (e.city ? e.city + (e.state ? ', ' + e.state : '') : 'TBD');
-    rows.push([iso, GENERIC_TIMES[i % 4], i % 3 === 1, GENERIC_OPPONENTS[(i * 2 + (e.id % 3)) % 6], 'Tournament Complex · Field ' + (i + 1) + ' · ' + place, null]);
+    rows.push({ date: iso, time: GENERIC_TIMES[i % 4], at: i % 3 === 1,
+      opp: GENERIC_OPPONENTS[(i * 2 + (e.id % 3)) % 6],
+      complex: 'Tournament Complex', field: 'Field ' + (i + 1),
+      city: e.city || '', state: e.state || '',
+      address: e.city ? '123 Tournament Way, ' + e.city + (e.state ? ', ' + e.state : '') : '',
+      us: null, them: null });
   }
   return rows;
 }
 function buildGames(rows){
-  return rows.map(r => ({ id: nid(), date: r[0], time: r[1], at: r[2], opp: r[3], venue: r[4], result: r[5] || null, jersey: null, rotation: [] }));
+  return rows.map(r => Object.assign({ id: nid(), us: null, them: null, jersey: null, rotation: [] }, r));
+}
+function gameVenueLine(g){
+  const place = g.city ? g.city + (g.state ? ', ' + g.state : '') : (g.state || '');
+  return [g.complex, g.field, place].filter(Boolean).join(' · ');
+}
+/* Result is derived from the entered score, never stored as its own fact */
+function gameResult(g){
+  if (g.us == null || g.them == null) return null;
+  const a = +g.us, b = +g.them;
+  return (a > b ? 'W ' : a < b ? 'L ' : 'T ') + a + '-' + b;
+}
+function setGameField(gid, key, val){
+  const g = findGame(gid);
+  if (!g) return;
+  g[key] = val.trim();
+  render();
+}
+function setGameScore(gid, key, val){
+  const g = findGame(gid);
+  if (!g) return;
+  g[key] = val === '' ? null : Math.max(0, Math.floor(+val) || 0);
+  render();
 }
 function importSchedule(evId){
   const t = curTeam();
@@ -3210,10 +3264,10 @@ function demoLoadSample(){
      finished state. The other events wait on Import Schedule. */
   const pbc = menendez.events[0];
   pbc.games = buildGames([
-    ['2026-06-05','10:00 AM',false,'Palm Beach Select 2027','Santaluces Athletic Complex · Field 1 · Lantana, FL','W 8-2'],
-    ['2026-06-06','12:30 PM',true,'South Florida Bandits','The Ballpark of the Palm Beaches · West Palm Beach, FL','L 3-5'],
-    ['2026-06-07','9:30 AM',false,'Treasure Coast Titans','Santaluces Athletic Complex · Field 3 · Lantana, FL','W 10-3'],
-    ['2026-06-08','11:00 AM',false,'Miami Prospects National','The Ballpark of the Palm Beaches · West Palm Beach, FL','W 6-1']
+    {date:'2026-06-05',time:'10:00 AM',at:false,opp:'Palm Beach Select 2027',complex:'Santaluces Athletic Complex',field:'Field 1',city:'Lantana',state:'FL',address:'6250 Lawrence Rd, Lantana, FL 33462',us:8,them:2},
+    {date:'2026-06-06',time:'12:30 PM',at:true,opp:'South Florida Bandits',complex:'The Ballpark of the Palm Beaches',field:'',city:'West Palm Beach',state:'FL',address:'5444 Haverhill Rd, West Palm Beach, FL 33407',us:3,them:5},
+    {date:'2026-06-07',time:'9:30 AM',at:false,opp:'Treasure Coast Titans',complex:'Santaluces Athletic Complex',field:'Field 3',city:'Lantana',state:'FL',address:'6250 Lawrence Rd, Lantana, FL 33462',us:10,them:3},
+    {date:'2026-06-08',time:'11:00 AM',at:false,opp:'Miami Prospects National',complex:'The Ballpark of the Palm Beaches',field:'',city:'West Palm Beach',state:'FL',address:'5444 Haverhill Rd, West Palm Beach, FL 33407',us:6,them:1}
   ]);
   const mrot = names => names.map(n => { const p = menendez.roster.find(x => x.name === n); return p ? p.id : null; }).filter(Boolean);
   pbc.games[0].rotation = mrot(['Bryan Eberly','Ryder Fogler']);
