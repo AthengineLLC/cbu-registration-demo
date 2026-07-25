@@ -2698,7 +2698,7 @@ function startSeasonWizard(){
     offlineOn:true, offlineHow:'',
     errs:{},
     waivers:null, waiverOpen:{}, addingWaiver:false,
-    pkg:{ offer:true, name:'', price:'', allowSecond:true, deadline:'', items:[], addons:[], addingItem:false, addingAddon:false },
+    pkg:{ offer:true, name:'', price:'', allowSecond:true, deadline:'', ship:false, shipCost:'', items:[], addons:[], addingItem:false, addingAddon:false },
     postMessage:'',
     isEdit:false, editIdx:null };
   setAccent('hs');
@@ -2721,6 +2721,7 @@ function editSeasonRegistration(i){
   swiz.waiverOpen = {};
   swiz.pkg.addingItem = false;
   swiz.pkg.addingAddon = false;
+  if(swiz.pkg.ship === undefined){ swiz.pkg.ship = false; swiz.pkg.shipCost = ''; }
   swiz.errs = {};
   if(!swiz.plan.mode) swiz.plan.mode = 'monthly';
   if(!swiz.plan.customDates) swiz.plan.customDates = [];
@@ -2817,6 +2818,7 @@ function validateSStep(){
           if(pkgSizes(swiz.pkg.items[i]).length === 0){ toast('"'+swiz.pkg.items[i].name+'" needs size options'); return false; }
         }
         if(!swiz.pkg.deadline){ toast('Set the sizing deadline — it drives the parent-side reminders'); return false; }
+        if(swiz.pkg.ship && (!swiz.pkg.shipCost || isNaN(parseFloat(swiz.pkg.shipCost)))){ toast('Enter the flat shipping cost, or turn shipping off'); return false; }
       }
       return true;
   }
@@ -3150,6 +3152,22 @@ function sStepPkg(){
     '</div>' +
   '</div>';
 
+  /* Shipping decision: hand out at practice, or ship to each player. Shipping
+     turns on the address step in the family flow and adds the flat fee. */
+  html += '<div class="waiver-item" style="padding:1rem 1.1rem;margin-top:1.2rem">' +
+    '<div style="display:flex;align-items:center;gap:.8rem">' +
+      '<button class="toggle'+(pk.ship?' on':'')+'" onclick="swiz.pkg.ship=!swiz.pkg.ship;renderSStepPanel()" aria-label="Ship jerseys to players"></button>' +
+      '<div><div class="cell-strong">Ship Jerseys Straight To Players</div>' +
+      '<div class="cell-sub">On: families enter a shipping address during registration and the flat shipping cost below is charged with their gear. Off: jerseys are handed out at practice, no address collected.</div></div>' +
+    '</div>' +
+    (pk.ship ?
+      '<div style="margin-top:.9rem;padding-left:3.1rem">' +
+        '<label class="field-label" for="spk-ship">Flat Shipping Cost ($) — per registration</label>' +
+        '<input type="text" id="spk-ship" inputmode="decimal" placeholder="12.50" value="'+escAttr(pk.shipCost)+'" oninput="swiz.pkg.shipCost=this.value" style="max-width:130px">' +
+        '<div class="cell-sub" style="margin-top:.35rem">One flat fee no matter how much gear is in the order. It is itemized on the family\x27s order summary.</div>' +
+      '</div>' : '') +
+  '</div>';
+
   html += '<div class="preview-section" style="margin-top:1.2rem"><div class="preview-section-head">What\x27s In The Package</div>';
   if(pk.items.length === 0){
     html += '<div class="preview-field" style="justify-content:center;color:var(--muted)">No items yet — add each piece families will size, or load the CBU standard package above.</div>';
@@ -3310,7 +3328,8 @@ function sStepReview(){
     '<dt>Jersey Package</dt><dd>'+(pk.offer
       ? '<span class="cell-strong">'+esc(pk.name)+'</span> — $'+esc(pk.price)+' · '+pk.items.length+' items' +
         (pk.allowSecond ? ' · second package allowed' : '') +
-        '<div class="cell-sub">Sizing deadline '+fmtDate(pk.deadline)+(pk.addons.length? ' · Add-ons: '+pk.addons.map(function(a){return esc(a.name)+' ($'+esc(a.price)+')';}).join(', ') : '')+'</div>'
+        (pk.ship ? ' · ships to players ($'+esc(pk.shipCost)+' flat shipping)' : ' · handed out at practice') +
+        '<div class="cell-sub">Sizing deadline '+fmtDate(pk.deadline)+(pk.addons.length? ' · Add-ons: '+pk.addons.map(function(a){return esc(a.name)+' ($'+esc(a.price)+')';}).join(', ') : '')+(pk.ship ? ' · Families enter a shipping address before payment' : '')+'</div>'
       : '<span style="color:var(--muted)">Not offered</span>')+'</dd>' +
     '<dt>Post-Reg. Message</dt><dd>'+(swiz.postMessage.trim()
       ? '<span style="font-size:.85rem"><strong>A Message From [Team Name]</strong> — '+esc(swiz.postMessage.trim())+'</span><div class="cell-sub">Title is automatic per team</div>'
@@ -3503,6 +3522,7 @@ registrations.push({
     errs:{},
     waivers:[], waiverOpen:{}, addingWaiver:false,
     pkg:{ offer:true, name:STANDARD_PKG.name, price:STANDARD_PKG.price, allowSecond:true, deadline:'2026-08-01',
+      ship:true, shipCost:'12.50',
       items:JSON.parse(JSON.stringify(STANDARD_PKG.items)), addons:JSON.parse(JSON.stringify(STANDARD_PKG.addons)),
       addingItem:false, addingAddon:false },
     postMessage:'Welcome to the team! Our first team workout is Saturday, August 8 at 9:00 AM at the CBU training facility. Your coaching staff will reach out this week with the full summer calendar. #RedHatNation',

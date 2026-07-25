@@ -12,14 +12,17 @@
   Flow: Invite summary -> Player Info -> Waivers -> Jersey
   Package (with extra-package toggle) -> Jersey Sizing (sizes
   + optional extra pieces; skippable with a do-it-now nudge)
-  -> Payment (full / plan / offline) -> Confirmation.
+  -> Payment (shipping address first when the admin ships gear,
+  then full / plan / offline) -> Confirmation.
   Sizing sits BEFORE payment because sizing can add purchases.
   Installment rule: the plan is a set DOWN PAYMENT + monthly
-  payments, and ALL apparel purchases are charged with the
-  down payment — never spread across installments.
-  Jersey package contents, per-item sizes, and per-item prices
-  come from the admin's jersey package setup — mocked in
-  PACKAGE below.
+  payments, and ALL apparel purchases (plus shipping) are
+  charged with the down payment — never spread across
+  installments.
+  Jersey package contents, per-item sizes, per-item prices,
+  and the ship-to-players decision + flat shipping cost come
+  from the admin's season registration wizard — mocked in
+  PACKAGE and SHIPPING below.
   ============================================================
 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -281,6 +284,25 @@ input.err{border-color:var(--red);background:#fff7f8}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
 /* ============ MOBILE ============ */
+/* NEW COMPONENT: addr-suggest — smart street-address search. As the family
+   types their street address, matching addresses drop down; tapping one
+   fills street, city, state, and zip in one shot. Mocked suggestions here;
+   the live app feeds this from an address service like Google Places. */
+.addr-wrap{position:relative}
+.addr-suggest{
+  position:absolute;left:0;right:0;top:100%;margin-top:4px;z-index:40;
+  background:#fff;border:1.5px solid var(--line);border-radius:10px;
+  box-shadow:0 14px 30px rgba(3,7,20,.18);overflow:hidden;
+}
+.addr-opt{
+  display:block;width:100%;text-align:left;background:none;border:none;cursor:pointer;
+  padding:.6rem .85rem;font-family:'Inter',Arial,sans-serif;font-size:.86rem;font-weight:600;color:var(--ink);
+  border-bottom:1px solid var(--line);
+}
+.addr-opt:hover{background:var(--row-alt)}
+.addr-opt .addr-sub{display:block;font-size:.72rem;font-weight:400;color:var(--muted);margin-top:.12rem}
+.addr-hint{padding:.45rem .85rem;font-size:.68rem;color:var(--muted);background:var(--row-alt)}
+
 @media (max-width:760px){
   .page{padding:1.6rem 1rem 4rem}
   .page-title{font-size:1.9rem}
@@ -591,7 +613,45 @@ input.err{border-color:var(--red);background:#fff7f8}
   <!-- ================= STEP 5 — PAYMENT ================= -->
   <div class="step-panel" id="panel5">
     <div class="card card-pad">
-      <div class="section-head" style="margin-top:0">Order Summary</div>
+
+      <!-- Shipping address — shown only when the admin turned on jersey
+           shipping for this registration AND the family is buying gear.
+           Uses the addr-suggest smart address search (see CSS). -->
+      <div id="shipBlock" style="display:none">
+        <div class="section-head" style="margin-top:0">Shipping Address</div>
+        <div class="section-body">
+          <p class="note-line" style="margin-bottom:1rem" id="shipIntro"></p>
+          <div class="form-grid">
+            <div class="full addr-wrap">
+              <label class="field-label">Street Address *</label>
+              <input type="text" id="shipStreet" placeholder="Start typing — e.g. 4302 Gunn Hwy" autocomplete="off" oninput="addrType()" onblur="addrBlur()">
+              <div class="addr-suggest" id="addrSuggest" style="display:none"></div>
+              <div class="err-msg" id="err-shipStreet">Street address is required.</div>
+            </div>
+            <div>
+              <label class="field-label">Apt / Unit</label>
+              <input type="text" id="shipApt" placeholder="Optional">
+            </div>
+            <div>
+              <label class="field-label">City *</label>
+              <input type="text" id="shipCity">
+              <div class="err-msg" id="err-shipCity">City is required.</div>
+            </div>
+            <div>
+              <label class="field-label">State *</label>
+              <input type="text" id="shipState" placeholder="e.g. FL">
+              <div class="err-msg" id="err-shipState">State is required.</div>
+            </div>
+            <div>
+              <label class="field-label">ZIP *</label>
+              <input type="text" id="shipZip" inputmode="numeric">
+              <div class="err-msg" id="err-shipZip">ZIP is required.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-head" id="orderSummaryHead" style="margin-top:0">Order Summary</div>
       <div class="section-body" id="orderSummary"><!-- filled by JS --></div>
 
       <div class="section-head">How Would You Like To Pay?</div>
@@ -775,6 +835,24 @@ var PACKAGE = {
   ]
 };
 
+/* Set by the admin in the season registration wizard: ship gear straight to
+   players (collect a shipping address before payment, charge the flat fee)
+   or hand it out at practice (no address, no fee). */
+var SHIPPING = { on: true, cost: 12.50 };
+
+/* Mock street directory behind the smart address search. In the live app
+   this wires to a real address service (e.g. Google Places autocomplete);
+   the interaction being designed is type, see matches, tap to fill. */
+var ADDR_STREETS = [
+  { street:'Gunn Hwy',           city:'Tampa',           state:'FL', zip:'33624' },
+  { street:'W Kennedy Blvd',     city:'Tampa',           state:'FL', zip:'33609' },
+  { street:'N Dale Mabry Hwy',   city:'Tampa',           state:'FL', zip:'33618' },
+  { street:'Bayshore Blvd',      city:'Tampa',           state:'FL', zip:'33606' },
+  { street:'Bruce B Downs Blvd', city:'Wesley Chapel',   state:'FL', zip:'33544' },
+  { street:'Starkey Blvd',       city:'New Port Richey', state:'FL', zip:'34655' },
+  { street:'E Fowler Ave',       city:'Temple Terrace',  state:'FL', zip:'33617' }
+];
+
 /* ================= STATE ================= */
 var state = {
   step: 1,
@@ -808,8 +886,15 @@ function apparelTotal(){
        + extrasTotal()
        + (state.practice ? 60 : 0);
 }
+/* Shipping applies only when the admin turned it on AND there is gear to ship */
+function shippingApplies(){
+  return SHIPPING.on && apparelTotal() > 0;
+}
+function shipTotal(){
+  return shippingApplies() ? SHIPPING.cost : 0;
+}
 function grandTotal(){
-  return SEASON.fee + apparelTotal();
+  return SEASON.fee + apparelTotal() + shipTotal();
 }
 
 /* ================= TOAST ================= */
@@ -1201,6 +1286,19 @@ function backFromPayment(){
   }
 }
 function renderPayment(){
+  /* Shipping address block: only when the admin ships gear and gear was bought */
+  var shipBlock = document.getElementById('shipBlock');
+  if(shippingApplies()){
+    document.getElementById('shipIntro').innerHTML =
+      'This season\'s gear ships straight to your player — no pickup day. The flat ' + money(SHIPPING.cost) +
+      ' shipping fee is in your total below. <strong>Start typing the street address and tap the match</strong> — city, state, and zip fill themselves in.';
+    shipBlock.style.display = 'block';
+    document.getElementById('orderSummaryHead').style.marginTop = '';
+  } else {
+    shipBlock.style.display = 'none';
+    document.getElementById('orderSummaryHead').style.marginTop = '0';
+  }
+
   var rows = '';
   rows += '<div class="sum-row"><span class="sr-l">Season Fee — ' + SEASON.team + ' (' + SEASON.ticket + ')</span><span class="sr-r">' + money(SEASON.fee) + '</span></div>';
   if(state.jersey) rows += '<div class="sum-row"><span class="sr-l">' + PACKAGE.name + '</span><span class="sr-r">' + money(PACKAGE.price) + '</span></div>';
@@ -1210,6 +1308,7 @@ function renderPayment(){
     rows += '<div class="sum-row"><span class="sr-l">Extra — ' + item.name + ' (' + state.extras[id] + ')</span><span class="sr-r">' + money(item.price) + '</span></div>';
   });
   if(state.practice) rows += '<div class="sum-row"><span class="sr-l">Practice Pack</span><span class="sr-r">' + money(60) + '</span></div>';
+  if(shippingApplies()) rows += '<div class="sum-row"><span class="sr-l">Gear Shipping — ships to your door</span><span class="sr-r">' + money(SHIPPING.cost) + '</span></div>';
   rows += '<div class="sum-row total"><span class="sr-l">Season Total</span><span class="sr-r">' + money(grandTotal()) + '</span></div>';
   document.getElementById('orderSummary').innerHTML = rows;
 
@@ -1221,8 +1320,8 @@ function renderPayment(){
   refreshPayUI();
 }
 function downToday(){
-  /* Down payment + ALL apparel purchases are due today on the plan */
-  return SEASON.plan.downPayment + apparelTotal();
+  /* Down payment + ALL apparel purchases (and shipping) are due today on the plan */
+  return SEASON.plan.downPayment + apparelTotal() + shipTotal();
 }
 function perInstallment(){
   return Math.round(((SEASON.fee - SEASON.plan.downPayment) / SEASON.plan.dates.length) * 100) / 100;
@@ -1248,7 +1347,7 @@ function refreshPayUI(){
   } else if(state.payType === 'plan'){
     document.getElementById('payPlan').classList.add('selected');
     var s = '';
-    s += '<div class="sched-row"><span class="sched-when">Down Payment — Today' + (apparelTotal() ? ' (' + money(SEASON.plan.downPayment) + ' down + ' + money(apparelTotal()) + ' apparel)' : '') + '</span><span class="sched-amt">' + money(downToday()) + '</span></div>';
+    s += '<div class="sched-row"><span class="sched-when">Down Payment — Today' + (apparelTotal() ? ' (' + money(SEASON.plan.downPayment) + ' down + ' + money(apparelTotal() + shipTotal()) + (shipTotal() ? ' gear & shipping' : ' apparel') + ')' : '') + '</span><span class="sched-amt">' + money(downToday()) + '</span></div>';
     SEASON.plan.dates.forEach(function(d, i){
       s += '<div class="sched-row"><span class="sched-when">Payment ' + (i + 2) + ' — ' + d + '</span><span class="sched-amt">' + money(perInstallment()) + '</span></div>';
     });
@@ -1272,7 +1371,51 @@ function refreshPayUI(){
     document.getElementById('offlineHowBox').style.display = 'none';
   }
 }
+/* ---- Smart address search (addr-suggest) ----
+   Typing a house number + street surfaces matches from the street directory;
+   picking one fills street, city, state, and zip in one tap. onmousedown is
+   used so the pick lands before the input's blur hides the dropdown. */
+function addrType(){
+  var el = document.getElementById('shipStreet');
+  var box = document.getElementById('addrSuggest');
+  var m = el.value.trim().match(/^(\d+)\s*(.*)$/);
+  if(!m){ box.style.display = 'none'; return; }
+  var num = m[1], rest = m[2].toLowerCase();
+  var hits = ADDR_STREETS.filter(function(s){
+    return !rest || s.street.toLowerCase().indexOf(rest) > -1 || s.city.toLowerCase().indexOf(rest) > -1;
+  }).slice(0, 4);
+  if(!hits.length){ box.style.display = 'none'; return; }
+  box._hits = hits;
+  box._num = num;
+  box.innerHTML = hits.map(function(s, i){
+    return '<button type="button" class="addr-opt" onmousedown="addrPick(' + i + ')">' + num + ' ' + s.street +
+      '<span class="addr-sub">' + s.city + ', ' + s.state + ' ' + s.zip + '</span></button>';
+  }).join('') + '<div class="addr-hint">Tap your address and everything below fills itself in.</div>';
+  box.style.display = 'block';
+}
+function addrPick(i){
+  var box = document.getElementById('addrSuggest');
+  var s = box._hits[i];
+  document.getElementById('shipStreet').value = box._num + ' ' + s.street;
+  document.getElementById('shipCity').value = s.city;
+  document.getElementById('shipState').value = s.state;
+  document.getElementById('shipZip').value = s.zip;
+  ['shipStreet','shipCity','shipState','shipZip'].forEach(function(id){ markField(id, false); });
+  box.style.display = 'none';
+  toast('Address filled in — add your apt or unit if you have one.');
+}
+function addrBlur(){
+  setTimeout(function(){ document.getElementById('addrSuggest').style.display = 'none'; }, 150);
+}
+
 function submitStep5(){
+  if(shippingApplies()){
+    var okShip = requireFilled(['shipStreet','shipCity','shipState','shipZip']);
+    if(!okShip){
+      toast('Please complete the shipping address so your gear knows where to go.');
+      return;
+    }
+  }
   if(!state.payType){
     document.getElementById('err-paytype').classList.add('show');
     toast('Choose how you would like to pay.');
@@ -1327,6 +1470,15 @@ function renderConfirmation(){
     rows += '<div class="sum-row"><span class="sr-l">Extra — ' + item.name + '</span><span class="sr-r">' + state.extras[id] + '</span></div>';
   });
   if(state.practice) rows += '<div class="sum-row"><span class="sr-l">Practice Pack</span><span class="sr-r">Added</span></div>';
+  if(shippingApplies()){
+    var shipApt = document.getElementById('shipApt').value.trim();
+    var shipAddr = document.getElementById('shipStreet').value.trim() +
+      (shipApt ? ', ' + shipApt : '') + ', ' +
+      document.getElementById('shipCity').value.trim() + ', ' +
+      document.getElementById('shipState').value.trim() + ' ' +
+      document.getElementById('shipZip').value.trim();
+    rows += '<div class="sum-row"><span class="sr-l">Gear Ships To</span><span class="sr-r" style="white-space:normal;text-align:right">' + shipAddr + '</span></div>';
+  }
   rows += '<div class="sum-row"><span class="sr-l">Payment</span><span class="sr-r" style="white-space:normal;text-align:right">' + payLabel + '</span></div>';
   document.getElementById('confirmSummary').innerHTML = rows;
 
