@@ -16,8 +16,10 @@ show the emoji placeholder until the file exists.
 | `white-pant.png` | White game pant |
 | `sock.png` | Game socks |
 | `hat.png` | Game hat |
-| `dryfit-navy.png` | Dry fit - navy |
-| `dryfit-powder.png` | Dry fit - powder |
+| `dryfit-navy.png` | Dry fit - navy (extra gear library) |
+| `dryfit-powder.png` | Dry fit - powder (extra gear library) |
+| `backpack.png` | CBU player backpack (extra gear library) - not saved yet, emoji placeholder shows |
+| `duffel.png` | CBU travel duffel (extra gear library) - not saved yet, emoji placeholder shows |
 
 JPGs work too - just keep the same base name and change the extension in
 gear-library.html, or save as PNG and nothing needs to change.

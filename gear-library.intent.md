@@ -1,4 +1,11 @@
-# Screen: Jersey Packages (gear library)
+# Screen: Jersey Packages (gear libraries)
+
+Two libraries on tabs: the JERSEY PACKAGE LIBRARY (pieces that build the
+package - tagged to programs) and the EXTRA GEAR LIBRARY (optional merch
+outside the package: dry fits, backpacks, bags - no program tags, empty
+sizes = one-size). The wizard's Jersey Package items pick from the first;
+its Season Add-Ons pick from (or one-click load) the second. Both charge
+with the family's first payment, never spread across a plan.
 
 - Who uses it: an ORGANIZATION-level admin (see ACCOUNT-HIERARCHY.md), on
   desktop, setting up the org's gear. This is the "host jersey account."

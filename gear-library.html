@@ -154,6 +154,14 @@ input:focus{outline:none;border-color:var(--powder-dark)}
   font-family:'Inter',Arial,sans-serif;font-weight:600;
 }
 .team-check.on{background:var(--navy-deep);color:#fff;border-color:var(--navy-deep)}
+/* the two libraries live on tabs: jersey package pieces vs extra gear */
+.lib-tabs{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.2rem}
+.lib-tab{
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.08em;
+  font-size:.72rem;font-weight:600;border:1.5px solid #c9cfdd;background:#fff;color:var(--ink);
+  border-radius:999px;padding:.45rem .95rem;cursor:pointer;
+}
+.lib-tab.active{background:var(--red);color:#fff;border-color:var(--red)}
 /* coverage warning: a team with no program tag would miss its jerseys */
 .warn-banner{background:#fdf3f4;border:1.5px solid #ecc7cc;border-radius:10px;padding:.8rem 1rem;margin-top:.9rem;font-size:.84rem;color:var(--ink);line-height:1.55}
 .warn-banner .warn-team{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;padding:.35rem 0}
@@ -239,9 +247,18 @@ var DEFAULT_ITEMS = [
   { name:'Powder Pinstripe Pant',   price:'45', emoji:'👖', bg:'linear-gradient(135deg,#6daed4,#4d8fb6)', photo:'img/gear/powder-pinstripe-pant.png',   sizes:RUN.slice(), tags:['Scout'] },
   { name:'White Pant',              price:'45', emoji:'👖', bg:'linear-gradient(135deg,#eef1f8,#c9cfdd)', photo:'img/gear/white-pant.jpg',              sizes:RUN.slice(), tags:[] },
   { name:'Game Socks',              price:'12', emoji:'🧦', bg:'linear-gradient(135deg,#d94b58,#b91e2d)', photo:'img/gear/sock.png',                    sizes:['S','M','L','XL'], tags:[] },
-  { name:'Game Hat',                price:'30', emoji:'🧢', bg:'linear-gradient(135deg,#b91e2d,#7a1420)', photo:'img/gear/hat.png',                     sizes:['XS','S/M','M/L','L/XL'], tags:[] },
-  { name:'Dry Fit — Navy',          price:'25', emoji:'👕', bg:'linear-gradient(135deg,#1b2749,#0e1730)', photo:'img/gear/dryfit-navy.png',             sizes:RUN.slice(), tags:[] },
-  { name:'Dry Fit — Powder',        price:'25', emoji:'👕', bg:'linear-gradient(135deg,#6daed4,#4d8fb6)', photo:'img/gear/dryfit-powder.png',           sizes:RUN.slice(), tags:[] }
+  { name:'Game Hat',                price:'30', emoji:'🧢', bg:'linear-gradient(135deg,#b91e2d,#7a1420)', photo:'img/gear/hat.png',                     sizes:['XS','S/M','M/L','L/XL'], tags:[] }
+];
+
+/* Extra gear: optional merch that is NOT part of a jersey package - dry
+   fits, backpacks, bags. The registration wizard's Season Add-Ons section
+   loads from this library. No program tags here; extra gear is for
+   everyone. Empty sizes = one-size (backpacks). */
+var DEFAULT_EXTRA = [
+  { name:'Dry Fit — Navy',      price:'25', emoji:'👕', bg:'linear-gradient(135deg,#1b2749,#0e1730)', photo:'img/gear/dryfit-navy.png',   sizes:RUN.slice(), tags:[] },
+  { name:'Dry Fit — Powder',    price:'25', emoji:'👕', bg:'linear-gradient(135deg,#6daed4,#4d8fb6)', photo:'img/gear/dryfit-powder.png', sizes:RUN.slice(), tags:[] },
+  { name:'CBU Player Backpack', price:'60', emoji:'🎒', bg:'linear-gradient(135deg,#141d3a,#0c1327)', photo:'img/gear/backpack.png',      sizes:[], tags:[] },
+  { name:'CBU Travel Duffel',   price:'50', emoji:'👜', bg:'linear-gradient(135deg,#b91e2d,#7a1420)', photo:'img/gear/duffel.png',        sizes:[], tags:[] }
 ];
 
 /* Program tags: created here at the org level, each naming which teams sit
@@ -288,6 +305,7 @@ function toggleUseTags(){
   render();
 }
 persist();   /* publish once at load, now that useTags is known */
+persistExtra();
 
 /* The library is the source of truth for the registration wizard: it is
    published to localStorage on every change, and admin.html's Jersey
@@ -308,6 +326,38 @@ function loadStored(){
 var items = (loadStored() || DEFAULT_ITEMS).map(function(o){
   return Object.assign({ img:null, photo:null, emoji:'👕', bg:'linear-gradient(135deg,#eef1f8,#c9cfdd)', tags:[] }, o, { id: nid() });
 });
+/* Extra gear list: same shape, its own storage key */
+var EXTRA_KEY = 'cbuExtraGear';
+function loadStoredExtra(){
+  try{
+    var raw = localStorage.getItem(EXTRA_KEY);
+    if(!raw) return null;
+    var arr = JSON.parse(raw);
+    if(!Array.isArray(arr) || !arr.length || !arr[0].name) return null;
+    return arr;
+  }catch(e){ return null; }
+}
+var extraItems = (loadStoredExtra() || DEFAULT_EXTRA).map(function(o){
+  return Object.assign({ img:null, photo:null, emoji:'🎒', bg:'linear-gradient(135deg,#eef1f8,#c9cfdd)', tags:[] }, o, { id: nid() });
+});
+var libTab = 'pkg';   /* 'pkg' = Jersey Package Library, 'extra' = Extra Gear Library */
+function curList(){ return libTab === 'extra' ? extraItems : items; }
+function setCurList(arr){ if(libTab === 'extra') extraItems = arr; else items = arr; }
+function persistExtra(){
+  try{
+    localStorage.setItem(EXTRA_KEY, JSON.stringify(extraItems.map(function(it){
+      var photo = (it.img && it.img.length < 200000) ? it.img : (it.photo || null);
+      return { name: it.name, price: it.price, emoji: it.emoji, bg: it.bg, photo: photo, sizes: it.sizes, tags: [] };
+    })));
+  }catch(e){}
+}
+function persistCur(){ if(libTab === 'extra') persistExtra(); else persist(); }
+function switchLibTab(t){
+  libTab = t;
+  formOpen = false; draft = null; editId = null; deleteId = null;
+  tagFormIdx = null; tagDraft = null; tagDeleteIdx = null; resetConfirm = false;
+  render();
+}
 function persist(){
   try{
     localStorage.setItem(STORE_KEY, JSON.stringify(items.map(function(it){
@@ -330,7 +380,7 @@ var resetConfirm = false;/* inline confirm for Reset Library */
 var tagFormIdx = null;   /* null = tag form closed, -1 = new tag, >=0 = editing that tag */
 var tagDraft = null;     /* {name, teams:[]} */
 function resetLibrary(){
-  try{ localStorage.removeItem(STORE_KEY); localStorage.removeItem(TAGS_KEY); }catch(e){}
+  try{ localStorage.removeItem(STORE_KEY); localStorage.removeItem(TAGS_KEY); localStorage.removeItem(EXTRA_KEY); }catch(e){}
   location.reload();
 }
 
@@ -433,7 +483,8 @@ function toast(msg){
   t._h = setTimeout(function(){ t.classList.remove('show'); }, 2400);
 }
 function findItem(id){
-  for(var i = 0; i < items.length; i++){ if(items[i].id === id) return items[i]; }
+  var list = curList();
+  for(var i = 0; i < list.length; i++){ if(list[i].id === id) return list[i]; }
   return null;
 }
 
@@ -520,30 +571,37 @@ function saveItem(){
   draft.name = document.getElementById('gearName').value.trim();
   draft.price = document.getElementById('gearPrice').value.trim();
   if(!draft.name){ toast('Give this piece a title.'); return; }
-  if(!draft.sizes.length){ toast('Add at least one size — load a preset or type your own.'); return; }
+  /* package pieces get sized by families; extra gear can be one-size (backpacks) */
+  if(libTab === 'pkg' && !draft.sizes.length){ toast('Add at least one size — load a preset or type your own.'); return; }
   if(editId != null){
     var it = findItem(editId);
     Object.assign(it, draft, { id: editId });
     toast(draft.name + ' updated.');
   } else {
     draft.id = nid();
-    items.push(draft);
-    toast(draft.name + ' added to the gear library.');
+    curList().push(draft);
+    toast(draft.name + ' added to the ' + (libTab === 'extra' ? 'extra gear' : 'jersey package') + ' library.');
   }
-  persist();
+  persistCur();
   closeForm();
 }
 function deleteItem(id){
   var it = findItem(id);
-  items = items.filter(function(x){ return x.id !== id; });
+  setCurList(curList().filter(function(x){ return x.id !== id; }));
   deleteId = null;
-  persist();
+  persistCur();
   toast((it ? it.name : 'Piece') + ' removed from the library.');
   render();
 }
 
 function render(){
   var html = '';
+
+  /* library tabs first - the two shops */
+  html += '<div class="lib-tabs">' +
+    '<button class="lib-tab' + (libTab === 'pkg' ? ' active' : '') + '" onclick="switchLibTab(\'pkg\')">Jersey Package Library</button>' +
+    '<button class="lib-tab' + (libTab === 'extra' ? ' active' : '') + '" onclick="switchLibTab(\'extra\')">Extra Gear Library</button>' +
+  '</div>';
 
   if(formOpen){
     html += '<div class="section-head red" style="margin-top:0">' + (editId != null ? 'Edit Gear Piece' : 'Add A Gear Piece') + '</div>' +
@@ -555,7 +613,7 @@ function render(){
         '<div style="margin-top:.9rem"><label class="field-label">Extra-Piece Price ($)</label>' +
         '<input type="text" id="gearPrice" inputmode="decimal" placeholder="55" value="' + esc(draft.price) + '" style="max-width:130px">' +
         '<p class="hint" style="margin-top:.35rem">What a spare costs when a family buys this piece on its own.</p></div>' +
-        (useTags ? '<div style="margin-top:1.1rem"><label class="field-label">Who Gets This Piece</label>' +
+        (useTags && libTab === 'pkg' ? '<div style="margin-top:1.1rem"><label class="field-label">Who Gets This Piece</label>' +
           '<div class="preset-row">' +
             '<button class="preset-btn ' + (!draft.tags.length ? 'on' : '') + '" onclick="draft.tags=[];render()">All Teams</button>' +
             tags.map(function(t){ return '<button class="preset-btn ' + (draft.tags.indexOf(t.name) > -1 ? 'on' : '') + '" onclick="toggleDraftTag(\'' + esc(t.name).replace(/'/g, "\\'") + '\')">' + esc(t.name) + '</button>'; }).join('') +
@@ -574,7 +632,7 @@ function render(){
                     '<button onclick="moveSize(' + i + ',1)" ' + (i === draft.sizes.length - 1 ? 'disabled' : '') + ' aria-label="Move size right">&#9654;</button>' +
                     '<button onclick="removeSize(' + i + ')" aria-label="Remove size">&#10005;</button></span>';
                 }).join('')
-              : '<span class="hint">No sizes yet — load a preset above, or add your own below.</span>') +
+              : '<span class="hint">' + (libTab === 'extra' ? 'No sizes - this piece sells as one-size, like a backpack. Add sizes only if it needs them.' : 'No sizes yet — load a preset above, or add your own below.') + '</span>') +
           '</div>' +
           '<p class="hint" style="margin-top:.4rem">Arrows reorder — this is the order families see when they pick a size.</p>' +
           '<div style="display:flex;gap:.6rem;margin-top:.7rem;flex-wrap:wrap;align-items:center">' +
@@ -591,8 +649,8 @@ function render(){
   }
 
   html += '<div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">' +
-    '<span class="field-label" style="margin:0">Gear Library (' + items.length + ')</span>' +
-    (formOpen ? '' : '<button class="btn btn-primary btn-sm" onclick="openForm(null)">+ Add Gear Piece</button>') +
+    '<span class="field-label" style="margin:0">' + (libTab === 'extra' ? 'Extra Gear Library' : 'Jersey Package Library') + ' (' + curList().length + ')</span>' +
+    (formOpen ? '' : '<button class="btn btn-primary btn-sm" onclick="openForm(null)">+ Add ' + (libTab === 'extra' ? 'Extra Gear' : 'Gear Piece') + '</button>') +
     '<span style="margin-left:auto">' +
     (resetConfirm
       ? '<span class="hint">Back to the standard CBU lineup? Custom edits are lost. </span>' +
@@ -601,10 +659,14 @@ function render(){
       : '<button class="link-muted" onclick="resetConfirm=true;render()">Reset Library</button>') +
     '</span>' +
   '</div>' +
-  '<p class="hint" style="margin-top:.5rem">These pieces are what the season registration wizard picks from when it builds a jersey package — add each piece once here, use it in every season. Changes here save automatically and show up in the registration wizard’s Jersey Package step.</p>';
+  (libTab === 'extra'
+    ? '<p class="hint" style="margin-top:.5rem">Optional merch that is not part of a jersey package — dry fits, backpacks, bags. The registration wizard’s Season Add-Ons section loads from here, families buy alongside the package, and it all charges with their first payment. Leave sizes empty for one-size gear like backpacks.</p>'
+    : '<p class="hint" style="margin-top:.5rem">These pieces are what the season registration wizard picks from when it builds a jersey package — add each piece once here, use it in every season. Changes here save automatically and show up in the registration wizard’s Jersey Package step.</p>');
 
   /* The gating question first; the Program Tags manager only exists when
-     the answer is yes */
+     the answer is yes - and only on the package tab, since extra gear is
+     for everyone */
+  if(libTab === 'pkg'){
   html += '<div class="tag-panel">' +
     '<div style="display:flex;align-items:center;gap:.9rem;flex-wrap:wrap">' +
       '<button class="switch' + (useTags ? ' on' : '') + '" onclick="toggleUseTags()" aria-label="Different jerseys per program"></button>' +
@@ -664,8 +726,9 @@ function render(){
   html += '<p class="hint" style="margin-top:.7rem">In the real app, picking a program tag is part of creating a team, so a new team cannot slip through untagged - this warning is the safety net if one ever does. <button class="link-muted" onclick="demoAddTeam()">Demo: create a team without a tag</button></p>';
   html += '</div>';
   }
+  }
 
-  html += '<div class="gear-grid">' + items.map(function(it){
+  html += '<div class="gear-grid">' + curList().map(function(it){
     var src = it.img || it.photo;
     var photo = src
       ? '<div class="gear-photo" style="background:' + it.bg + '">' + it.emoji + '<img src="' + src + '" alt="' + esc(it.name) + '" onerror="this.remove()"></div>'
@@ -680,12 +743,14 @@ function render(){
       '<div class="gear-body">' +
         '<div class="gear-name">' + esc(it.name) + '</div>' +
         (it.price ? '<div class="gear-price">Extra: $' + esc(it.price) + '</div>' : '') +
-        (useTags ? '<div class="size-chips">' +
+        (useTags && libTab === 'pkg' ? '<div class="size-chips">' +
           ((it.tags && it.tags.length)
             ? it.tags.map(function(t){ return '<span class="tag-chip">' + esc(t) + '</span>'; }).join('')
             : '<span class="tag-chip all">All Teams</span>') +
         '</div>' : '') +
-        '<div class="size-chips">' + it.sizes.map(function(s){ return '<span class="size-chip">' + esc(s) + '</span>'; }).join('') + '</div>' +
+        '<div class="size-chips">' + (it.sizes.length
+          ? it.sizes.map(function(s){ return '<span class="size-chip">' + esc(s) + '</span>'; }).join('')
+          : '<span class="size-chip">One size</span>') + '</div>' +
         '<div class="gear-actions">' + actions + '</div>' +
       '</div>' +
     '</div>';

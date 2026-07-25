@@ -2735,9 +2735,15 @@ const GEAR_FALLBACK = [
   { name:'Powder Pinstripe Pant',   price:'45', photo:'img/gear/powder-pinstripe-pant.png',   sizes:GEAR_RUN, tags:['Scout'] },
   { name:'White Pant',              price:'45', photo:'img/gear/white-pant.jpg',              sizes:GEAR_RUN, tags:[] },
   { name:'Game Socks',              price:'12', photo:'img/gear/sock.png',                    sizes:['S','M','L','XL'], tags:[] },
-  { name:'Game Hat',                price:'30', photo:'img/gear/hat.png',                     sizes:['XS','S/M','M/L','L/XL'], tags:[] },
-  { name:'Dry Fit — Navy',          price:'25', photo:'img/gear/dryfit-navy.png',             sizes:GEAR_RUN, tags:[] },
-  { name:'Dry Fit — Powder',        price:'25', photo:'img/gear/dryfit-powder.png',           sizes:GEAR_RUN, tags:[] }
+  { name:'Game Hat',                price:'30', photo:'img/gear/hat.png',                     sizes:['XS','S/M','M/L','L/XL'], tags:[] }
+];
+/* Extra gear library: optional merch outside the package (dry fits, bags).
+   The Season Add-Ons section loads from this one. */
+const EXTRA_GEAR_FALLBACK = [
+  { name:'Dry Fit — Navy',      price:'25', photo:'img/gear/dryfit-navy.png',   sizes:GEAR_RUN, tags:[] },
+  { name:'Dry Fit — Powder',    price:'25', photo:'img/gear/dryfit-powder.png', sizes:GEAR_RUN, tags:[] },
+  { name:'CBU Player Backpack', price:'60', photo:'img/gear/backpack.png',      sizes:[], tags:[] },
+  { name:'CBU Travel Duffel',   price:'50', photo:'img/gear/duffel.png',        sizes:[], tags:[] }
 ];
 const GEAR_TAGS_FALLBACK = [
   { name:'United', teams:['CBU United 2027','CBU United 2028','CBU United 2029','CBU United 2030'] },
@@ -2762,6 +2768,16 @@ function gearTags(){
     }
   }catch(e){}
   return GEAR_TAGS_FALLBACK;
+}
+function extraGearLibrary(){
+  try{
+    const raw = localStorage.getItem('cbuExtraGear');
+    if(raw){
+      const arr = JSON.parse(raw);
+      if(Array.isArray(arr) && arr.length && arr[0].name) return arr;
+    }
+  }catch(e){}
+  return EXTRA_GEAR_FALLBACK;
 }
 function libToPkgItem(g){
   return { name:g.name, desc:g.desc || '', price:String(g.price || ''), sizes:(g.sizes || []).join(', '), img:g.photo || '', tags:(g.tags || []).slice() };
@@ -2795,13 +2811,14 @@ function sPkgAutoPrice(pk){
 function sPkgPriceStr(pk){
   return pk.priceAuto === false ? (pk.price || '0') : String(sPkgAutoPrice(pk));
 }
-function sAvailableGear(){
+function sAvailableGear(source){
   const used = {};
   swiz.pkg.items.concat(swiz.pkg.addons).forEach(function(x){ used[x.name.toLowerCase()] = 1; });
-  return gearLibrary().filter(function(g){ return !used[String(g.name).toLowerCase()]; });
+  const lib = source === 'extra' ? extraGearLibrary() : gearLibrary();
+  return lib.filter(function(g){ return !used[String(g.name).toLowerCase()]; });
 }
-function sAddLibraryPiece(i, target){
-  const g = sAvailableGear()[i];
+function sAddLibraryPiece(i, target, source){
+  const g = sAvailableGear(source)[i];
   if(!g) return;
   const it = libToPkgItem(g);
   if(target === 'addons') swiz.pkg.addons.push({ name:it.name, desc:it.desc, price:it.price, img:it.img });
@@ -2809,22 +2826,23 @@ function sAddLibraryPiece(i, target){
   renderSStepPanel();
   toast(g.name + (target === 'addons' ? ' added as a season add-on.' : ' added to the package.'));
 }
-/* Rows for the pick-from-library panel, shared by items and add-ons */
-function sGearPickerPanel(target, closeFlag){
-  const avail = sAvailableGear();
+/* Rows for the pick-from-library panel, shared by items (jersey package
+   library) and add-ons (extra gear library) */
+function sGearPickerPanel(target, closeFlag, source){
+  const avail = sAvailableGear(source);
   let html = '<div style="background:var(--row-alt);border:1.5px solid var(--line);border-radius:12px;padding:1rem 1.1rem;margin-top:1rem">' +
-    '<div class="cell-strong" style="margin-bottom:.6rem">Pick From The Gear Library</div>';
+    '<div class="cell-strong" style="margin-bottom:.6rem">Pick From The ' + (source === 'extra' ? 'Extra Gear' : 'Jersey Package') + ' Library</div>';
   if(avail.length){
     avail.forEach(function(g, i){
       html += '<div style="display:flex;align-items:center;gap:.8rem;padding:.45rem 0;border-bottom:1px solid var(--line)">' +
         (g.photo ? '<img src="'+escAttr(g.photo)+'" alt="" style="width:44px;height:44px;object-fit:contain;background:#fff;border:1.5px solid var(--line);border-radius:8px;padding:2px;flex:0 0 44px" onerror="this.remove()">' : '') +
-        '<div style="flex:1;min-width:0"><span class="cell-strong">'+esc(g.name)+'</span>'+tagPills(g.tags)+
-        '<div class="cell-sub">Sizes: '+esc((g.sizes || []).join(' · '))+'</div></div>' +
+        '<div style="flex:1;min-width:0"><span class="cell-strong">'+esc(g.name)+'</span>'+(source === 'extra' ? '' : tagPills(g.tags))+
+        '<div class="cell-sub">'+((g.sizes || []).length ? 'Sizes: '+esc(g.sizes.join(' · ')) : 'One size')+'</div></div>' +
         '<span class="pill pill-red">$'+esc(g.price)+'</span>' +
-        '<button class="btn btn-outline-dark btn-sm" onclick="sAddLibraryPiece('+i+',\''+target+'\')">Add</button></div>';
+        '<button class="btn btn-outline-dark btn-sm" onclick="sAddLibraryPiece('+i+',\''+target+'\',\''+(source || '')+'\')">Add</button></div>';
     });
   } else {
-    html += '<div class="cell-sub" style="padding:.4rem 0">Every piece in the gear library is already used in this registration. Add new pieces on the Jersey Packages page.</div>';
+    html += '<div class="cell-sub" style="padding:.4rem 0">Every piece in this library is already used in this registration. Add new pieces on the Jersey Packages page.</div>';
   }
   html += '<div style="margin-top:.8rem"><button class="btn btn-primary btn-sm" onclick="swiz.pkg.'+closeFlag+'=false;renderSStepPanel()">Done</button></div></div>';
   return html;
@@ -3432,7 +3450,7 @@ function sStepPkg(){
   }
   html += '</div>';
   if(pk.pickingAddon){
-    html += sGearPickerPanel('addons', 'pickingAddon');
+    html += sGearPickerPanel('addons', 'pickingAddon', 'extra');
   } else if(pk.addingAddon){
     html += '<div style="background:var(--row-alt);border:1.5px solid var(--line);border-radius:12px;padding:1.2rem 1.3rem;margin-top:1rem">' +
       '<div style="display:flex;gap:1.2rem;flex-wrap:wrap">' +
@@ -3449,11 +3467,19 @@ function sStepPkg(){
       '</div>' +
     '</div>';
   } else {
-    html += '<div class="mt-2" style="display:flex;gap:.7rem;flex-wrap:wrap">' +
-      '<button class="btn btn-outline-dark btn-sm" onclick="swiz.pkg.pickingAddon=true;renderSStepPanel()">+ Add-On From Gear Library</button>' +
-      '<button class="btn btn-outline-dark btn-sm" onclick="swiz.pkg.addingAddon=true;renderSStepPanel()">+ Custom Add-On</button></div>';
+    html += '<div class="mt-2" style="display:flex;gap:.7rem;flex-wrap:wrap;align-items:center">' +
+      '<button class="btn btn-primary btn-sm" onclick="swiz.pkg.pickingAddon=true;renderSStepPanel()">+ Add From Extra Gear Library</button>' +
+      (pk.addons.length === 0 ? '<button class="btn btn-outline-dark btn-sm" onclick="sLoadExtraGear()">Load The Extra Gear Library</button>' : '') +
+      '<button class="btn btn-outline-dark btn-sm" onclick="swiz.pkg.addingAddon=true;renderSStepPanel()">+ Custom Add-On</button></div>' +
+      '<p class="step-help" style="font-size:.78rem;margin-top:.6rem">Add-ons and extra gear are charged with the family\x27s first payment, same as the package - never spread across a payment plan.</p>';
   }
   return html;
+}
+function sLoadExtraGear(){
+  const lib = extraGearLibrary();
+  swiz.pkg.addons = lib.map(function(g){ return { name:g.name, desc:g.desc || '', price:String(g.price || ''), img:g.photo || '' }; });
+  renderSStepPanel();
+  toast('All ' + lib.length + ' extra gear pieces loaded as season add-ons - remove any that should not be offered.');
 }
 function sLoadStandardPkg(){
   /* Loads whatever is in the gear library RIGHT NOW - every piece, in

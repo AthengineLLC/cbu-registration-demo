@@ -862,10 +862,12 @@ var PACKAGE = {
     { id:'hat',          name:'Game Hat',                desc:'Official CBU game hat',                    price:30, img:'img/gear/hat.png',                     sizes:['XS','S/M','M/L','L/XL'], tags:[] },
     { id:'socks',        name:'Game Socks',              desc:'Game socks, navy and red',                 price:12, img:'img/gear/sock.png',                    sizes:['S','M','L','XL'], tags:[] }
   ],
-  /* Optional season add-ons — from the same gear library, sized like everything else */
+  /* Optional season add-ons — from the org's EXTRA GEAR library. Sized like
+     everything else, except one-size gear (empty sizes) like backpacks. */
   addons: [
-    { id:'dryNavy',   name:'Dry Fit — Navy',   desc:'Practice dry fit, navy',        price:25, img:'img/gear/dryfit-navy.png',   sizes:RUN },
-    { id:'dryPowder', name:'Dry Fit — Powder', desc:'Practice dry fit, powder blue', price:25, img:'img/gear/dryfit-powder.png', sizes:RUN }
+    { id:'dryNavy',   name:'Dry Fit — Navy',      desc:'Practice dry fit, navy',                    price:25, img:'img/gear/dryfit-navy.png',   sizes:RUN },
+    { id:'dryPowder', name:'Dry Fit — Powder',    desc:'Practice dry fit, powder blue',             price:25, img:'img/gear/dryfit-powder.png', sizes:RUN },
+    { id:'backpack',  name:'CBU Player Backpack', desc:'Bat sleeve, helmet clip, and gear tunnels', price:60, img:'img/gear/backpack.png',      sizes:[] }
   ]
 };
 function addonById(id){
@@ -944,14 +946,21 @@ function addonsTotal(){
   return t;
 }
 function anyAddons(){ return Object.keys(state.addons).length > 0; }
+/* one-size gear (backpacks) never needs the sizing step */
+function addonsNeedingSizes(){
+  return Object.keys(state.addons).filter(function(id){
+    var a = addonById(id);
+    return a && (a.sizes || []).length;
+  });
+}
 function apparelTotal(){
   return (state.jersey ? PACKAGE.price : 0)
        + (state.extraPackage ? PACKAGE.price : 0)
        + extrasTotal()
        + addonsTotal();
 }
-/* Sizing applies when there is anything to size - the package or an add-on */
-function needSizing(){ return state.jersey === true || anyAddons(); }
+/* Sizing applies when there is anything to size - the package or a sized add-on */
+function needSizing(){ return state.jersey === true || addonsNeedingSizes().length > 0; }
 /* Shipping applies only when the admin turned it on AND there is gear to ship */
 function shippingApplies(){
   return SHIPPING.on && apparelTotal() > 0;
@@ -1162,6 +1171,10 @@ function toggleAddon(id){
   if(Object.prototype.hasOwnProperty.call(state.addons, id)){
     delete state.addons[id];
     toast(a.name + ' removed.');
+  } else if(!(a.sizes || []).length){
+    /* one-size gear needs no sizing step */
+    state.addons[id] = 'One Size';
+    toast(a.name + ' added — one size fits all.');
   } else {
     state.addons[id] = '';
     toast(a.name + ' added — you’ll pick its size on the next step.');
@@ -1249,8 +1262,9 @@ function renderSizing(){
     });
   }
 
-  /* Season add-ons size here too - same cards, their own group */
-  var addonIds = Object.keys(state.addons);
+  /* Season add-ons size here too - same cards, their own group. One-size
+     gear (backpacks) is already set and never shows here. */
+  var addonIds = addonsNeedingSizes();
   if(addonIds.length){
     html += '<div class="group-label"><span>Season Add-Ons</span></div>';
     addonIds.forEach(function(id){
