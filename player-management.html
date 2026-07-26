@@ -19,11 +19,12 @@ if (window.self === window.top) location.replace('app-shell.html?open=player-man
   - No Guardian column (Addison: not needed at this level).
   - Filters: search, SEASON (new - it is how CBU is organized),
     team, grad year, plus Clear all.
-  - Roster / Evals / Recruiting tabs. Evals and Recruiting are
-    placeholders until those systems get built.
+  - Roster / Evals / Recruiting tabs. Evals is the audit hub:
+    objectives / coach eval / director eval status per player,
+    honoring the same filters. Recruiting is still a placeholder.
   - Per-row three-dot menu: Change Team, Unassign, Start
-    Evaluation, and the two log-in-as items (grayed until
-    player/guardian accounts exist).
+    Evaluation (opens the full-page eval form), and the two
+    log-in-as items (grayed until player/guardian accounts exist).
   - Clicking a player opens the INTERNAL profile - first pass.
     The player's own view and the public recruiting profile are
     separate screens that come later.
@@ -97,6 +98,8 @@ body{
 .btn-outline:hover{border-color:#fff}
 .btn-outline-dark{background:transparent;color:var(--ink);border-color:#c6ccdb}
 .btn-outline-dark:hover{border-color:var(--ink)}
+.btn-navy{background:var(--navy-deep);color:#fff}
+.btn-navy:hover{background:#1b2749}
 .btn-sm{padding:.45rem .9rem;font-size:.74rem}
 .btn[disabled]{opacity:.4;cursor:not-allowed;pointer-events:none}
 .link-red{color:var(--red);font-weight:600;font-size:.8rem;text-decoration:none;cursor:pointer;background:none;border:none;font-family:inherit;padding:0}
@@ -478,6 +481,131 @@ textarea:focus{outline:2px solid var(--powder);border-color:var(--powder)}
 .ai-teaser h4{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.14em;font-size:.8rem;color:var(--powder)}
 .ai-teaser p{font-size:.84rem;color:#aab3cc;line-height:1.6;margin-top:.5rem}
 
+/* ============ PAGE-SPECIFIC: EVALS ============ */
+/* Evals hub: summary counts riding above the audit table */
+.eval-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.9rem;margin-bottom:1rem}
+.eval-stat{background:var(--card);border-radius:10px;padding:.8rem 1rem;color:var(--ink);box-shadow:0 10px 24px rgba(3,7,20,.35)}
+.es-num{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-weight:700;font-size:1.7rem;line-height:1.1}
+.es-num.blue{color:var(--powder-dark)}
+.es-num.green{color:var(--green)}
+.es-num.gold{color:#9a6b0f}
+.es-num.gray{color:var(--muted)}
+.es-label{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.1em;font-size:.62rem;font-weight:600;color:var(--muted);margin-top:.2rem}
+/* gray status pill: nothing on file yet */
+.pill-gray{background:#edeff5;color:#7d879f}
+/* circular jersey-number badge in the audit table */
+.jnum{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--navy-deep);color:#fff;font-family:'Oswald',Arial,sans-serif;font-weight:600;font-size:.66rem}
+.jnum.empty{background:#e8ebf4;color:var(--muted)}
+/* one completed eval (or objectives set) on the profile tab */
+.eval-entry{border:1.5px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin-top:.9rem;background:#fff}
+.eval-entry-head{display:flex;gap:.5rem .9rem;flex-wrap:wrap;align-items:center}
+.ee-title{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.08em;font-weight:600;font-size:.9rem;color:var(--navy-deep)}
+.ee-share{margin-left:auto;display:flex;align-items:center;gap:.55rem;flex-wrap:wrap}
+/* colored 1-10 rating badges - Addison's bands: 1-3 red, 4-6 yellow,
+   7-10 green */
+.rate-badge{display:inline-block;font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.07em;font-size:.7rem;font-weight:600;border-radius:6px;padding:.3rem .6rem;white-space:nowrap}
+.rb-low{background:#f8e3e6;color:var(--red-dark)}
+.rb-mid{background:#fdf3dc;color:#9a6b0f}
+.rb-high{background:var(--green-bg);color:var(--green)}
+/* the Improvement Noted tag on a performance report - the AI card
+   reads these later ("your coach noted an improvement in...") */
+.imp-tag{display:inline-block;font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.08em;font-size:.6rem;font-weight:600;background:var(--green-bg);color:var(--green);border-radius:6px;padding:.2rem .5rem;margin-bottom:.25rem}
+/* column tags on the stats import page: core columns vs stored-only */
+.col-tag{display:inline-block;font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.06em;font-size:.6rem;font-weight:600;border-radius:6px;padding:.2rem .45rem;background:#e8ebf4;color:var(--navy-deep);white-space:nowrap}
+.col-tag.dim{background:#edeff5;color:#7d879f}
+/* report entries (defensive / offensive / pitching) inside an eval -
+   no per-report dates, the eval's own date covers them */
+.report-entry{border-left:3px solid var(--powder);padding:.15rem 0 .15rem .75rem;margin-top:.55rem;font-size:.85rem;line-height:1.55;color:var(--ink)}
+/* the 1-10 rating dots on the eval form: a tap-to-rate track that
+   STARTS EMPTY - an untouched row saves as no rating, never a default
+   5. The picked dot fills in its band color (1-3 red, 4-6 yellow,
+   7-10 green). */
+.rate-dots{display:flex;align-items:center;gap:.3rem;flex-wrap:wrap}
+.rate-dot{
+  width:31px;height:31px;border-radius:50%;border:1.5px solid #c9cfdd;background:#fff;
+  color:var(--muted);font-family:'Oswald',Arial,sans-serif;font-weight:600;font-size:.76rem;
+  cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0;
+}
+.rate-dot:hover{border-color:var(--ink);color:var(--ink)}
+.rate-dot.sel-low{background:var(--red);border-color:var(--red);color:#fff}
+.rate-dot.sel-mid{background:#d9a70f;border-color:#d9a70f;color:#fff}
+.rate-dot.sel-high{background:var(--green);border-color:var(--green);color:#fff}
+.rate-val{font-family:'Oswald',Arial,sans-serif;font-weight:700;font-size:.95rem;color:var(--navy-deep);min-width:70px}
+.rate-val.none{color:var(--muted);font-weight:600;font-size:.78rem}
+/* the little triangle under the 5 dot naming the anchor of the scale -
+   most people do not read the section copy, so the scale explains
+   itself right on the track */
+.rate-dots{padding-bottom:1.9rem}
+.dot-wrap{position:relative;display:inline-flex}
+.dot-marker{
+  position:absolute;top:calc(100% + .1rem);left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;white-space:nowrap;pointer-events:none;
+}
+.dot-marker .tri{color:var(--red);font-size:.6rem;line-height:1}
+.dot-marker .tri-label{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.08em;font-size:.56rem;font-weight:600;color:var(--muted);margin-top:.1rem}
+/* the white "toggle off to skip" whisper riding next to every section
+   switch in the navy headers */
+.sec-toggle-hint{font-family:'Inter',Arial,sans-serif;text-transform:none;letter-spacing:0;font-size:.68rem;font-weight:500;color:rgba(255,255,255,.75)}
+
+/* ============ AI SCOUTING CARD (modal) ============ */
+/* Ported from Addison's old view_evals card: red header band, dark navy
+   body, big rating tiles, college chips, long-form AI summary. */
+.modal-scrim{position:fixed;inset:0;z-index:120;background:rgba(3,7,20,.72);overflow-y:auto;padding:3vh 1rem 6vh}
+.ai-card{max-width:720px;margin:0 auto;border-radius:14px;overflow:hidden;box-shadow:0 30px 70px rgba(0,0,0,.6);background:linear-gradient(170deg,var(--navy-deep) 0%,var(--navy-bg-2) 100%);color:#eef1f8}
+.ai-card-head{background:var(--red);padding:1.2rem 1.4rem 1.1rem;position:relative}
+.ai-card-eyebrow{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.24em;font-size:.66rem;font-weight:600;color:#f6d2d6}
+.ai-card-name{font-family:'Oswald','Arial Narrow',Arial,sans-serif;text-transform:uppercase;font-weight:700;font-size:1.9rem;color:#fff;line-height:1.05;margin-top:.25rem}
+.ai-card-sub{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin-top:.5rem;font-size:.85rem;color:#fbe6e8;font-weight:600}
+.ai-card-close{position:absolute;top:.9rem;right:.9rem;width:34px;height:34px;border-radius:50%;border:none;cursor:pointer;background:#fff;color:var(--red-dark);font-size:1rem;font-weight:700;line-height:1}
+.ai-card-close:hover{background:#fbe6e8}
+.ai-card-body{padding:1.3rem 1.4rem 1.6rem}
+.ai-sec-label{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.18em;font-size:.68rem;font-weight:600;color:var(--powder);margin-bottom:.6rem}
+.ai-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.7rem}
+.ai-tile{border:1.5px solid rgba(255,255,255,.14);border-radius:10px;padding:.75rem .6rem;text-align:center}
+.ai-tile .t-label{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.14em;font-size:.62rem;font-weight:600;color:#8b96b5}
+.ai-tile .t-val{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-weight:700;font-size:1.7rem;margin-top:.25rem;line-height:1.05}
+.ai-tile .t-of{font-size:.64rem;color:#8b96b5;font-weight:600}
+.ai-tile.band-low{border-color:#d96b78}.ai-tile.band-low .t-val{color:#f08a96}
+.ai-tile.band-mid{border-color:#d9b64f}.ai-tile.band-mid .t-val{color:#f2cf6b}
+.ai-tile.band-high{border-color:#3f9e6a}.ai-tile.band-high .t-val{color:#5fce93}
+.ai-tile.band-none .t-val{color:#5a6584}
+.ai-kv{display:flex;gap:.5rem 1.6rem;flex-wrap:wrap;margin-top:.9rem;font-size:.85rem}
+.ai-kv b{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.12em;font-size:.64rem;font-weight:600;color:#8b96b5;margin-right:.35rem}
+/* college chips: division badge + name; the title attribute carries the
+   hover detail (who logged it, when, notes) */
+.col-chip{display:inline-flex;align-items:center;gap:.4rem;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:.28rem .7rem .28rem .3rem;font-size:.78rem;font-weight:600;color:#eef1f8;cursor:help}
+.col-chip .dv{font-family:'Oswald',Arial,sans-serif;font-size:.6rem;font-weight:600;letter-spacing:.06em;border-radius:999px;padding:.16rem .45rem}
+.dv-d1{background:var(--green-bg);color:var(--green)}
+.dv-d2{background:#e2eef7;color:#2d6f96}
+.dv-d3{background:#fdf3dc;color:#9a6b0f}
+.dv-juco{background:#e8ebf4;color:var(--navy-deep)}
+.dv-naia{background:#f8e3e6;color:var(--red-dark)}
+.col-chip .who{color:#8b96b5;font-size:.68rem;font-weight:500}
+.ai-summary{margin-top:.4rem;font-size:.9rem;line-height:1.75;color:#dfe5f2}
+.ai-summary p+p{margin-top:.9rem}
+.ai-rule{border:none;border-top:1px solid rgba(255,255,255,.12);margin:1.3rem 0 1.1rem}
+/* committed chip riding the red header - the red hat piece */
+.ai-commit{display:inline-flex;align-items:center;gap:.4rem;background:#fff;color:var(--red-dark);border-radius:999px;padding:.26rem .8rem .26rem .55rem;font-family:'Oswald',Arial,sans-serif;font-weight:600;font-size:.74rem;text-transform:uppercase;letter-spacing:.08em}
+/* metric development on the card: window chips + one row per metric
+   with the latest mark and a green/red delta badge */
+.ai-win-chip{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.08em;font-size:.66rem;font-weight:600;border:1px solid rgba(255,255,255,.25);background:none;color:#aab3cc;border-radius:999px;padding:.3rem .8rem;cursor:pointer}
+.ai-win-chip:hover{border-color:#fff;color:#fff}
+.ai-win-chip.on{background:var(--red);border-color:var(--red);color:#fff}
+.ai-metric-row{display:flex;gap:.5rem 1rem;flex-wrap:wrap;align-items:baseline;padding:.55rem 0;border-bottom:1px solid rgba(255,255,255,.09)}
+.ai-metric-row:last-child{border-bottom:none}
+.amr-label{min-width:148px;font-size:.82rem;font-weight:600;color:#dfe5f2}
+.amr-latest{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-weight:700;font-size:1.15rem;color:#fff}
+.amr-latest span{font-size:.62rem;color:#8b96b5;margin-left:.15rem;font-weight:600}
+.delta-badge{display:inline-flex;align-items:center;gap:.3rem;font-family:'Oswald',Arial,sans-serif;font-weight:600;font-size:.72rem;letter-spacing:.05em;border-radius:6px;padding:.24rem .55rem;white-space:nowrap}
+.delta-badge.up{background:rgba(46,160,92,.18);color:#5fce93}
+.delta-badge.down{background:rgba(217,84,100,.2);color:#f08a96}
+.delta-badge.flat{background:rgba(255,255,255,.08);color:#aab3cc}
+.amr-sub{font-size:.72rem;color:#8b96b5}
+@media (max-width:760px){
+  .modal-scrim{padding:0}
+  .ai-card{border-radius:0;min-height:100vh}
+}
+
 @media (max-width:760px){
   .page{padding:1.6rem 1rem 4rem}
   .page-title{font-size:1.9rem}
@@ -611,7 +739,7 @@ let players = SEED.map((r, i) => {
     email: slugify(name) + '@email.com',
     phone: '(813) 555-0' + ('00' + (110 + i)).slice(-3),
     guardian: { name: GUARD_FIRST[i % GUARD_FIRST.length] + ' ' + r[1], phone: '(813) 555-0' + ('00' + (410 + i)).slice(-3) },
-    evals: 0
+    evalList: []
   };
 });
 /* Profile fields the internal profile edits. Blank until filled in -
@@ -761,7 +889,18 @@ const SCHED_PRACTICES = (function(){
   ];
   isa.contacts = [
     { college: 'Georgia Tech (D1, ACC)', date: '2026-07-18', by: 'Addison Maruszak',
-      notes: 'Called after the PG WWBA outing - wants summer video.' }
+      notes: 'Called after the PG WWBA outing - wants summer video.' },
+    { college: 'South Florida (D1, AAC)', date: '2026-07-02', by: 'Danny Menendez',
+      notes: 'Assistant asked about him at Boombah - following the middle infield.' }
+  ];
+  /* Pre-written sample of the Claude scouting summary the real app
+     generates from the season's evals, metrics, and contacts */
+  isa.aiCard = [
+    'Isaiah Maruszak is a steady, high-floor middle infielder in the 2027 class who projects on the Mid Major D1 track. At 5\'11" and 175 pounds he is not the loudest tool set on the field, but the actions, the approach, and the work rate all read like a player who keeps closing gaps every summer - and the improvement tags in his file back that up. His current ratings grade him ahead of the age group defensively with the bat coming, and the interest from Georgia Tech and South Florida says the profile is traveling.',
+    'Defensively, Maruszak is the best version of a tournament shortstop: he reads hops early, plays with his feet under him, and wants the ball with the game on the line. The arm strength jump shows up in games now - his infield velo sits 97 at testing - and the deep play from the 6-hole that used to be a question is becoming an answer. He is a plus communicator for his age, and the staff has challenged him to own the infield vocally, which is the last step from good defender to leader.',
+    'At the plate he is approach-first with real bat-to-ball: a .306 summer with more walks than strikeouts, line drives to all fields, and gap power starting to arrive as the strength program takes hold. He stays inside good velocity and does not chase. The staff note is consistent across evals - hunt your pitch earlier in counts - and that adjustment plus 8-10 pounds of good weight is what turns doubles-power into a complete offensive profile.',
+    'The newest wrinkle is on the mound: his coaches formally noted an improvement in his pitching this summer. The fastball took a real jump from the spring, he holds his velocity deep into relief outings, and he lands two pitches for strikes. He will never be built as a pitcher first, but a trustworthy bullpen inning from your shortstop changes tournament weekends.',
+    'At a current roster level in the properly-rostered band and trending up on Menendez, no move is recommended - he is getting premium reps at the position that decides his ceiling. Recommendation: keep the shortstop development plan, keep feeding the strength program, and push the Mid Major D1 conversations while the Sunshine State D2 relationships stay warm as the floor. Maruszak is the kind of player who outperforms his projection because nothing in his game depends on luck.'
   ];
   /* Six years of testing-day history, 20 results per metric (fall 2020
      through summer 2026, age 11 to 17). Values climb toward the target
@@ -827,6 +966,324 @@ const COLLEGES = [
   {n:'Webber International',d:'NAIA',c:'The Sun'},{n:'Emory',d:'D3',c:'UAA'}
 ];
 function collegeLabel(c){ return c.n + ' (' + c.d + (c.c ? ', ' + c.c : '') + ')'; }
+
+/* =====================================================================
+   EVALS
+   Rebuilt from Addison's working eval system. Two kinds of write-up:
+   - A FULL EVALUATION: projected positions, dated defensive / offensive
+     / pitching reports, 1-10 performance ratings (5 = a typical player
+     for the age group), a roster-level check (1 = move way down, 5 =
+     properly rostered, 10 = move way up), and a projected college level.
+   - OBJECTIVES ONLY: the three development objectives - fundamental,
+     physical, mental/emotional - and nothing else.
+   Every entry carries a share flag: internal-only (staff eyes) or
+   shared with the player and family. Roster level NEVER shows to the
+   family, even on a shared eval - that conversation stays in-house.
+   Directors are told apart from coaches by the staff list, which is how
+   the audit knows whether a player has a coach eval, a director eval,
+   or both.
+   ===================================================================== */
+const DIRECTORS = ['Addison Maruszak', 'Nick James', 'Wayne Stofsky', 'Richie Warren', 'Maddux Faber'];
+const EVAL_POSITIONS = ['C','1B','2B','3B','SS','LF','CF','RF','DH','RHP','LHP'];
+/* The five report categories. ALL of them always show on the form -
+   no smart show/hide off the position picks; coaches use what fits. */
+const REPORT_CATS = [
+  ['defensive', 'Defensive'], ['offensive', 'Offensive'], ['pitching', 'Pitching'],
+  ['baserunning', 'Base Running'], ['iq', 'Baseball IQ']
+];
+/* The five 1-10 performance ratings (roster level rides separately) */
+const RATING_KEYS = ['defense', 'offense', 'pitching', 'baserunning', 'iq'];
+const RECRUIT_LEVELS = [
+  'High Draft', 'Power 4 D1', 'Mid Major D1', 'Lower Level D1', 'High Academic D1',
+  'D2', 'D3', 'High Academic D3', 'D1 JUCO', 'D2 JUCO', 'NAIA', 'Not A Prospect'
+];
+/* Every eval is stamped with a SEASON, newest first here. The audit runs
+   per season - Addison wants as many evals as possible, so an eval from
+   two summers ago never reads as "covered" today. */
+const EVAL_SEASONS = ['Summer 2026', 'Fall 2026 Youth', 'Spring 2026', 'Fall 2025', 'Summer 2025'];
+function seasonRank(s){ const i = EVAL_SEASONS.indexOf(s); return i === -1 ? EVAL_SEASONS.length : i; }
+function isDirector(name){ return DIRECTORS.indexOf(name) > -1; }
+function evalRoleOf(e){ return isDirector(e.by) ? 'Director' : 'Coach'; }
+
+/* Every free-text field on an eval keeps THREE layers:
+   - raw:   exactly what the coach typed or voice-dictated. Never shown
+            to families, never deleted - it is the scouting truth.
+   - staff: the cleaned-up, fact-driven version staff reads. In the real
+            app AI drafts it from raw at write time and the coach
+            approves; in this demo it starts as the raw text.
+   - fam:   the delicate, constructive version - exists ONLY once the
+            coach shares the entry and approves the wording. Frozen at
+            share time; never regenerated behind anyone's back. */
+function layerText(t, layer){
+  if (!t) return '';
+  if (typeof t === 'string') return t;   /* safety for plain strings */
+  if (layer === 'fam') return t.fam || t.staff || t.raw || '';
+  if (layer === 'raw') return t.raw || '';
+  return t.staff || t.raw || '';
+}
+
+/* The player's evals, newest first */
+function evalsOf(p){
+  return (p.evalList || []).slice().sort((a, b) => b.date < a.date ? -1 : 1);
+}
+/* Which season a player is audited against: the season picked in the
+   filters, or - on All seasons - each player's own current season, so
+   the unfiltered hub still answers "who is covered RIGHT NOW". */
+function auditSeason(p){ return filters.season !== 'all' ? filters.season : p.season; }
+function seasonEntries(p, season){ return evalsOf(p).filter(e => e.season === season); }
+/* Objectives completion for a season: all 3 written / some / none */
+function objectivesStatus(p, season){
+  const o = seasonEntries(p, season).find(e => e.kind === 'objectives');
+  if (!o) return 'missing';
+  const n = ['fundamental', 'physical', 'mental'].filter(k => layerText(o.obj[k], 'staff').trim()).length;
+  return n === 3 ? 'done' : (n > 0 ? 'partial' : 'missing');
+}
+function hasCoachEval(p, season){ return seasonEntries(p, season).some(e => e.kind === 'eval' && !isDirector(e.by)); }
+function hasDirectorEval(p, season){ return seasonEntries(p, season).some(e => e.kind === 'eval' && isDirector(e.by)); }
+/* Rated this season? Verbals-only evals are legit - coaches can skip
+   any slider - so the audit tracks ratings separately or they would
+   hide behind "eval done". */
+function isRated(p, season){
+  return seasonEntries(p, season).some(e => e.kind === 'eval' && e.ratings &&
+    RATING_KEYS.some(k => e.ratings[k] != null));
+}
+/* Roll-up for the hub summary: complete / partial / missing, per season */
+function evalOverall(p, season){
+  if (!seasonEntries(p, season).length) return 'missing';
+  return (objectivesStatus(p, season) === 'done' && hasCoachEval(p, season) &&
+          hasDirectorEval(p, season) && isRated(p, season)) ? 'done' : 'partial';
+}
+/* What the family is allowed to see */
+function sharedEvalsOf(p){ return evalsOf(p).filter(e => e.shared); }
+/* Every written text on an entry, in a fixed order - drives the
+   family-version review at share time and the layer views on cards */
+function entryTexts(e){
+  const out = [];
+  if (e.kind === 'objectives'){
+    [['fundamental', 'Fundamental Objectives'], ['physical', 'Physical Objectives'], ['mental', 'Mental / Emotional Objectives']].forEach(pair => {
+      if (layerText(e.obj[pair[0]], 'staff').trim()) out.push({ t: e.obj[pair[0]], label: pair[1] });
+    });
+  } else {
+    REPORT_CATS.forEach(pair => {
+      const list = e.reports[pair[0]] || [];
+      list.forEach((r, i) => out.push({ t: r, label: pair[1] + ' Report' + (list.length > 1 ? ' ' + (i + 1) : '') }));
+    });
+  }
+  return out;
+}
+
+/* Sample evals so the hub, the audit, and Isaiah's profile all have
+   something real to show. A spread of statuses on the Menendez club plus
+   a few elsewhere - most of the org is still waiting on their first one.
+   Adrian Alfonso deliberately carries LAST season's evals only: history
+   on file, current season red - the exact case the per-season audit
+   exists for. Isaiah's shared entries carry handcrafted raw / staff /
+   family layers so the three registers can be felt side by side. */
+(function seedEvals(){
+  const find = (f, l) => players.find(p => p.first === f && p.last === l);
+  const add = (p, e) => { if (p) p.evalList.push(Object.assign({ id: nid() }, e)); };
+  /* text with its three layers - staff falls back to raw, fam only if given */
+  const T = (raw, staff, fam) => ({ raw: raw, staff: staff || raw, fam: fam || null });
+
+  /* Isaiah Maruszak: fully complete this season - shared objectives, a
+     shared director eval, an internal coach eval, plus one old internal
+     eval from Summer 2025 so the profile shows seasons stacking. */
+  const isa = find('Isaiah', 'Maruszak');
+  add(isa, {
+    kind: 'objectives', date: '2026-06-30', season: 'Summer 2026', by: 'Addison Maruszak', shared: true,
+    obj: {
+      fundamental: T(
+        'backhand still leaks, arm slot all over the place from the hole, 2 strike approach choke up shrink zone put it in play',
+        'Sharpen the backhand and lock in one arm slot on throws from the hole. Two-strike plan every at-bat: choke up, shrink the zone, put the ball in play.',
+        'Isaiah is working on two clear goals: cleaning up the backhand play with a more consistent throwing slot, and committing to a two-strike plan - choke up, shrink the zone, put the ball in play. Both are very reachable with his work rate.'
+      ),
+      physical: T(
+        'needs 8-10 lbs by spring, 60 under 6.8 next testing day',
+        'Add 8-10 lbs of good weight by spring. 60-yard under 6.8 at the next testing day.',
+        'The strength program is the focus this offseason - 8 to 10 pounds of good weight by spring, with a 60-yard goal of under 6.8 at the next testing day. He knows exactly what to do in the weight room.'
+      ),
+      mental: T(
+        'be the loudest guy on the dirt, flush the errors faster - next pitch',
+        'Own the infield - louder pre-pitch communication, and flush mistakes with the next-pitch routine.',
+        'We are asking Isaiah to lead the infield with his voice - louder pre-pitch communication - and to keep building the next-pitch routine so one mistake never becomes two. Leadership is right there for him.'
+      )
+    }
+  });
+  add(isa, {
+    kind: 'eval', date: '2026-07-19', season: 'Summer 2026', by: 'Addison Maruszak', shared: true,
+    positions: ['SS', '2B', 'RHP'],
+    reports: {
+      defensive: [{ ...T(
+        'smooth all wknd at wwba, reads hops early feet under him, arm finally plays from the 6 hole - ifv jump is real in games',
+        'Smooth actions at short all weekend at WWBA. Reads hops early, feet always under him. The arm plays from the 6-hole now - the infield velo jump shows up in games.',
+        'Isaiah had a strong defensive weekend at WWBA. He reads the ball off the bat early, his feet are always under him, and the arm strength he built this year is now showing up on the deep play from short. Really encouraging progress.'
+      ) }],
+      offensive: [{ ...T(
+        'line drive swing, gap juice coming, stayed inside good velo, used whole field, walks more than he Ks - approach is legit',
+        'Line-drive swing with gap juice starting to come. Stayed inside the ball against good velocity and used the whole field. Walks more than he strikes out - the approach is real.',
+        'At the plate, Isaiah keeps showing a mature approach - he stays inside good fastballs, uses the whole field, and walks more than he strikes out. The gap power is starting to come as he gets stronger, which is exactly the right order.'
+      ) }],
+      /* the Improvement tag in action - the AI card reads this later */
+      pitching: [{ improvement: true, ...T(
+        'fb took a real jump since spring, holds it deep into relief outings, strikes with 2 pitches now - big improvement',
+        'Fastball took a real jump since the spring and he holds it deep into relief outings. Lands two pitches for strikes now. Marked improvement on the mound.',
+        'One of the best jumps this summer: Isaiah\'s fastball has climbed noticeably since the spring, and he holds that velocity deep into his relief outings. He lands two pitches for strikes now. His coaches made a point of noting the improvement.'
+      ) }]
+    },
+    ratings: { defense: 7, offense: 6, pitching: 5, baserunning: 6, iq: 8 },
+    rosterLevel: 6, recruitLevel: 'Mid Major D1'
+  });
+  add(isa, {
+    kind: 'eval', date: '2026-06-09', season: 'Summer 2026', by: 'Danny Menendez', shared: false,
+    positions: ['SS'],
+    reports: {
+      defensive: [{ ...T(
+        'best IF actions on the club, wants the ball late',
+        'Best infield actions on the club. Wants the ball with the game on the line.'
+      ) }],
+      offensive: [{ ...T(
+        'good ABs all month but hunts too deep, needs to jump his pitch early in counts',
+        'Quality at-bats all month - needs to hunt his pitch earlier in counts instead of working deep every time.'
+      ) }],
+      pitching: []
+    },
+    ratings: { defense: 6, offense: 6, pitching: null },
+    rosterLevel: 5, recruitLevel: 'D2'
+  });
+  add(isa, {
+    kind: 'eval', date: '2025-07-20', season: 'Summer 2025', by: 'Addison Maruszak', shared: false,
+    positions: ['SS', '2B'],
+    reports: {
+      defensive: [{ ...T(
+        'hands are ahead of the arm right now, makes the routine play every time',
+        'Hands are ahead of the arm right now. Makes the routine play every time - the arm strength decides whether short sticks.'
+      ) }],
+      offensive: [{ ...T(
+        'slap contact, no juice yet, does not chase',
+        'Contact-first bat with no real juice yet, but he does not chase. Strength will tell the story.'
+      ) }],
+      pitching: []
+    },
+    ratings: { defense: 5, offense: 4, pitching: null },
+    rosterLevel: 5, recruitLevel: 'D2'
+  });
+
+  /* A spread of partial statuses for the current-season audit */
+  add(find('Johnny', 'Adams'), {
+    kind: 'eval', date: '2026-07-02', season: 'Summer 2026', by: 'Danny Menendez', shared: false,
+    positions: ['C'],
+    reports: {
+      defensive: [{ ...T(
+        'receives well under the zone, pop trending down, calls his own game already',
+        'Receives well below the zone and the pop times keep trending down. Game-calling is ahead of his age.'
+      ) }],
+      offensive: [], pitching: []
+    },
+    ratings: { defense: 7, offense: 5, pitching: null },
+    rosterLevel: 6, recruitLevel: 'D2'
+  });
+  add(find('Ryan', 'Dejnak'), {
+    kind: 'objectives', date: '2026-07-08', season: 'Summer 2026', by: 'Danny Menendez', shared: true,
+    obj: {
+      fundamental: T(
+        'slow the feet on routine plays, easy play easy, bunt game daily',
+        'Slow the feet down on routine plays - make the easy play easy. Bunt game needs daily reps.',
+        'Ryan is focusing on making the easy play easy - slowing his feet down on routine balls - and getting daily reps on the bunt game. Small things that add up fast.'
+      ),
+      physical: T('', ''),
+      mental: T(
+        'stop carrying the AB into the field, one pitch at a time',
+        'Stop riding the last at-bat into the field. One pitch at a time.',
+        'The mental goal is separation: leaving the last at-bat in the dugout and playing defense one pitch at a time. Every good infielder learns this - Ryan is right on schedule.'
+      )
+    }
+  });
+  add(find('Bryan', 'Eberly'), {
+    kind: 'eval', date: '2026-07-20', season: 'Summer 2026', by: 'Danny Menendez', shared: false,
+    positions: ['RHP'],
+    reports: {
+      defensive: [], offensive: [],
+      pitching: [{ ...T(
+        'fb held 88-91 into the 5th at wwba, sldr flashes plus when he stays on top, 18/24 first pitch Ks',
+        'Fastball held 88-91 into the fifth at WWBA. Slider flashes plus when he stays on top of it. Attacks the zone - 18 of 24 first-pitch strikes.'
+      ) }]
+    },
+    ratings: { defense: null, offense: null, pitching: 7 },
+    rosterLevel: 6, recruitLevel: 'Lower Level D1'
+  });
+  /* Trey Glaser: verbals-only eval - no ratings submitted, so the hub
+     shows eval done but Rated still red. The exact forget-me case. */
+  add(find('Trey', 'Glaser'), {
+    kind: 'eval', date: '2026-07-19', season: 'Summer 2026', by: 'Addison Maruszak', shared: false,
+    positions: ['CF'],
+    reports: {
+      defensive: [{ ...T(
+        'covers both gaps real routes, arm fringy for CF, quick release makes up some',
+        'Covers both gaps and takes real routes. Arm is fringy for center - gets rid of it fast to make up for it.'
+      ) }],
+      offensive: [{ ...T(
+        'slap and run rn, sneaky pull pop in BP not in games yet',
+        'Slap-and-run profile right now. Sneaky pull-side pop in BP that has not shown up in games yet.'
+      ) }],
+      pitching: []
+    },
+    ratings: { defense: null, offense: null, pitching: null },
+    rosterLevel: 5, recruitLevel: 'D3'
+  });
+  add(find('Aaden', 'Hernandez'), {
+    kind: 'objectives', date: '2026-06-25', season: 'Summer 2026', by: 'Chris Thomas', shared: true,
+    obj: {
+      fundamental: T(
+        'DP exchange cleanup, keep building oppo approach',
+        'Clean up the exchange on double-play feeds. Keep building the opposite-field approach.',
+        'Aaden is working the exchange on double-play feeds and continuing to build his opposite-field approach - both trending the right way.'
+      ),
+      physical: T(
+        'core + hips 2x week, swing gets long when hips lock',
+        'Core and hip mobility program twice a week - the swing gets long when the hips lock up.',
+        'Twice-a-week core and hip mobility work keeps the swing short and quick. When the hips move well, everything at the plate follows.'
+      ),
+      mental: T(
+        'same guy 0-3 as 3-3',
+        'Bring the same energy on 0-for-3 days as 3-for-3 days.',
+        'The goal is steadiness: bringing the same energy to the park on an 0-for-3 day as a 3-for-3 day. That consistency is what coaches at the next level look for.'
+      )
+    }
+  });
+  /* Adrian Alfonso: two strong evals - LAST season. On the current
+     season he reads Not Started, which is the whole point. */
+  const alf = find('Adrian', 'Alfonso');
+  add(alf, {
+    kind: 'eval', date: '2025-06-28', season: 'Summer 2025', by: 'Sean McCoy', shared: false,
+    positions: ['C', 'RHP'],
+    reports: {
+      defensive: [{ ...T(
+        'strong hands, blocks everything in the dirt',
+        'Strong hands behind the plate, blocks everything in the dirt.'
+      ) }],
+      offensive: [], pitching: []
+    },
+    ratings: { defense: 7, offense: 5, pitching: 5 },
+    rosterLevel: 6, recruitLevel: 'D2'
+  });
+  add(alf, {
+    kind: 'eval', date: '2025-07-12', season: 'Summer 2025', by: 'Nick James', shared: false,
+    positions: ['C'],
+    reports: {
+      defensive: [{ ...T(
+        'catch and throw guy, 1.95-2.0 pop in games w carry',
+        'Catch-and-throw guy. 1.95-2.0 pop in games with carry to the bag.'
+      ) }],
+      offensive: [{ ...T(
+        'bat behind the glove, contact there, strength coming',
+        'Bat is behind the glove. Contact skills are there - strength coming.'
+      ) }],
+      pitching: []
+    },
+    ratings: { defense: 8, offense: 4, pitching: null },
+    rosterLevel: 7, recruitLevel: 'Mid Major D1'
+  });
+})();
 
 /* =====================================================================
    METRICS
@@ -899,6 +1356,19 @@ let metricTo = '';                  // custom to date
 let commitSearch = '';              // college search text on the commitment card
 let commitPick = null;              // index into COLLEGES chosen to commit to
 let uncommitArm = false;            // inline confirm for removing a commitment
+let evalFormPlayerId = null;        // player being evaluated - the eval form takes the page
+let evalDraft = null;               // the in-progress eval while the form is open
+let evalReturn = 'list';            // where Cancel goes: 'list' or 'profile'
+let evalReview = false;             // the family-version review step before a shared submit
+let evalShareArm = null;            // eval id pending its share review on the profile
+let evalDelArm = null;              // eval id pending its inline remove confirm
+let evalCardLayer = {};             // eval id -> which text layer a card shows (staff/fam/raw)
+let aiCardOpen = false;             // the AI Scouting Card modal over the profile
+let aiMetricWin = '6m';             // metric window on the card: 6m | 1y | all
+let statsFile = null;               // CSV picked on the Add Stats tab, waiting to be imported
+let statsImports = [                // import history - seeded with one example run
+  { file: 'summer-2026-menendez-gamechanger.csv', team: 'Menendez', season: 'Summer 2026', rows: 16, cols: 34, date: '2026-07-21' }
+];
 
 /* =====================================================================
    PLAYER PHOTOS
@@ -1171,6 +1641,7 @@ function clearFilters(){
 }
 function setTab(t){
   tab = t; menuOpenId = null; changeTeamId = null; addOpen = false;
+  statsFile = null;
   render();
 }
 
@@ -1237,11 +1708,211 @@ function applyChangeTeam(id){
   render();
   toast(fullName(p) + ' moved to ' + p.team + '.');
 }
+/* =====================================================================
+   EVAL FORM ACTIONS
+   Start Evaluation - from a row menu, the hub, or the profile - opens
+   the full-page eval form for that player. The draft lives in JS state
+   so free-text keeps its value across re-renders (chips and toggles
+   re-render; textareas only sync on input).
+   ===================================================================== */
 function startEval(id){
   const p = playerById(id);
-  menuOpenId = null;
+  if (!p) return;
+  menuOpenId = null; changeTeamId = null; addOpen = false;
+  evalReturn = viewPlayerId != null ? 'profile' : 'list';
+  evalFormPlayerId = id;
+  evalReview = false;
+  evalDraft = {
+    kind: 'eval',                    /* 'eval' | 'objectives' */
+    date: todayIso(),
+    season: EVAL_SEASONS.indexOf(p.season) > -1 ? p.season : EVAL_SEASONS[0],
+    shared: false,                   /* internal-only until the coach flips it */
+    /* every divider has its own include switch - a coach evals whatever
+       he actually saw and skips the rest */
+    incPositions: true,
+    /* always starts BLANK - never prefilled from the roster positions.
+       A projection is the coach's own call, not an echo of the roster. */
+    positions: [],
+    obj: { fundamental: '', physical: '', mental: '' },
+    incReports: true,
+    reports: { defensive: [], offensive: [], pitching: [], baserunning: [], iq: [] },   /* entries: {raw, improvement} */
+    impNext: { defensive: false, offensive: false, pitching: false, baserunning: false, iq: false },
+    pending: { defensive: '', offensive: '', pitching: '', baserunning: '', iq: '' },   /* typed-but-not-added report text, kept across re-renders */
+    incRatings: true,
+    skip: { defense: false, offense: false, pitching: false, baserunning: false, iq: false }, /* per-rating Don't Rate Yet */
+    /* ratings START AS NOTHING - a rating only exists once a dot gets
+       tapped, so an untouched row can never sneak in as a 5 */
+    ratings: { defense: null, offense: null, pitching: null, baserunning: null, iq: null },
+    incRoster: true,
+    rosterLevel: null,
+    recruitLevel: ''
+  };
   render();
-  toast('Evaluations are not built yet - this will open ' + (p ? fullName(p) : 'the player') + '’s eval when the Evals tab exists.');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function cancelEval(){
+  evalFormPlayerId = null; evalDraft = null; evalReview = false;
+  if (evalReturn !== 'profile') viewPlayerId = null;
+  render();
+}
+function setEvalKind(k){ evalDraft.kind = k; render(); }
+function toggleEvalPos(pos){
+  const at = evalDraft.positions.indexOf(pos);
+  if (at > -1) evalDraft.positions.splice(at, 1); else evalDraft.positions.push(pos);
+  render();
+}
+function toggleEvalInc(key){ evalDraft[key] = !evalDraft[key]; render(); }
+function toggleEvalSkip(key){ evalDraft.skip[key] = !evalDraft.skip[key]; render(); }
+function toggleEvalDraftShare(){ evalDraft.shared = !evalDraft.shared; render(); }
+/* Tap-to-rate: a rating exists only once a dot is tapped, and Clear
+   takes it back to nothing */
+function setEvalRating(key, v){ evalDraft.ratings[key] = v; render(); }
+function clearEvalRating(key){ evalDraft.ratings[key] = null; render(); }
+function setEvalRoster(v){ evalDraft.rosterLevel = v; render(); }
+function clearEvalRoster(){ evalDraft.rosterLevel = null; render(); }
+function toggleImpNext(cat){ evalDraft.impNext[cat] = !evalDraft.impNext[cat]; render(); }
+function addEvalReport(cat){
+  const text = (evalDraft.pending[cat] || '').trim();
+  if (!text){ toast('Write the report first, then add it.'); return; }
+  evalDraft.reports[cat].push({ raw: text, improvement: evalDraft.impNext[cat] });
+  evalDraft.impNext[cat] = false;
+  evalDraft.pending[cat] = '';
+  render();
+}
+function removeEvalReport(cat, i){
+  evalDraft.reports[cat].splice(i, 1);
+  render();
+}
+/* Everything written on the DRAFT, in the same fixed order entryTexts
+   uses on a saved entry - the family review textareas map 1:1 onto it */
+function evalDraftTexts(d){
+  const out = [];
+  if (d.kind === 'objectives'){
+    [['fundamental', 'Fundamental Objectives'], ['physical', 'Physical Objectives'], ['mental', 'Mental / Emotional Objectives']].forEach(pair => {
+      if (d.obj[pair[0]].trim()) out.push({ label: pair[1], raw: d.obj[pair[0]].trim() });
+    });
+  } else if (d.incReports){
+    REPORT_CATS.forEach(pair => {
+      d.reports[pair[0]].forEach((r, i) => out.push({ label: pair[1] + ' Report' + (d.reports[pair[0]].length > 1 ? ' ' + (i + 1) : ''), raw: r.raw }));
+    });
+  }
+  return out;
+}
+/* Positions are optional now - leaving them blank is fine. The only
+   rule left: an eval has to SAY something. */
+function validateEvalDraft(d){
+  if (d.kind === 'objectives'){
+    if (!d.obj.fundamental.trim() && !d.obj.physical.trim() && !d.obj.mental.trim())
+      return 'Write at least one objective before saving.';
+    return '';
+  }
+  const anyReport = d.incReports && REPORT_CATS.some(pair => d.reports[pair[0]].length);
+  const anyRating = d.incRatings && RATING_KEYS.some(k => !d.skip[k] && d.ratings[k] != null);
+  const anyRoster = d.incRoster && d.rosterLevel != null;
+  const anything = (d.incPositions && d.positions.length) || anyReport || anyRating || anyRoster || d.recruitLevel;
+  if (!anything) return 'This eval is empty - add a report, tap a rating, or set a projection before submitting.';
+  return '';
+}
+/* Submit. A shared eval detours through the family-version review
+   first: AI drafts the delicate wording in the real app (here it starts
+   as the coach's words), the coach approves or edits, THEN it saves.
+   The family never reads a sentence nobody signed off on. */
+function submitEval(){
+  const p = playerById(evalFormPlayerId);
+  if (!p || !evalDraft) return;
+  const d = evalDraft;
+  const err = validateEvalDraft(d);
+  if (err){ toast(err); return; }
+  if (d.shared && evalDraftTexts(d).length && !evalReview){
+    evalReview = true;
+    render();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+  finishEval(p, d, null);
+}
+function approveEvalReview(){
+  const p = playerById(evalFormPlayerId);
+  if (!p || !evalDraft) return;
+  const fam = evalDraftTexts(evalDraft).map((x, i) => {
+    const el = document.getElementById('famnew-' + i);
+    return el ? el.value.trim() : '';
+  });
+  finishEval(p, evalDraft, fam);
+}
+function backFromEvalReview(){ evalReview = false; render(); }
+function finishEval(p, d, famTexts){
+  /* raw is what the coach typed; staff starts as raw in the demo - the
+     real app runs the AI cleanup here with the coach approving it */
+  const mk = raw => ({ raw: raw, staff: raw, fam: null });
+  let entry;
+  if (d.kind === 'objectives'){
+    entry = {
+      id: nid(), kind: 'objectives', date: d.date || todayIso(), season: d.season, by: CURRENT_USER, shared: d.shared,
+      obj: { fundamental: mk(d.obj.fundamental.trim()), physical: mk(d.obj.physical.trim()), mental: mk(d.obj.mental.trim()) }
+    };
+  } else {
+    const rep = cat => d.incReports ? d.reports[cat].map(r => Object.assign(mk(r.raw), { improvement: !!r.improvement })) : [];
+    const rate = k => (d.incRatings && !d.skip[k] && d.ratings[k] != null) ? d.ratings[k] : null;
+    entry = {
+      id: nid(), kind: 'eval', date: d.date || todayIso(), season: d.season, by: CURRENT_USER, shared: d.shared,
+      positions: (d.incPositions && d.positions.length) ? d.positions.slice() : null,
+      reports: { defensive: rep('defensive'), offensive: rep('offensive'), pitching: rep('pitching'), baserunning: rep('baserunning'), iq: rep('iq') },
+      ratings: { defense: rate('defense'), offense: rate('offense'), pitching: rate('pitching'), baserunning: rate('baserunning'), iq: rate('iq') },
+      rosterLevel: (d.incRoster && d.rosterLevel != null) ? d.rosterLevel : null,
+      recruitLevel: d.recruitLevel
+    };
+  }
+  if (famTexts) entryTexts(entry).forEach((x, i) => { if (famTexts[i]) x.t.fam = famTexts[i]; });
+  p.evalList.push(entry);
+  evalFormPlayerId = null; evalDraft = null; evalReview = false;
+  /* land on the player's Evals tab so the new entry is right there */
+  viewPlayerId = p.id; profileTab = 'evals'; editSection = null;
+  evalShareArm = null; evalDelArm = null;
+  ensurePhoto(p);
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  toast((entry.kind === 'objectives' ? 'Objectives saved' : 'Evaluation saved') +
+    ' for ' + entry.season +
+    (entry.shared ? ' and shared with ' + p.first + ' and family.' : ' - internal only, staff eyes.'));
+}
+
+/* ---- Layer view + share + remove on saved evals (profile tab) ---- */
+function setCardLayer(eid, layer){ evalCardLayer[eid] = layer; render(); }
+function toggleEvalShare(pid, eid){
+  const p = playerById(pid);
+  const e = p && p.evalList.find(x => x.id === eid);
+  if (!e) return;
+  if (e.shared){
+    e.shared = false; evalShareArm = null;
+    if (evalCardLayer[eid] === 'fam') delete evalCardLayer[eid];
+    render();
+    toast('Back to internal only - the family no longer sees this.');
+  } else {
+    evalShareArm = eid; evalDelArm = null;   /* sharing goes through the family-version review */
+    render();
+  }
+}
+function confirmEvalShare(pid, eid){
+  const p = playerById(pid);
+  const e = p && p.evalList.find(x => x.id === eid);
+  if (!e) return;
+  entryTexts(e).forEach((x, i) => {
+    const el = document.getElementById('famtx-' + eid + '-' + i);
+    if (el && el.value.trim()) x.t.fam = el.value.trim();
+  });
+  e.shared = true; evalShareArm = null;
+  render();
+  toast('Shared - ' + p.first + ' and family see the approved version from their login now.');
+}
+function removeEval(pid, eid){
+  const p = playerById(pid);
+  if (!p) return;
+  const at = p.evalList.findIndex(x => x.id === eid);
+  if (at > -1) p.evalList.splice(at, 1);
+  evalDelArm = null;
+  render();
+  toast('Removed.');
 }
 
 function toggleSel(id, on){
@@ -1309,7 +1980,7 @@ function savePlayer(){
     height: '', weight: '', bats: 'R', throws: 'R',
     jerseySize: '', shirtSize: '', pantsSize: '',
     committed: null, contacts: [], metrics: {},
-    evals: 0
+    evalList: []
   });
   addOpen = false;
   render();
@@ -1329,17 +2000,19 @@ function openPlayer(id){
   schedView = 'tours'; schedShowPast = false; schedSel = null;
   schedCalMonth = todayIso().slice(0, 7);
   metricPreset = 'all'; metricFrom = ''; metricTo = '';
+  evalShareArm = null; evalDelArm = null; aiCardOpen = false;
   const p = playerById(id);
   if (p) ensurePhoto(p);
   render();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
-function backToList(){ viewPlayerId = null; changeTeamId = null; photoAdjust = false; render(); }
+function backToList(){ viewPlayerId = null; changeTeamId = null; photoAdjust = false; aiCardOpen = false; render(); }
 function setProfileTab(t){
   profileTab = t; photoAdjust = false; changeTeamId = null;
   commitSearch = ''; commitPick = null; uncommitArm = false;
   editSection = null; videoXEdit = false; videoDelArm = null; socialEdit = false;
   nameEdit = false; pubConfirm = false; tgtSearch = '';
+  evalShareArm = null; evalDelArm = null; aiCardOpen = false;
   render();
 }
 
@@ -1560,6 +2233,620 @@ function logContact(){
 }
 
 /* =====================================================================
+   AI SCOUTING CARD
+   Ported from the old view_evals card and cut to CBU branding. The
+   ratings on the card are CURRENT ratings, not career averages -
+   Addison's rule: growth is real, so you cannot average over years.
+   For each metric, the newest rating anchors the window and only
+   ratings within about four months of it blend in; anything older is
+   overridden and aged out. (Different evaluator weights - a head
+   coach counting more than a guest coach - are a real-app algorithm
+   decision later; the demo blends evenly.) The summary is written by
+   Claude in the real app from the season's evals; Isaiah carries a
+   pre-written example of what comes back.
+   ===================================================================== */
+const CARD_BLEND_DAYS = 120;   /* ratings within ~4 months of the newest blend together */
+function cardRatings(p){
+  const out = {};
+  [['defense', null], ['offense', null], ['pitching', null], ['baserunning', null], ['iq', null], ['roster', 'rosterLevel']].forEach(pair => {
+    const key = pair[0];
+    const pts = [];
+    evalsOf(p).forEach(e => {
+      if (e.kind !== 'eval') return;
+      const v = pair[1] ? e[pair[1]] : (e.ratings ? e.ratings[key] : null);
+      if (v != null) pts.push({ v: v, date: e.date });
+    });
+    if (!pts.length){ out[key] = null; return; }
+    pts.sort((a, b) => a.date < b.date ? 1 : -1);
+    const anchor = new Date(pts[0].date + 'T12:00:00');
+    const used = pts.filter(x => (anchor - new Date(x.date + 'T12:00:00')) / 86400000 <= CARD_BLEND_DAYS);
+    out[key] = {
+      v: used.reduce((s, x) => s + x.v, 0) / used.length,
+      n: used.length, dropped: pts.length - used.length, asOf: pts[0].date
+    };
+  });
+  return out;
+}
+function openAiCard(){ aiCardOpen = true; aiMetricWin = '6m'; render(); }
+function closeAiCard(){ aiCardOpen = false; render(); }
+function setAiMetricWin(w){ aiMetricWin = w; render(); }
+/* Metric development for a window: the MOST RECENT mark against where
+   the window started. Most recent, never best-of-window - a best from
+   a year ago would hide a slide since. Total runs latest vs the very
+   first mark on file. Fewer than two readings in the window = no trend
+   to claim. Improvement respects the metric's direction: on the clocks
+   (dashes, pop time) DOWN is the good arrow. */
+function metricTrend(p, def, win){
+  const series = ((p.metrics && p.metrics[def.key]) || []).slice().sort((a, b) => a.date < b.date ? -1 : 1);
+  if (!series.length) return null;
+  const latest = series[series.length - 1];
+  let base = null;
+  if (win === 'all'){
+    if (series.length > 1) base = series[0];
+  } else {
+    const cut = new Date();
+    cut.setDate(cut.getDate() - (win === '6m' ? 183 : 365));
+    const cutIso = cut.toISOString().slice(0, 10);
+    const inWin = series.filter(x => x.date >= cutIso);
+    if (inWin.length > 1) base = inWin[0];
+  }
+  if (!base) return { latest: latest, base: null };
+  const delta = latest.v - base.v;
+  const pct = base.v ? (delta / base.v) * 100 : 0;
+  return { latest: latest, base: base, delta: delta, pct: pct, improved: def.best === 'low' ? delta < 0 : delta > 0 };
+}
+function renderAiCard(p){
+  const r = cardRatings(p);
+  const commit = committedTo(p);
+  const seasonEvals = seasonEntries(p, p.season).filter(e => e.kind === 'eval');
+  const allEvals = evalsOf(p).filter(e => e.kind === 'eval');
+  const dropped = ['defense','offense','pitching','roster'].reduce((s, k) => s + (r[k] ? r[k].dropped : 0), 0);
+
+  const tile = (label, x) => {
+    if (!x) return `<div class="ai-tile band-none"><div class="t-label">${label}</div><div class="t-val">-</div><div class="t-of">not rated yet</div></div>`;
+    const v = Math.round(x.v * 10) / 10;
+    const band = v <= 3.4 ? 'band-low' : (v <= 6.4 ? 'band-mid' : 'band-high');
+    return `<div class="ai-tile ${band}"><div class="t-label">${label}</div><div class="t-val">${v.toFixed(1)}</div><div class="t-of">/10 &middot; ${x.n} rating${x.n === 1 ? '' : 's'}</div></div>`;
+  };
+
+  /* consolidated positions + recruitment from the newest eval carrying them */
+  const newestPos = allEvals.find(e => e.positions && e.positions.length);
+  const newestRec = allEvals.find(e => e.recruitLevel);
+
+  const dvClass = label => {
+    const m = label.match(/\((D1|D2|D3|JUCO|NAIA)/i);
+    return m ? 'dv-' + m[1].toLowerCase() : 'dv-juco';
+  };
+  const chipName = label => label.replace(/\s*\(.*\)$/, '');
+  const chipDiv = label => { const m = label.match(/\((D1|D2|D3|JUCO|NAIA)/i); return m ? m[1].toUpperCase() : '-'; };
+  const staffChips = (p.contacts || []).map(c =>
+    `<span class="col-chip" title="Logged by ${esc(c.by)} on ${fmtDate(c.date)}${c.notes ? ' - ' + esc(c.notes) : ''}"><span class="dv ${dvClass(c.college)}">${chipDiv(c.college)}</span>${esc(chipName(c.college))}<span class="who">&#9432;</span></span>`).join(' ');
+  const famChips = (p.famContacts || []).map(c =>
+    `<span class="col-chip" title="${fmtDate(c.date)}${c.notes ? ' - ' + esc(c.notes) : ''}"><span class="dv ${dvClass(c.college)}">${chipDiv(c.college)}</span>${esc(chipName(c.college))}</span>`).join(' ');
+
+  const summary = p.aiCard
+    ? `<div class="ai-summary">${p.aiCard.map(par => `<p>${esc(par)}</p>`).join('')}</div>
+       <p class="hint" style="color:#8b96b5;margin-top:.9rem">Sample of what Claude returns in the real app - it reads every eval, objective, metric, and college contact from the season and writes this fresh on demand.</p>`
+    : `<div class="ai-summary"><p>${allEvals.length
+        ? 'Claude writes this in the real app: it takes every eval and objective from the season - the staff versions, the ratings, the improvement tags - plus metrics and college contacts, and returns a scouting summary in CBU’s voice. The wiring lands with the app build.'
+        : 'No evals on file yet - the summary generates from the season’s evals once coaches start writing.'}</p></div>`;
+
+  return `
+  <div class="modal-scrim" onclick="if(event.target===this)closeAiCard()">
+    <!-- AI SCOUTING CARD - the old site's card, rebuilt on the navy system -->
+    <div class="ai-card" role="dialog" aria-label="AI Scouting Card for ${esc(fullName(p))}">
+      <div class="ai-card-head">
+        <div class="ai-card-eyebrow">AI Scouting Card</div>
+        <div class="ai-card-name">${esc(fullName(p))}</div>
+        <div class="ai-card-sub">
+          <span>${p.team ? esc(p.team) : 'Unassigned'} &middot; ${esc(p.season)}</span>
+          <span class="pill" style="background:rgba(255,255,255,.16);color:#fff">${seasonEvals.length} eval${seasonEvals.length === 1 ? '' : 's'} this season</span>
+          ${commit ? `<span class="ai-commit">${redHat(false)}${esc(commit)}</span>` : ''}
+        </div>
+        <button class="ai-card-close" onclick="closeAiCard()" aria-label="Close">&#10005;</button>
+      </div>
+      <div class="ai-card-body">
+        <div style="display:flex;gap:.6rem 1rem;flex-wrap:wrap;align-items:baseline;justify-content:space-between">
+          <div class="ai-sec-label">Current Ratings - Newest First</div>
+          ${(() => {
+            /* the date these numbers are built on. If the last eval is
+               old - injury year, missed summer - the reader has to know
+               before trusting the tiles, so staleness changes the color */
+            const lastEval = allEvals[0];
+            if (!lastEval) return '';
+            const days = Math.round((new Date() - new Date(lastEval.date + 'T12:00:00')) / 86400000);
+            const cls = days > 365 ? 'pill-red' : (days > 183 ? 'pill-gold' : '');
+            const style = cls ? '' : 'background:rgba(255,255,255,.12);color:#dfe5f2';
+            return `<span class="pill ${cls}" ${style ? `style="${style}"` : ''}>Last Eval: ${fmtDate(lastEval.date)}${days > 365 ? ' - over a year old' : (days > 183 ? ' - getting stale' : '')}</span>`;
+          })()}
+        </div>
+        <div class="ai-tiles">
+          ${tile('Defense', r.defense)}${tile('Offense', r.offense)}${tile('Pitching', r.pitching)}${tile('Base Running', r.baserunning)}${tile('Baseball IQ', r.iq)}${tile('Roster', r.roster)}
+        </div>
+        <p class="hint" style="color:#8b96b5;margin-top:.6rem">Not a career average - growth is real. The newest rating anchors each number; ratings within about four months of it blend in, anything older is overridden.${dropped ? ' ' + dropped + ' older rating' + (dropped === 1 ? '' : 's') + ' aged out here.' : ''}</p>
+        <div class="ai-kv">
+          ${newestPos ? `<span><b>Positions</b>${newestPos.positions.map(esc).join(', ')}</span>` : ''}
+          ${newestRec ? `<span><b>Recruitment</b>${esc(newestRec.recruitLevel)}</span>` : ''}
+        </div>
+        <hr class="ai-rule">
+        <div class="ai-sec-label">Metric Development</div>
+        ${(() => {
+          const mrows = METRIC_DEFS.map(def => {
+            const t = metricTrend(p, def, aiMetricWin);
+            if (!t) return '';
+            let deltaBits, sub = '';
+            if (!t.base){
+              deltaBits = '<span class="delta-badge flat">Only one reading in this window</span>';
+            } else if (Math.abs(t.delta) < Math.pow(10, -def.dec) / 2){
+              deltaBits = '<span class="delta-badge flat">No change</span>';
+              sub = `<span class="amr-sub">vs ${t.base.v.toFixed(def.dec)} ${def.unit} in ${fmtDate(t.base.date)}</span>`;
+            } else {
+              const arrow = t.delta > 0 ? '&#9650;' : '&#9660;';
+              deltaBits = `<span class="delta-badge ${t.improved ? 'up' : 'down'}">${arrow} ${Math.abs(t.delta).toFixed(def.dec)} ${def.unit} &middot; ${Math.abs(t.pct).toFixed(1)}%</span>`;
+              sub = `<span class="amr-sub">vs ${t.base.v.toFixed(def.dec)} ${def.unit} in ${fmtDate(t.base.date)}</span>`;
+            }
+            return `<div class="ai-metric-row">
+              <span class="amr-label">${def.label}</span>
+              <span class="amr-latest">${t.latest.v.toFixed(def.dec)}<span>${def.unit}</span></span>
+              ${deltaBits}
+              ${sub}
+            </div>`;
+          }).filter(Boolean).join('');
+          if (!mrows) return '<p class="hint" style="color:#8b96b5">No metrics logged yet - trends show here once testing days go in.</p>';
+          return `
+          <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.6rem">
+            <button class="ai-win-chip ${aiMetricWin === '6m' ? 'on' : ''}" onclick="setAiMetricWin('6m')">Last 6 Months</button>
+            <button class="ai-win-chip ${aiMetricWin === '1y' ? 'on' : ''}" onclick="setAiMetricWin('1y')">Last Year</button>
+            <button class="ai-win-chip ${aiMetricWin === 'all' ? 'on' : ''}" onclick="setAiMetricWin('all')">All Time</button>
+          </div>
+          ${mrows}
+          <p class="hint" style="color:#8b96b5;margin-top:.6rem">Most recent mark vs where the window started - never best-of-window, so a slide has nowhere to hide. Green is improvement; on the clocks, the down arrow is the good one. With enough seasons of data this becomes pace analysis - improving ahead of, on, or behind the age curve.</p>`;
+        })()}
+        <hr class="ai-rule">
+        <div class="ai-sec-label">Colleges In Communication - CBU Staff Log</div>
+        ${staffChips ? `<div style="display:flex;gap:.4rem;flex-wrap:wrap">${staffChips}</div>
+        <p class="hint" style="color:#8b96b5;margin-top:.5rem">Hover a school to see who logged the contact.</p>` : '<p class="hint" style="color:#8b96b5">Nothing logged by staff yet.</p>'}
+        <div class="ai-sec-label" style="margin-top:1rem">Colleges In Communication - Player + Family Log</div>
+        ${famChips ? `<div style="display:flex;gap:.4rem;flex-wrap:wrap">${famChips}</div>` : '<p class="hint" style="color:#8b96b5">Nothing logged by the family yet.</p>'}
+        <hr class="ai-rule">
+        <div class="ai-sec-label">&#9889; AI Scouting Summary</div>
+        ${summary}
+      </div>
+    </div>
+  </div>`;
+}
+
+/* =====================================================================
+   ADD STATS (CSV import, first pass)
+   Simple on purpose: pick a CSV, tag it to a season and a team, import.
+   The rule that matters is KEEP EVERYTHING - imports usually carry far
+   more columns than the profile shows, and every column gets stored
+   even if only the core hitting and pitching lines display today. The
+   display set can change later; the data is already in the building.
+   ===================================================================== */
+/* Columns the profile actually displays - anything else is stored-only */
+const STAT_CORE_COLS = ['player','name','first','last','first name','last name','team','season',
+  'g','ab','r','h','2b','3b','hr','rbi','bb','so','sb','cs','avg','obp','slg','ops',
+  'w','l','sv','gp','era','ip','er','ibb','hbp','whip'];
+const STATS_TEMPLATE_HREF = 'data:text/csv;charset=utf-8,' + encodeURIComponent(
+  'First Name,Last Name,G,AB,R,H,2B,3B,HR,RBI,BB,SO,SB,CS,AVG,OBP,SLG,OPS,W,L,SV,GP,ERA,IP,ER,IBB,HBP,WHIP\n');
+function pickStatsCsv(input){
+  const f = input.files && input.files[0];
+  input.value = '';
+  if (!f) return;
+  const rd = new FileReader();
+  rd.onload = function(){
+    const lines = String(rd.result).split(/\r?\n/).filter(x => x.trim());
+    if (!lines.length){ toast('That file looks empty - check the CSV and try again.'); return; }
+    statsFile = {
+      name: f.name,
+      rows: Math.max(0, lines.length - 1),
+      headers: lines[0].split(',').map(x => x.trim().replace(/^"|"$/g, '')).filter(Boolean)
+    };
+    render();
+  };
+  rd.readAsText(f);
+}
+function clearStatsFile(){ statsFile = null; render(); }
+function doStatsImport(){
+  if (!statsFile){ toast('Pick the CSV file first.'); return; }
+  const season = (document.getElementById('siSeason') || {}).value || EVAL_SEASONS[0];
+  const team = (document.getElementById('siTeam') || {}).value;
+  if (!team){ toast('Tag the import to a team.'); return; }
+  statsImports.unshift({ file: statsFile.name, team: team, season: season, rows: statsFile.rows, cols: statsFile.headers.length, date: todayIso() });
+  statsFile = null;
+  render();
+  toast('Imported and stored in full - the core lines show on the player profiles.');
+}
+function renderAddStatsTab(){
+  const fileBits = statsFile ? (() => {
+    const core = statsFile.headers.filter(h => STAT_CORE_COLS.indexOf(h.toLowerCase()) > -1);
+    const extra = statsFile.headers.filter(h => STAT_CORE_COLS.indexOf(h.toLowerCase()) === -1);
+    return `
+    <div style="background:var(--row-alt);border:1.5px solid var(--line);border-radius:10px;padding:.9rem 1rem;margin-top:.9rem">
+      <div style="display:flex;gap:.7rem;flex-wrap:wrap;align-items:center">
+        <strong style="font-size:.88rem;color:var(--ink);overflow-wrap:anywhere">${esc(statsFile.name)}</strong>
+        <span class="pill pill-blue">${statsFile.rows} row${statsFile.rows === 1 ? '' : 's'}</span>
+        <span class="pill pill-navy">${statsFile.headers.length} columns</span>
+        <button class="link-muted" onclick="clearStatsFile()">Clear</button>
+      </div>
+      ${core.length ? `<p class="hint" style="margin-top:.7rem;margin-bottom:.3rem">Columns that show on profiles:</p>
+      <div style="display:flex;gap:.3rem;flex-wrap:wrap">${core.map(h => `<span class="col-tag">${esc(h)}</span>`).join('')}</div>` : ''}
+      ${extra.length ? `<p class="hint" style="margin-top:.7rem;margin-bottom:.3rem">Stored but not shown (kept in full - the display set can grow later):</p>
+      <div style="display:flex;gap:.3rem;flex-wrap:wrap">${extra.map(h => `<span class="col-tag dim">${esc(h)}</span>`).join('')}</div>` : ''}
+    </div>`;
+  })() : '';
+
+  const history = statsImports.length ? statsImports.map(im => `
+    <div class="contact-entry">
+      <strong style="color:var(--red);overflow-wrap:anywhere">${esc(im.file)}</strong>
+      <div class="cell-sub">${esc(im.team)} &middot; ${esc(im.season)} &middot; ${im.rows} rows &middot; ${im.cols} columns stored &middot; imported ${fmtDate(im.date)}</div>
+    </div>`).join('')
+    : '<p class="hint" style="margin-top:.8rem">No imports yet.</p>';
+
+  return `
+  <div class="card card-pad">
+    <div class="section-head red" style="margin-top:0;border-radius:8px 8px 0 0">Import Team Stats</div>
+    <div class="section-body">
+      <p class="hint">Bring a whole team's season in at once from a CSV export (GameChanger or anything else). Tag it to a season and a team, and every player row lands on the matching profile's Stats tab. <strong>Every column is kept</strong> - the profiles show the core hitting and pitching lines, but the full import is stored because the display set will change and we want the data already in hand.</p>
+      <div style="display:flex;gap:.7rem;flex-wrap:wrap;align-items:center;margin-top:1rem">
+        <button class="btn btn-primary btn-sm" onclick="document.getElementById('statsCsvFile').click()">Choose CSV File</button>
+        <a class="link-red" href="${STATS_TEMPLATE_HREF}" download="cbu-stats-template.csv">Download the CSV template</a>
+        <input type="file" id="statsCsvFile" accept=".csv,text/csv" style="display:none" onchange="pickStatsCsv(this)">
+      </div>
+      ${fileBits}
+      <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;margin-top:1.1rem">
+        <div>
+          <label class="field-label" for="siSeason">Tag To Season</label>
+          <select id="siSeason" style="max-width:200px">${EVAL_SEASONS.map(s => `<option>${s}</option>`).join('')}</select>
+        </div>
+        <div>
+          <label class="field-label" for="siTeam">Tag To Team</label>
+          <select id="siTeam" style="max-width:260px"><option value="">Choose a team...</option>${teamOptions(null, false)}</select>
+        </div>
+        <button class="btn btn-primary btn-sm" style="margin-bottom:.1rem" ${statsFile ? '' : 'disabled'} onclick="doStatsImport()">Import Stats</button>
+      </div>
+      <p class="hint" style="margin-top:.8rem">First pass on purpose - matching rows to players, fixing mismatched names, and per-game lines come later. Right now: file in, tagged, stored.</p>
+    </div>
+
+    <div class="section-head">Import History</div>
+    <div class="section-body">
+      <p class="hint">Every import stays on record with its full column set, even the ones the profiles do not display yet.</p>
+      <div style="margin-top:.6rem">${history}</div>
+    </div>
+  </div>`;
+}
+
+/* =====================================================================
+   RENDER: EVAL FORM (full page) + EVAL CARDS (shared by admin + family)
+   ===================================================================== */
+/* 1-10 rating badge, colored by the number - Addison's bands:
+   1-3 red, 4-6 yellow, 7-10 green */
+function rateBadge(label, v){
+  if (v == null) return '';
+  const band = v <= 3 ? 'rb-low' : (v <= 6 ? 'rb-mid' : 'rb-high');
+  return `<span class="rate-badge ${band}">${label} ${v}/10</span>`;
+}
+function reportList(title, list, layer){
+  if (!list || !list.length) return '';
+  const rows = list.map(r => `
+    <div class="report-entry">${r.improvement ? '<div><span class="imp-tag">&#9650; Improvement Noted</span></div>' : ''}${esc(layerText(r, layer))}</div>`).join('');
+  return `<div class="kv-sub">${title}</div>${rows}`;
+}
+
+/* One saved eval or objectives entry, rendered as a card. famSafe locks
+   it to the approved family layer and hides the staff-only pieces:
+   roster level, the layer chips, the share controls, remove. */
+function renderEvalEntry(p, e, famSafe){
+  const role = evalRoleOf(e);
+  const title = e.kind === 'objectives' ? 'Player Objectives' : 'Player Evaluation';
+  const texts = entryTexts(e);
+  const anyFam = e.shared && texts.some(x => x.t && typeof x.t === 'object' && x.t.fam);
+  const rawDiffers = texts.some(x => x.t && typeof x.t === 'object' && x.t.raw && x.t.staff && x.t.raw !== x.t.staff);
+  const layer = famSafe ? 'fam' : (evalCardLayer[e.id] || 'staff');
+
+  let shareBits = '';
+  if (!famSafe){
+    shareBits = `
+    <span class="ee-share">
+      <span class="pill ${e.shared ? 'pill-green' : 'pill-navy'}">${e.shared ? 'Shared With Family' : 'Internal Only'}</span>
+      <button class="switch ${e.shared ? 'on' : ''}" onclick="toggleEvalShare(${p.id}, ${e.id})" aria-label="Share this with the player and family"></button>
+    </span>`;
+  }
+
+  /* the text-layer switcher: staff version, the approved family version
+     once one exists, and the coach's raw notes when they differ */
+  const layerChips = (!famSafe && (anyFam || rawDiffers) && texts.length) ? `
+    <div style="display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.7rem;align-items:center">
+      <button class="vtag ${layer === 'staff' ? 'on' : ''}" onclick="setCardLayer(${e.id}, 'staff')">Staff Version</button>
+      ${anyFam ? `<button class="vtag ${layer === 'fam' ? 'on' : ''}" onclick="setCardLayer(${e.id}, 'fam')">Family Version</button>` : ''}
+      ${rawDiffers ? `<button class="vtag ${layer === 'raw' ? 'on' : ''}" onclick="setCardLayer(${e.id}, 'raw')">Raw Notes</button>` : ''}
+      ${layer === 'fam' ? '<span class="hint" style="font-size:.72rem">Exactly what the family reads - frozen when it was shared.</span>' : ''}
+      ${layer === 'raw' ? '<span class="hint" style="font-size:.72rem">The coach&#39;s own words - never shown to families.</span>' : ''}
+    </div>` : '';
+
+  let body = '';
+  if (e.kind === 'objectives'){
+    const block = (label, t) => layerText(t, 'staff').trim()
+      ? `<div class="kv-sub">${label}</div><p style="font-size:.86rem;line-height:1.55;color:var(--ink)">${esc(layerText(t, layer))}</p>`
+      : (famSafe ? '' : `<div class="kv-sub">${label}</div><p class="hint" style="padding:.15rem 0 .3rem">Not written yet.</p>`);
+    body = block('Fundamental', e.obj.fundamental) + block('Physical', e.obj.physical) + block('Mental / Emotional', e.obj.mental);
+  } else {
+    const r = e.ratings || {};
+    const badges = [
+      rateBadge('DEF', r.defense), rateBadge('OFF', r.offense), rateBadge('PIT', r.pitching),
+      rateBadge('BASE RUN', r.baserunning), rateBadge('IQ', r.iq),
+      famSafe ? '' : rateBadge('ROSTER', e.rosterLevel)
+    ].filter(Boolean).join(' ');
+    body = `
+      ${e.positions && e.positions.length ? `<div style="margin-top:.7rem;font-size:.85rem;color:var(--ink)"><strong style="font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.1em;font-size:.64rem;color:var(--muted);margin-right:.4rem">Projected Positions</strong>${e.positions.map(esc).join(', ')}</div>` : ''}
+      ${badges ? `<div style="display:flex;gap:.45rem;flex-wrap:wrap;margin-top:.6rem">${badges}</div>` : ''}
+      ${!famSafe && e.rosterLevel != null ? '<p class="hint" style="margin-top:.4rem">Roster level stays internal even when the eval is shared: 1 = move way down, 5 = properly rostered, 10 = move way up.</p>' : ''}
+      ${e.recruitLevel ? `<div style="margin-top:.7rem;font-size:.85rem;color:var(--ink)"><strong style="font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.1em;font-size:.64rem;color:var(--muted);margin-right:.4rem">Projected College Level</strong>${esc(e.recruitLevel)}</div>` : ''}
+      ${REPORT_CATS.map(pair => reportList(pair[1] + ' Report', e.reports[pair[0]], layer)).join('')}`;
+  }
+
+  /* sharing goes through the family-version review: the delicate
+     wording gets approved by a human BEFORE the family can read it */
+  const shareReview = (!famSafe && evalShareArm === e.id) ? `
+    <div class="pub-warn" style="margin-top:.8rem">
+      <strong>Review the family version before it goes live.</strong> ${esc(p.first)} and family will read exactly what is approved here, from their own login - ${e.kind === 'eval' ? 'the roster level never shows to them, shared or not' : 'objectives read as goals, not criticism'}. In the real app AI drafts this delicate version from the coach's notes; edit it the way you would say it to the family. Nothing ever goes on the public site.
+      ${texts.map((x, i) => `
+        <label class="field-label" style="margin-top:.9rem" for="famtx-${e.id}-${i}">${esc(x.label)}</label>
+        <textarea id="famtx-${e.id}-${i}" style="background:#fff">${esc(x.t.fam || layerText(x.t, 'staff'))}</textarea>`).join('')}
+      ${texts.length ? '' : '<p class="hint" style="margin-top:.6rem">This entry is ratings only - nothing written to soften. The family sees the badges as they are.</p>'}
+      <div style="display:flex;gap:.8rem;margin-top:.9rem;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm" onclick="confirmEvalShare(${p.id}, ${e.id})">Approve &amp; Share</button>
+        <button class="link-muted" onclick="evalShareArm=null;render()">Keep It Internal</button>
+      </div>
+    </div>` : '';
+
+  const removeBits = famSafe ? '' : (evalDelArm === e.id
+    ? `<div style="margin-top:.8rem;font-size:.82rem"><span class="hint">Remove this ${e.kind === 'objectives' ? 'objectives entry' : 'evaluation'} for good? </span>
+        <button class="link-red" onclick="removeEval(${p.id}, ${e.id})">Remove</button>
+        <button class="link-muted" onclick="evalDelArm=null;render()">Keep</button></div>`
+    : `<div style="margin-top:.8rem"><button class="link-muted" style="font-size:.74rem" onclick="evalDelArm=${e.id};evalShareArm=null;render()">Remove</button></div>`);
+
+  return `
+  <div class="eval-entry">
+    <div class="eval-entry-head">
+      <span class="ee-title">${title}</span>
+      <span class="pill pill-navy">${esc(e.season)}</span>
+      <span class="pill ${role === 'Director' ? 'pill-red' : 'pill-blue'}">${role} - ${esc(e.by)}</span>
+      <span style="font-size:.78rem;color:var(--muted)">${fmtDate(e.date)}</span>
+      ${shareBits}
+    </div>
+    ${shareReview}
+    ${layerChips}
+    ${body}
+    ${removeBits}
+  </div>`;
+}
+
+/* The eval form itself. Free-text syncs into the draft on input (no
+   re-render, same trick as the interview) so chips and toggles can
+   re-render the page without eating what was typed. Every divider has
+   its own include switch - a coach writes up what he actually saw and
+   switches the rest off. A shared submit detours through the
+   family-version review before anything saves. */
+function renderEvalForm(p){
+  const d = evalDraft;
+  const info = p.team ? teamInfo(p.team) : null;
+
+  /* ---- the family-version review step (shared submits only) ---- */
+  if (evalReview){
+    const texts = evalDraftTexts(d);
+    return `
+    <button class="link-muted" style="color:#aab3cc;font-size:.84rem" onclick="backFromEvalReview()">&larr; Back to the eval</button>
+    <div class="title-row" style="margin-top:.8rem">
+      <div class="grow">
+        <div class="eyebrow">Before It Reaches The Family</div>
+        <h1 class="page-title">Review The Family Version</h1>
+        <div class="title-rule"></div>
+        <p class="page-title-sub">${esc(fullName(p))}'s family reads exactly what leaves this page - nothing else, and it never changes behind your back.</p>
+      </div>
+    </div>
+    <div class="card card-pad" style="margin-top:1.4rem">
+      <div class="section-head red" style="margin-top:0">The Family Version</div>
+      <div class="section-body">
+        <p class="hint">In the real app, AI drafts this from your notes: delicate, constructive, well written - not sugar-coated, just put the way a good coach says a hard thing to a parent. Here it starts as your own words. Edit each one the way you would say it to the family, then approve. Your raw notes and the staff version stay untouched underneath.</p>
+        ${texts.map((x, i) => `
+          <label class="field-label" style="margin-top:1rem" for="famnew-${i}">${esc(x.label)}</label>
+          <textarea id="famnew-${i}">${esc(x.raw)}</textarea>`).join('')}
+        ${d.kind === 'eval' ? '<p class="hint" style="margin-top:.8rem">Ratings show to the family as they are. The roster level never shows to them, no matter what.</p>' : ''}
+      </div>
+      <div style="display:flex;gap:.8rem;margin-top:1.3rem;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-primary" onclick="approveEvalReview()">Approve &amp; Share</button>
+        <button class="link-muted" onclick="backFromEvalReview()">Back To The Eval</button>
+      </div>
+    </div>`;
+  }
+
+  const typeChips = `
+  <div class="chip-row" style="margin-top:.3rem">
+    <button class="chip ${d.kind === 'eval' ? 'active' : ''}" onclick="setEvalKind('eval')">Full Evaluation</button>
+    <button class="chip ${d.kind === 'objectives' ? 'active' : ''}" onclick="setEvalKind('objectives')">Objectives Only</button>
+  </div>
+  <p class="hint" style="margin-top:.5rem">${d.kind === 'objectives'
+    ? 'Just the three development objectives - skip ratings, reports, and recruiting for now.'
+    : 'The write-up: positions, reports, ratings, roster level, projected college level - every section has its own on-off switch, so use what you saw and skip the rest.'}</p>`;
+
+  const objectives = `
+  <div class="section-head">Player Objectives</div>
+  <div class="section-body">
+    <p class="hint" style="margin-bottom:.7rem">Type or voice-dictate rough - your exact words are kept as the record, and AI cleans them up for the staff view in the real app.</p>
+    <label class="field-label" for="objFund">Fundamental Objectives</label>
+    <textarea id="objFund" placeholder="Skill development, mechanics, baseball IQ, situational awareness..." oninput="evalDraft.obj.fundamental=this.value">${esc(d.obj.fundamental)}</textarea>
+    <label class="field-label" style="margin-top:.9rem" for="objPhys">Physical Objectives</label>
+    <textarea id="objPhys" placeholder="Strength, speed, mobility, conditioning, body composition..." oninput="evalDraft.obj.physical=this.value">${esc(d.obj.physical)}</textarea>
+    <label class="field-label" style="margin-top:.9rem" for="objMent">Mental / Emotional Objectives</label>
+    <textarea id="objMent" placeholder="Focus, confidence, composure, leadership, mental routines..." oninput="evalDraft.obj.mental=this.value">${esc(d.obj.mental)}</textarea>
+  </div>`;
+
+  /* a navy section header with its own include switch and the white
+     whisper telling coaches exactly what the switch does */
+  const secHead = (title, incKey) => `
+  <div class="section-head" style="display:flex;align-items:center;gap:.6rem">
+    <span>${title}</span>
+    <span class="sec-toggle-hint" style="margin-left:auto">${d[incKey] ? 'Toggle off to skip this section' : 'Skipped - toggle on to include'}</span>
+    <button class="switch ${d[incKey] ? 'on' : ''}" style="flex:0 0 auto" onclick="toggleEvalInc('${incKey}')" aria-label="Include ${title}"></button>
+  </div>`;
+  const skippedBody = copy => `<div class="section-body"><p class="hint">${copy}</p></div>`;
+
+  const posChips = EVAL_POSITIONS.map(x =>
+    `<button class="vtag ${d.positions.indexOf(x) > -1 ? 'on' : ''}" onclick="toggleEvalPos('${x}')">${x}</button>`).join('');
+
+  const reportEditor = (title, cat) => `
+    <div class="kv-sub" style="margin-top:1rem">${title} Reports</div>
+    ${d.reports[cat].map((r, i) => `
+      <div class="report-entry">
+        ${r.improvement ? '<div><span class="imp-tag">&#9650; Improvement Noted</span></div>' : ''}
+        <div>${esc(r.raw)} <button class="link-muted" style="font-size:.72rem" onclick="removeEvalReport('${cat}', ${i})">Remove</button></div>
+      </div>`).join('')}
+    <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:flex-end;margin-top:.6rem">
+      <div style="flex:1;min-width:220px">
+        <label class="field-label" for="rp-${cat}-text">${title} Report</label>
+        <input type="text" id="rp-${cat}-text" placeholder="What did you see? Rough is fine - AI cleans it up." style="max-width:100%" value="${esc(d.pending[cat])}" oninput="evalDraft.pending.${cat}=this.value">
+      </div>
+      <button class="vtag ${d.impNext[cat] ? 'on' : ''}" style="margin-bottom:.35rem" onclick="toggleImpNext('${cat}')">Noting An Improvement</button>
+      <button class="btn btn-outline-dark btn-sm" style="margin-bottom:.1rem" onclick="addEvalReport('${cat}')">+ Add</button>
+    </div>
+    ${d.impNext[cat] ? '<p class="hint" style="margin-top:.35rem">This report gets the Improvement tag - the AI card reads these later and tells the family their coach noted the jump.</p>' : ''}`;
+
+  /* tap-to-rate dots: the row STARTS EMPTY and only says something once
+     a dot gets tapped - an untouched row can never submit as a 5.
+     Don't Rate Yet stays as the explicit version of the same call.
+     callPrefix is the start of the onclick, e.g. "setEvalRoster(" -
+     the dot number and closing paren get appended. */
+  const dots = (val, callPrefix, markerLabel) => `
+    <div class="rate-dots">
+      ${Array.from({ length: 10 }, (_, i) => {
+        const n = i + 1;
+        const sel = val === n ? (n <= 3 ? 'sel-low' : (n <= 6 ? 'sel-mid' : 'sel-high')) : '';
+        return `<span class="dot-wrap">
+          <button class="rate-dot ${sel}" onclick="${callPrefix}${n})" aria-label="Rate ${n} of 10">${n}</button>
+          ${n === 5 ? `<span class="dot-marker"><span class="tri">&#9650;</span><span class="tri-label">${markerLabel}</span></span>` : ''}
+        </span>`;
+      }).join('')}
+    </div>`;
+  const ratingRow = (label, key) => `
+    <div style="margin-top:1rem">
+      <div style="display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;margin-bottom:.4rem">
+        <span class="field-label" style="margin-bottom:0">${label}</span>
+        <span class="rate-val ${d.ratings[key] == null ? 'none' : ''}">${d.ratings[key] == null ? 'Nothing yet' : d.ratings[key] + '/10'}</span>
+        ${d.ratings[key] != null ? `<button class="link-muted" style="font-size:.72rem" onclick="clearEvalRating('${key}')">Clear</button>` : ''}
+        <button class="vtag ${d.skip[key] ? 'on' : ''}" onclick="toggleEvalSkip('${key}')">Don't Rate Yet</button>
+      </div>
+      ${d.skip[key]
+        ? '<p class="hint">No ' + label.toLowerCase() + ' rating goes in - the write-up carries it until you have seen enough.</p>'
+        : dots(d.ratings[key], "setEvalRating('" + key + "', ", 'Average For Age')}
+    </div>`;
+
+  const fullEval = `
+  ${secHead('Projected Positions', 'incPositions')}
+  ${d.incPositions ? `
+  <div class="section-body">
+    <p class="hint" style="margin-bottom:.6rem">Where ${esc(p.first)} projects, not just where he plays today. Starts blank on purpose - the projection is your call, not an echo of the roster. Pick all that apply, or leave it blank if you are not ready to project him.</p>
+    <div class="chip-row">${posChips}</div>
+  </div>` : skippedBody('No position projection on this eval.')}
+
+  ${secHead('Performance Reports', 'incReports')}
+  ${d.incReports ? `
+  <div class="section-body">
+    <p class="hint">Written observations - the heart of the eval. All five sections are always here; use the ones you actually saw and skip the rest. Defensive only is a real eval. Rough words are fine - they are kept as your raw notes and cleaned up for the staff view.</p>
+    ${REPORT_CATS.map(pair => reportEditor(pair[1], pair[0])).join('')}
+  </div>` : skippedBody('No written reports on this eval.')}
+
+  ${secHead('Performance Ratings', 'incRatings')}
+  ${d.incRatings ? `
+  <div class="section-body">
+    <p class="hint">Rate ${esc(p.first)} against peers in the same age group - a 5 is a typical player his age, above 5 ahead of the group, below 5 behind it. <strong>Every row starts as nothing.</strong> Tap a number to rate; leave it untouched and no rating goes in - it can never accidentally read as a 5.</p>
+    ${ratingRow('Defense Level', 'defense')}
+    ${ratingRow('Offense Level', 'offense')}
+    ${ratingRow('Pitching Level', 'pitching')}
+    ${ratingRow('Base Running Level', 'baserunning')}
+    ${ratingRow('Baseball IQ Level', 'iq')}
+  </div>` : skippedBody('No ratings on this eval - verbals only. The Rated column on the audit stays open until a rating goes in, so it will not be forgotten.')}
+
+  ${secHead('Roster Level', 'incRoster')}
+  ${d.incRoster ? `
+  <div class="section-body">
+    <p class="hint">Is he on the right team? <strong>1 = move way down &middot; 5 = properly rostered &middot; 10 = move way up.</strong> Starts as nothing - tap to answer. This line never shows to the family, even on a shared eval.</p>
+    <div style="display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;margin:.7rem 0 .4rem">
+      <span class="rate-val ${d.rosterLevel == null ? 'none' : ''}">${d.rosterLevel == null ? 'Nothing yet' : d.rosterLevel + '/10'}</span>
+      ${d.rosterLevel != null ? '<button class="link-muted" style="font-size:.72rem" onclick="clearEvalRoster()">Clear</button>' : ''}
+    </div>
+    ${dots(d.rosterLevel, 'setEvalRoster(', 'Rostered Perfectly')}
+  </div>` : skippedBody('No roster-level call on this eval.')}
+
+  <div class="section-head">Recruitment</div>
+  <div class="section-body">
+    <label class="field-label" for="evRecruit">Projected College Level</label>
+    <select id="evRecruit" onchange="evalDraft.recruitLevel=this.value">
+      <option value="">Not projected yet</option>
+      ${RECRUIT_LEVELS.map(x => `<option ${d.recruitLevel === x ? 'selected' : ''}>${x}</option>`).join('')}
+    </select>
+    <p class="hint" style="margin-top:.5rem">Not projected yet is a fine answer - no switch needed here. College contacts and the commitment live on the Recruiting tab.</p>
+  </div>`;
+
+  return `
+  <button class="link-muted" style="color:#aab3cc;font-size:.84rem" onclick="cancelEval()">&larr; Cancel - back to ${evalReturn === 'profile' ? esc(fullName(p)) + "'s profile" : 'the player list'}</button>
+
+  <div class="title-row" style="margin-top:.8rem">
+    <div class="grow">
+      <div class="eyebrow">Player Evaluation</div>
+      <h1 class="page-title">${esc(fullName(p))}</h1>
+      <div class="title-rule"></div>
+      <p class="page-title-sub">${esc(posLabel(p))} &middot; Class of ${p.grad}${p.team ? ' &middot; ' + esc(p.team) : ' &middot; Unassigned'}${info ? ' &middot; ' + esc(info.season) : ''}</p>
+    </div>
+  </div>
+
+  <div class="card card-pad" style="margin-top:1.4rem">
+    <div class="section-head" style="margin-top:0">Evaluation Setup</div>
+    <div class="section-body">
+      <p class="hint">You are signed in as <strong>${esc(CURRENT_USER)}</strong> (${isDirector(CURRENT_USER) ? 'Director' : 'Coach'}) - this write-up links to your name automatically.</p>
+      <div style="display:flex;gap:1.2rem;flex-wrap:wrap;align-items:flex-end;margin-top:.8rem">
+        <div>
+          <label class="field-label" for="evSeason">Season</label>
+          <select id="evSeason" style="max-width:200px" onchange="evalDraft.season=this.value">
+            ${EVAL_SEASONS.map(s => `<option ${d.season === s ? 'selected' : ''}>${s}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <label class="field-label" for="evDate">Evaluation Date</label>
+          <input type="date" id="evDate" value="${d.date}" style="max-width:180px" onchange="evalDraft.date=this.value">
+        </div>
+        <div style="flex:1;min-width:230px">
+          <span class="field-label">Evaluation Type</span>
+          ${typeChips}
+        </div>
+      </div>
+      <p class="hint" style="margin-top:.6rem">Evals count toward the season they are stamped with - the audit runs season by season, so last summer's eval never covers this one.</p>
+    </div>
+
+    ${d.kind === 'objectives' ? objectives : fullEval}
+
+    <div class="section-head red">Who Sees This?</div>
+    <div class="section-body">
+      <div class="pub-q">
+        <span class="pub-label">Share with ${esc(p.first)} and family?</span>
+        <button class="switch ${d.shared ? 'on' : ''}" onclick="toggleEvalDraftShare()" aria-label="Share with player and family"></button>
+        <span class="pill ${d.shared ? 'pill-green' : 'pill-navy'}">${d.shared ? 'Shared With Family' : 'Internal Only'}</span>
+      </div>
+      <p class="hint" style="margin-top:.6rem">${d.shared
+        ? 'Submitting steps through the family-version review first: you approve the delicate wording before anyone reads it' + (d.kind === 'eval' ? ', and the roster level always stays internal' : '') + '. You can flip it back to internal any time.'
+        : 'Staff eyes only. You can share it with the family later from the profile - the switch stays on every saved eval.'}
+      Nothing on this form ever appears on the public site.</p>
+    </div>
+
+    <div style="display:flex;gap:.8rem;margin-top:1.3rem;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-primary" onclick="submitEval()">${d.shared ? 'Review Family Version &amp; Submit' : (d.kind === 'objectives' ? 'Save Objectives' : 'Submit Evaluation')}</button>
+      <button class="link-muted" onclick="cancelEval()">Cancel</button>
+    </div>
+  </div>`;
+}
+
+/* =====================================================================
    RENDER: LIST
    ===================================================================== */
 function renderMenu(p){
@@ -1699,9 +2986,7 @@ function renderRosterTab(){
 }
 
 function renderPlaceholderTab(kind){
-  const copy = kind === 'evals'
-    ? { title: 'Evaluations', body: 'Player evaluations will live here - who has been evaluated, who is missing one, and the eval form itself. Start Evaluation on any player row will open into this tab once it is built.' }
-    : { title: 'Recruiting', body: 'The recruiting view will live here - the outward-facing player profiles that recruiters see, and the tools to manage what gets published on each one.' };
+  const copy = { title: 'Recruiting', body: 'The recruiting view will live here - the outward-facing player profiles that recruiters see, and the tools to manage what gets published on each one.' };
   return `
     <div class="card">
       <div class="tab-placeholder">
@@ -1709,6 +2994,85 @@ function renderPlaceholderTab(kind){
         <p>${copy.body}</p>
       </div>
     </div>`;
+}
+
+/* ---- Evals hub: the audit. Who has objectives written, who has a
+   coach eval, who has a director eval - across whatever the filters
+   above have narrowed the list to. Modeled on the old director and
+   player audits, folded into one because the filters already slice by
+   season, team, and class. ---- */
+function openPlayerEvals(id){
+  openPlayer(id);
+  profileTab = 'evals';
+  render();
+}
+function renderEvalsHubTab(){
+  const list = filtered();
+  const nDone = list.filter(p => evalOverall(p, auditSeason(p)) === 'done').length;
+  const nPartial = list.filter(p => evalOverall(p, auditSeason(p)) === 'partial').length;
+  const nMissing = list.length - nDone - nPartial;
+
+  const objBadge = (p, season) => {
+    const s = objectivesStatus(p, season);
+    return s === 'done' ? '<span class="pill pill-green">&#10003; All 3</span>'
+      : s === 'partial' ? '<span class="pill pill-gold">Partial</span>'
+      : '<span class="pill pill-gray">Not Started</span>';
+  };
+  const yn = has => has ? '<span class="pill pill-green">&#10003; Submitted</span>' : '<span class="pill pill-gray">None</span>';
+
+  const rows = list.map(p => {
+    const season = auditSeason(p);
+    const n = seasonEntries(p, season).length;
+    return `
+    <tr>
+      <td style="width:44px"><span class="jnum ${p.jersey ? '' : 'empty'}">${p.jersey ? esc(p.jersey) : '-'}</span></td>
+      <td>
+        <a class="link-red" style="font-size:.92rem" onclick="openPlayerEvals(${p.id})">${esc(fullName(p))}</a>${p.committed ? redHat(false) : ''}
+        <div class="cell-sub">${playerSub(p)}</div>
+      </td>
+      <td>${p.team ? `<div class="cell-strong">${esc(p.team)}</div>` : '<span class="pill pill-red">Unassigned</span>'}</td>
+      <td style="text-align:center">${n ? `<span class="cell-strong">${n}</span>` : '<span style="color:var(--muted)">-</span>'}</td>
+      <td style="text-align:center">${objBadge(p, season)}</td>
+      <td style="text-align:center">${yn(hasCoachEval(p, season))}</td>
+      <td style="text-align:center">${yn(hasDirectorEval(p, season))}</td>
+      <td style="text-align:center">${isRated(p, season) ? '<span class="pill pill-green">&#10003; Rated</span>' : '<span class="pill pill-gray">Not Rated</span>'}</td>
+      <td style="text-align:right"><button class="btn btn-outline-dark btn-sm" onclick="startEval(${p.id})">Start Evaluation</button></td>
+    </tr>`;
+  }).join('');
+
+  return `
+    <div class="count-line">
+      <span>${filters.season !== 'all'
+        ? 'Auditing <strong style="color:#fff">' + esc(filters.season) + '</strong> - old evals read as history, not coverage.'
+        : 'Auditing every player against their own current season - an eval from a past season never reads as covered. Pick a season above to audit that season specifically.'}</span>
+    </div>
+    <div class="eval-stats">
+      <div class="eval-stat"><div class="es-num blue">${list.length}</div><div class="es-label">Players Shown</div></div>
+      <div class="eval-stat"><div class="es-num green">${nDone}</div><div class="es-label">Fully Complete</div></div>
+      <div class="eval-stat"><div class="es-num gold">${nPartial}</div><div class="es-label">Partially Done</div></div>
+      <div class="eval-stat"><div class="es-num gray">${nMissing}</div><div class="es-label">Nothing Yet</div></div>
+    </div>
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th style="width:44px">#</th>
+            <th>Player</th>
+            <th>Team</th>
+            <th style="text-align:center">Evals</th>
+            <th style="text-align:center">Objectives</th>
+            <th style="text-align:center">Coach Eval</th>
+            <th style="text-align:center">Director Eval</th>
+            <th style="text-align:center">Rated</th>
+            <th></th>
+          </tr></thead>
+          <tbody>${rows || `<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:2.4rem 1rem">
+            No players match these filters. <button class="link-red" onclick="clearFilters()">Clear all filters</button>
+          </td></tr>`}</tbody>
+        </table>
+      </div>
+    </div>
+    <p class="hint" style="color:#aab3cc;margin-top:.8rem">All statuses are for the audited season only. Fully complete = all three objectives written, a coach eval, a director eval, AND at least one rating - verbals-only evals keep Rated open on purpose, so a rating never gets forgotten. The Evals count is the season's total: complete is the floor, stack as many as the summer gives. Directors: ${DIRECTORS.join(', ')}.</p>`;
 }
 
 function renderList(){
@@ -1791,9 +3155,13 @@ function renderList(){
     <button class="chip ${tab === 'roster' ? 'active' : ''}" onclick="setTab('roster')">Roster</button>
     <button class="chip ${tab === 'evals' ? 'active' : ''}" onclick="setTab('evals')">Evals</button>
     <button class="chip ${tab === 'recruiting' ? 'active' : ''}" onclick="setTab('recruiting')">Recruiting</button>
+    <button class="chip ${tab === 'addstats' ? 'active' : ''}" onclick="setTab('addstats')">Add Stats</button>
   </div>
 
-  ${tab === 'roster' ? renderRosterTab() : renderPlaceholderTab(tab)}`;
+  ${tab === 'roster' ? renderRosterTab()
+    : tab === 'evals' ? renderEvalsHubTab()
+    : tab === 'addstats' ? renderAddStatsTab()
+    : renderPlaceholderTab(tab)}`;
 }
 
 /* =====================================================================
@@ -1871,8 +3239,9 @@ function renderProfile(p){
         </div>
         ${famView() ? renderPublicPanel(p) : `
         <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1.1rem">
-          <button class="btn btn-outline-dark btn-sm" onclick="startEval(${p.id})">Start Evaluation</button>
           <button class="btn btn-outline-dark btn-sm" onclick="openChangeTeam(${p.id})">${p.team ? 'Change Team' : 'Assign To Team'}</button>
+          <button class="btn btn-primary btn-sm" onclick="startEval(${p.id})">Start An Eval</button>
+          <button class="btn btn-navy btn-sm" onclick="openAiCard()">${esc(p.first)}'s AI Scouting Card</button>
         </div>`}
         ${!famView() && changeTeamId === p.id ? `
         <div style="background:var(--row-alt);border:1.5px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin-top:1rem">
@@ -2116,31 +3485,59 @@ function renderInfoTab(p, info){
 }
 
 /* ---- Evals / Objectives: coach-written, each marked internal-only or
-   shared with the player and family. Never public. ---- */
+   shared with the player and family. Never public. The admin sees every
+   entry with its share switch; the family sees only what got shared,
+   read-only, with the roster level stripped out. ---- */
 function renderEvalsTab(p){
+  /* entries grouped by season, current season on top - the file grows
+     into a year-over-year development record instead of one long pile */
+  const seasonGroups = (entries, famSafe) => {
+    const seasons = [];
+    entries.forEach(e => { if (seasons.indexOf(e.season) === -1) seasons.push(e.season); });
+    seasons.sort((a, b) => seasonRank(a) - seasonRank(b));
+    return seasons.map(s => {
+      const inSeason = entries.filter(e => e.season === s);
+      const objs = inSeason.filter(e => e.kind === 'objectives');
+      const evals = inSeason.filter(e => e.kind === 'eval');
+      return `
+      <div class="kv-sub" style="font-size:.74rem;margin-top:1.4rem;padding-bottom:.3rem;border-bottom:2px solid var(--line)">${esc(s)}${s === p.season ? ' &middot; Current Season' : ''}</div>
+      ${objs.map(e => renderEvalEntry(p, e, famSafe)).join('')}
+      ${evals.map(e => renderEvalEntry(p, e, famSafe)).join('')}`;
+    }).join('');
+  };
+
   if (famView()){
-    /* read-only for the family: they see what coaches share, add nothing */
+    const shared = sharedEvalsOf(p);
     return `
     <div class="card card-pad">
       <div class="section-head" style="margin-top:0;border-radius:8px 8px 0 0">Evals / Objectives</div>
       <div class="section-body">
         <p class="hint" style="font-size:.84rem">When ${esc(p.first)}'s coaches write an evaluation or set objectives and share them with the family, they show up right here. Some evals stay internal to the staff - that is normal. Nothing on this tab ever appears on the public site.</p>
+        ${shared.length ? seasonGroups(shared, true) : `
         <div style="background:var(--row-alt);border:1.5px dashed #c9cfdd;border-radius:10px;padding:1.6rem 1.2rem;text-align:center;margin-top:1rem">
           <p style="color:var(--muted);font-size:.88rem">Nothing shared yet - check back after evaluations.</p>
-        </div>
+        </div>`}
       </div>
     </div>`;
   }
+
+  const all = evalsOf(p);
+  const nShared = sharedEvalsOf(p).length;
+
   return `
   <div class="card card-pad">
-    <div class="section-head" style="margin-top:0;border-radius:8px 8px 0 0">Evals / Objectives</div>
+    <div class="section-head" style="margin-top:0;border-radius:8px 8px 0 0;display:flex;align-items:center;justify-content:space-between;gap:.6rem">
+      <span>Evals / Objectives</span>
+      <button class="sec-edit" onclick="startEval(${p.id})">+ New Evaluation</button>
+    </div>
     <div class="section-body">
-      <p class="hint" style="font-size:.84rem">Coaches write evals and objectives for ${esc(p.first)} here. Every one gets a share switch: <strong>internal only</strong> (staff eyes) or <strong>shared with player and family</strong>, which shows it on their login. Nothing in this tab ever appears on the public site.</p>
+      <p class="hint" style="font-size:.84rem">Every entry carries the share switch: <strong>internal only</strong> (staff eyes) or <strong>shared with player and family</strong>, which shows it on their login. ${all.length ? (nShared ? nShared + ' of ' + all.length + ' currently shared.' : 'Nothing shared with the family yet.') : ''} Old seasons stay on file as history - the audit only counts the season being audited. Nothing in this tab ever appears on the public site.</p>
+
+      ${all.length ? seasonGroups(all, false) : `
       <div style="background:var(--row-alt);border:1.5px dashed #c9cfdd;border-radius:10px;padding:1.6rem 1.2rem;text-align:center;margin-top:1rem">
         <p style="color:var(--muted);font-size:.88rem">No evals or objectives yet.</p>
         <button class="btn btn-primary btn-sm" style="margin-top:.9rem" onclick="startEval(${p.id})">Start An Evaluation</button>
-        <p class="hint" style="margin-top:.7rem">The eval form itself comes with the coaching side - this button will open it.</p>
-      </div>
+      </div>`}
     </div>
   </div>`;
 }
@@ -2784,6 +4181,10 @@ function renderRecruitingTab(p){
       </div>`).join('')
     : '<p class="hint" style="margin-top:.8rem">No college contacts logged yet.</p>';
 
+  /* Layout per Addison: commitment left, the two AI cards stacked on
+     the right (they never grow, so the top row stays symmetrical), and
+     the contact log full-width at the bottom - its list grows without
+     limit and must never push anything down. Admin side only. */
   return `
   <div class="rec-grid">
     <div class="card card-pad">
@@ -2791,7 +4192,30 @@ function renderRecruitingTab(p){
       <div class="section-body">${commitBody}</div>
     </div>
 
-    <div class="card card-pad">
+    <div style="display:grid;gap:1.3rem;align-content:start">
+      <div class="card card-pad">
+        <div class="section-head" style="margin-top:0;border-radius:8px 8px 0 0">AI Scouting Card</div>
+        <div class="section-body">
+          <div class="ai-teaser">
+            <h4>The Whole File, One Card</h4>
+            <p>Everything CBU has on ${esc(p.first)} in one place: current ratings (newest first - never a career average), positions, recruitment level, metric development, both college contact logs, and the Claude-written scouting summary from the season's evals. Staff eyes only.</p>
+            <button class="btn btn-outline btn-sm" style="margin-top:.9rem" onclick="openAiCard()">View AI Scouting Card</button>
+          </div>
+        </div>
+      </div>
+      <div class="card card-pad">
+        <div class="section-head" style="margin-top:0;border-radius:8px 8px 0 0">AI Player Pitch</div>
+        <div class="section-body">
+          <div class="ai-teaser">
+            <h4>Written From ${esc(p.first)}'s Own Words</h4>
+            <p>The player's side of the story: colleges of interest, level of interest, and the write-up ${esc(p.first)} fills out in the Player + Family view. AI turns it into the clean introduction colleges actually read, to pair with our scouting card.</p>
+            <button class="btn btn-outline btn-sm" style="margin-top:.9rem" disabled>Generate Player Pitch</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card card-pad" style="grid-column:1 / -1">
       <div class="section-head" style="margin-top:0;border-radius:8px 8px 0 0">College Contact Log</div>
       <div class="section-body">
         <p class="hint">You are signed in as <strong>${esc(CURRENT_USER)}</strong> - every contact you log links to your name automatically, so staff can see which colleges are talking to us and who they talk to.</p>
@@ -2805,28 +4229,6 @@ function renderRecruitingTab(p){
           <div style="margin-top:.9rem"><button class="btn btn-primary btn-sm" onclick="logContact()">Log Contact</button></div>
         </div>
         <div style="margin-top:1.1rem">${logRows}</div>
-      </div>
-    </div>
-
-    <div class="card card-pad" style="grid-column:1 / -1">
-      <div class="section-head" style="margin-top:0;border-radius:8px 8px 0 0">AI Scouting Card</div>
-      <div class="section-body">
-        <div class="ai-teaser">
-          <h4>AI Scouting Card - Coming Online With Evals + Metrics</h4>
-          <p>Our side of the story: takes everything CBU has on ${esc(p.first)} - coach evals, metrics, recruiting activity, colleges in contact - and writes a full scouting summary with averaged ratings, like the card in the previous build. Once Evals and Metrics feed real data, the card generates from here. Addison's earlier files carry the working version to port over.</p>
-          <button class="btn btn-outline btn-sm" style="margin-top:.9rem" disabled>Generate AI Card</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="card card-pad" style="grid-column:1 / -1">
-      <div class="section-head" style="margin-top:0;border-radius:8px 8px 0 0">AI Player Pitch</div>
-      <div class="section-body">
-        <div class="ai-teaser">
-          <h4>AI Player Pitch - Written From ${esc(p.first)}'s Own Words</h4>
-          <p>The player's side of the story: when the Player + Family view is built, ${esc(p.first)} fills out his colleges of interest, level of interest in each, and a write-up in his own words - goals, academics, what he wants in a program. AI reads all of it and writes the report colleges actually see: a clean introduction of who he is and what he is looking for, to pair with our scouting card above.</p>
-          <button class="btn btn-outline btn-sm" style="margin-top:.9rem" disabled>Generate Player Pitch</button>
-        </div>
       </div>
     </div>
   </div>`;
@@ -2974,6 +4376,9 @@ function switchViewAs(v){
     viewPlayerId = isa.id;
     ensurePhoto(isa);
   }
+  /* a half-written eval belongs to the admin view - drop it on switch */
+  evalFormPlayerId = null; evalDraft = null; evalReview = false;
+  evalShareArm = null; evalDelArm = null; aiCardOpen = false;
   menuOpenId = null; photoAdjust = false;
   profileTab = 'info'; editSection = null; changeTeamId = null;
   nameEdit = false; pubConfirm = false; tgtSearch = '';
@@ -3088,10 +4493,14 @@ function renderPublicView(p){
 function render(){
   const app = document.getElementById('app');
   const p = viewPlayerId != null ? playerById(viewPlayerId) : null;
+  const evalP = evalFormPlayerId != null ? playerById(evalFormPlayerId) : null;
   let body;
-  if (viewAs === 'public') body = p ? (p.publicOn ? renderPublicView(p) : renderPublicPrivate(p)) : renderList();
+  if (viewAs === 'admin' && evalP && evalDraft) body = renderEvalForm(evalP);
+  else if (viewAs === 'public') body = p ? (p.publicOn ? renderPublicView(p) : renderPublicPrivate(p)) : renderList();
   else body = p ? renderProfile(p) : renderList();
-  app.innerHTML = viewAsBar() + body;
+  /* the AI Scouting Card rides over the admin profile as a modal */
+  const modal = (viewAs === 'admin' && aiCardOpen && p && !evalDraft) ? renderAiCard(p) : '';
+  app.innerHTML = viewAsBar() + body + modal;
 }
 render();
 </script>
