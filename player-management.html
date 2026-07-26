@@ -7,7 +7,7 @@
 <script>
 /* This page always lives inside the app shell. Opened bare, it re-opens
    itself in app-shell.html so the left menu is there on desktop and phone. */
-if (window.self === window.top) location.replace('app-shell.html?open=player-management');
+if (window.self === window.top) location.replace('app-shell.html?open=player-management' + (location.search ? '&' + location.search.slice(1) : ''));
 </script>
 <!--
   ============================================================
@@ -4502,6 +4502,19 @@ function render(){
   const modal = (viewAs === 'admin' && aiCardOpen && p && !evalDraft) ? renderAiCard(p) : '';
   app.innerHTML = viewAsBar() + body + modal;
 }
+/* Deep link: ?player=<first.last>&ptab=<tab> opens straight to that
+   player's profile on the named tab - the Metrics Hub dashboard links
+   here so a name click lands on the player's Metrics tab. */
+(function(){
+  const q = new URLSearchParams(location.search);
+  const slug = q.get('player');
+  if (!slug) return;
+  const hit = players.find(p => slugify(p.first + ' ' + p.last) === slug);
+  if (!hit) return;
+  viewPlayerId = hit.id;
+  const t = q.get('ptab');
+  if (t && ['info','evals','recruiting','metrics','stats','schedule','videos','social'].indexOf(t) !== -1) profileTab = t;
+})();
 render();
 </script>
 </body>

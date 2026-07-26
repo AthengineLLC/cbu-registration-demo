@@ -34,6 +34,13 @@
   Warren, Maddux Faber). Every row carries Start Evaluation; the player
   name opens straight to the profile's Evals / Objectives tab.
 
+# Deep links
+
+- ?player=<first.last>&ptab=<tab> opens straight to that player's
+  profile on the named tab; the bare-open redirect and the app shell
+  both pass these params through. The Metrics Hub dashboard uses it to
+  land a name click on the player's Metrics tab in a new tab.
+
 # Screen: Add Stats (fourth tab on the player list)
 
 - Who uses it: Addison / an admin after a season or tournament, holding a

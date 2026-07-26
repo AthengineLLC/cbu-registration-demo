@@ -1,0 +1,2257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CBU App — Metrics Hub</title>
+<script>
+/* This page always lives inside the app shell. Opened bare, it re-opens
+   itself in app-shell.html so the left menu is there on desktop and phone. */
+if (window.self === window.top) location.replace('app-shell.html?open=metrics-hub');
+</script>
+<!--
+  ============================================================
+  CBU APP — METRICS HUB (clickable demo, mock data)
+  ============================================================
+  The org's home for metric testing. Three pills:
+
+  1. TESTING DAYS - create a metric testing day through a wizard
+     (name/date/location/season, which teams, which metrics from
+     the library, how testing numbers get assigned), then open a
+     day into the BULK ENTRY GRID: players down the side, the
+     day's metrics across the top, a testing-number column first
+     because at the field you find "47", not a last name. Sorts
+     by number or by last name (the fallback when numbers were
+     not assigned), search jumps to a number or a name, and a
+     Missing Only filter shows who has not been recorded yet.
+     Built to survive 100+ players: sticky number/player columns,
+     everything else scrolls.
+
+  2. METRICS TO BE TESTED - the org metric library. The STANDARD
+     set (the same nine metrics the player profiles chart) is what
+     the whole org studies; CUSTOM & SITE metrics (the Tampa force
+     plate pieces) live in their own section on purpose so they
+     never clutter the standard list. Affiliate-created metrics
+     roll up here so the org always sees them. Each testing day
+     picks which library metrics run that day.
+
+  3. DASHBOARD - the org-wide leaderboard. Pick a metric, filter
+     by season / grad year / team, and flip the same recency
+     windows the AI Scouting Card uses (Last 6 Months / Last Year
+     / All Time) plus a custom date range. Most-recent mark,
+     best-in-window, and a direction-aware trend delta (down is
+     green on the clocks). No player cards here by design - the
+     name clicks through to the profile, which is the per-player
+     dashboard.
+
+  Seasons, teams, players, and the nine standard metrics are the
+  same mock data as player-management.html so the story lines up:
+  Isaiah Maruszak's newest testing-day marks here ARE the best
+  marks his profile header shows.
+
+  Navy design system, same conventions as player-management.html.
+  ============================================================
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============ TOKENS (same as player-management) ============ */
+:root{
+  --navy-bg:#0c1327;
+  --navy-bg-2:#141d3a;
+  --navy-deep:#0e1730;
+  --card:#ffffff;
+  --row-alt:#f5f6fa;
+  --red:#b91e2d;
+  --red-dark:#8f1622;
+  --powder:#6daed4;
+  --powder-dark:#4d8fb6;
+  --ink:#16203c;
+  --muted:#6b7590;
+  --line:#e3e6ee;
+  --green:#1e7a44;
+  --green-bg:#e2f2e8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;overflow-x:hidden}
+body{
+  font-family:'Inter',-apple-system,'Segoe UI',Arial,sans-serif;
+  background:
+    radial-gradient(1200px 600px at 70% -10%, rgba(185,30,45,.12), transparent 60%),
+    linear-gradient(160deg,var(--navy-bg) 0%,var(--navy-bg-2) 100%);
+  background-attachment:fixed;
+  color:#eef1f8;min-height:100vh;overflow-x:hidden;max-width:100vw;
+}
+
+/* ============ TOP NAV ============ */
+.topnav{
+  position:sticky;top:0;z-index:50;background:var(--navy-deep);
+  border-bottom:1px solid rgba(255,255,255,.07);
+  display:flex;align-items:center;justify-content:space-between;padding:.85rem 2rem;
+}
+.brand{display:flex;align-items:center;gap:.9rem}
+.brand-logo{font-family:'Oswald',Arial,sans-serif;font-weight:700;font-size:1.55rem;color:#fff;line-height:1}
+.brand-logo b{color:var(--red)}
+.brand-divider{width:1px;height:26px;background:rgba(255,255,255,.18)}
+.brand-label{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.2em;font-size:.78rem;color:#c6cde0;font-weight:600}
+
+/* ============ LAYOUT ============ */
+.page{max-width:1120px;margin:0 auto;padding:2.4rem 2rem 5rem}
+.eyebrow{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.28em;font-size:.72rem;font-weight:600;color:var(--powder)}
+.page-title{font-family:'Oswald','Arial Narrow',Arial,sans-serif;text-transform:uppercase;font-size:2.5rem;font-weight:700;color:#fff;line-height:1.05}
+.page-title-sub{color:#aab3cc;font-size:.92rem;margin-top:.5rem;max-width:640px}
+.title-rule{width:64px;height:4px;background:var(--red);margin-top:.85rem;border-radius:2px}
+.title-row{display:flex;align-items:flex-end;gap:1rem;flex-wrap:wrap}
+.title-row .grow{flex:1;min-width:220px}
+
+/* ============ BUTTONS / LINKS ============ */
+.btn{
+  display:inline-flex;align-items:center;gap:.5rem;justify-content:center;
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.09em;
+  font-weight:600;font-size:.85rem;border-radius:8px;cursor:pointer;
+  padding:.72rem 1.35rem;border:2px solid transparent;transition:all .15s ease;
+  text-decoration:none;user-select:none;
+}
+.btn:focus-visible{outline:3px solid var(--powder);outline-offset:2px}
+.btn-primary{background:var(--red);color:#fff}
+.btn-primary:hover{background:var(--red-dark)}
+.btn-outline{background:transparent;color:#fff;border-color:rgba(255,255,255,.35)}
+.btn-outline:hover{border-color:#fff}
+.btn-outline-dark{background:transparent;color:var(--ink);border-color:#c6ccdb}
+.btn-outline-dark:hover{border-color:var(--ink)}
+.btn-navy{background:var(--navy-deep);color:#fff}
+.btn-navy:hover{background:#1b2749}
+.btn-sm{padding:.45rem .9rem;font-size:.74rem}
+.btn[disabled]{opacity:.4;cursor:not-allowed;pointer-events:none}
+.link-red{color:var(--red);font-weight:600;font-size:.8rem;text-decoration:none;cursor:pointer;background:none;border:none;font-family:inherit;padding:0;text-align:left}
+.link-red:hover{text-decoration:underline}
+.link-muted{color:var(--muted);font-weight:600;font-size:.8rem;text-decoration:none;cursor:pointer;background:none;border:none;font-family:inherit;padding:0}
+.link-muted:hover{text-decoration:underline}
+.hint{font-size:.78rem;color:var(--muted);line-height:1.55}
+
+/* ============ CARDS & TABLES ============ */
+.card{background:var(--card);border-radius:12px;color:var(--ink);box-shadow:0 18px 40px rgba(3,7,20,.45);overflow:hidden}
+.card-pad{padding:1.4rem 1.6rem}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+thead th{
+  background:var(--navy-deep);color:#fff;text-align:left;
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.12em;
+  font-size:.7rem;font-weight:600;padding:.85rem 1.1rem;white-space:nowrap;
+}
+tbody td{padding:.9rem 1.1rem;border-bottom:1px solid var(--line);vertical-align:middle}
+tbody tr:nth-child(even){background:var(--row-alt)}
+tbody tr:last-child td{border-bottom:none}
+.cell-strong{font-weight:600;color:var(--ink)}
+.cell-sub{font-size:.76rem;color:var(--muted);margin-top:.15rem}
+
+/* ============ PILLS ============ */
+.pill{
+  display:inline-block;font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;
+  letter-spacing:.1em;font-size:.66rem;font-weight:600;
+  padding:.28rem .65rem;border-radius:999px;white-space:nowrap;
+}
+.pill-green{background:var(--green-bg);color:var(--green)}
+.pill-red{background:#f8e3e6;color:var(--red)}
+.pill-blue{background:#e2eef7;color:#2d6f96}
+.pill-navy{background:#e8ebf4;color:var(--navy-deep)}
+.pill-gold{background:#fdf3dc;color:#9a6b0f}
+
+/* ============ CHIPS (tabs + quick filters) ============ */
+.chip-row{display:flex;gap:.5rem;flex-wrap:wrap}
+.chip{
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.08em;font-size:.72rem;font-weight:600;
+  border:1.5px solid #c9cfdd;background:#fff;color:var(--ink);border-radius:999px;padding:.4rem .85rem;cursor:pointer;
+}
+.chip:hover{border-color:var(--red);color:var(--red)}
+.chip.active{background:var(--red);color:#fff;border-color:var(--red)}
+.chip.active:hover{background:var(--red-dark);border-color:var(--red-dark);color:#fff}
+.tab-row{margin:1.6rem 0 1.1rem}
+
+/* ============ FORMS ============ */
+.field-label{display:block;font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.14em;font-size:.68rem;font-weight:600;color:var(--muted);margin-bottom:.4rem}
+input[type=text],input[type=email],input[type=tel],input[type=date],select{
+  width:100%;max-width:420px;padding:.6rem .75rem;border:1.5px solid #c9cfdd;border-radius:8px;
+  font-family:'Inter',Arial,sans-serif;font-size:.9rem;color:var(--ink);background:#fff;
+}
+input:focus,select:focus{outline:2px solid var(--powder);border-color:var(--powder)}
+input[type=checkbox]{width:17px;height:17px;accent-color:var(--red);cursor:pointer;vertical-align:middle}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem 1.4rem}
+.form-grid .full{grid-column:1 / -1}
+
+/* ============ SECTION HEADERS ============ */
+.section-head{
+  background:var(--navy-deep);color:#fff;padding:.6rem 1rem;border-radius:8px 8px 0 0;
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.12em;font-size:.74rem;font-weight:600;margin-top:1.5rem;
+  display:flex;align-items:center;justify-content:space-between;gap:.8rem;flex-wrap:wrap;
+}
+.section-head.red{background:var(--red)}
+.section-body{border:1.5px solid var(--line);border-top:none;border-radius:0 0 8px 8px;padding:1.1rem}
+.section-body.flush{padding:0}
+
+/* ============ TOAST ============ */
+.toast{
+  position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--navy-deep);color:#fff;padding:.8rem 1.4rem;border-radius:10px;font-size:.88rem;
+  opacity:0;pointer-events:none;transition:all .25s ease;z-index:99;border:1px solid rgba(255,255,255,.15);max-width:90vw;text-align:center;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ============ FILTER BAR / COUNT LINE (same as player-management) ============ */
+.filter-bar{display:flex;gap:1rem 1.4rem;flex-wrap:wrap;align-items:flex-end}
+.filter-bar .f-search{flex:2;min-width:230px}
+.filter-bar .f-select{flex:1;min-width:150px}
+.filter-bar select,.filter-bar input{max-width:100%}
+.filter-clear{padding-bottom:.55rem}
+.count-line{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin:.9rem 0 .7rem;color:#aab3cc;font-size:.84rem}
+.count-line .spacer{margin-left:auto}
+
+/* ============ PAGE-SPECIFIC: METRICS HUB ============ */
+
+/* NEW COMPONENT: wizard-steps
+   A numbered progress banner across the top of the create-a-testing-day
+   wizard. Nothing in the navy system does this yet - the eval form is a
+   single page. Steps read done / active / still to come. */
+.wizard-steps{list-style:none;display:flex;gap:.4rem;flex-wrap:wrap;margin:1.5rem 0 1.2rem}
+.wizard-steps li{
+  display:flex;align-items:center;gap:.5rem;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);border-radius:999px;
+  padding:.32rem .85rem .32rem .35rem;color:#8b96b5;
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.09em;font-size:.66rem;font-weight:600;
+}
+.wizard-steps .n{
+  width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.12);
+  display:inline-flex;align-items:center;justify-content:center;font-size:.68rem;color:#fff;flex:0 0 22px;
+}
+.wizard-steps li.active{background:var(--red);border-color:var(--red);color:#fff}
+.wizard-steps li.active .n{background:rgba(255,255,255,.24)}
+.wizard-steps li.done{color:#dfe5f2;border-color:rgba(255,255,255,.3)}
+.wizard-steps li.done .n{background:var(--green)}
+
+/* NEW COMPONENT: choice-card
+   Two big either-or cards (how testing numbers get assigned). A radio
+   dressed as a card so the trade-off text lives right on the choice. */
+.choice-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:.4rem}
+.choice{border:2px solid var(--line);border-radius:10px;padding:1rem 1.1rem;cursor:pointer;background:#fff;text-align:left;font-family:'Inter',Arial,sans-serif}
+.choice:hover{border-color:var(--powder-dark)}
+.choice.sel{border-color:var(--red);box-shadow:0 0 0 1px var(--red) inset}
+.choice h4{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.08em;font-size:.82rem;color:var(--navy-deep)}
+.choice p{font-size:.8rem;color:var(--muted);line-height:1.55;margin-top:.4rem}
+
+/* NEW COMPONENT: progress-bar
+   Thin recorded-players bar on a testing day. */
+.progress{height:10px;background:var(--row-alt);border:1px solid var(--line);border-radius:999px;overflow:hidden;min-width:160px}
+.progress i{display:block;height:100%;background:var(--green);border-radius:999px;transition:width .2s ease}
+
+/* NEW COMPONENT: entry-grid
+   The bulk results grid for a testing day. The testing-number and player
+   columns stay stuck to the left while the metric columns scroll, so a
+   hundred-player day works on a phone at the field. Values are typed
+   straight into the cells and save as you go. */
+.grid-wrap{overflow:auto;max-height:72vh}
+.grid-wrap table{min-width:760px}
+.grid-wrap thead th{position:sticky;top:0;z-index:3}
+th.stick1,td.stick1{position:sticky;left:0;z-index:2;min-width:72px;width:72px}
+th.stick2,td.stick2{position:sticky;left:72px;z-index:2;min-width:190px;box-shadow:6px 0 8px -6px rgba(3,7,20,.18)}
+thead th.stick1,thead th.stick2{z-index:4}
+td.stick1,td.stick2{background:#fff}
+tbody tr:nth-child(even) td.stick1,tbody tr:nth-child(even) td.stick2{background:var(--row-alt)}
+.eg-mh span{display:block;font-size:.58rem;letter-spacing:.14em;color:#aab3cc;margin-top:.15rem}
+/* TWO-STAGE SAVED STATE, both entry modes:
+   check + green border, white field  = saved on THIS DEVICE
+   check + fully green field          = synced into CBU's system */
+/* the check rides INSIDE the input, pinned left, so every cell stays
+   the same width whether saved or not and the columns line up */
+.eg-wrap{position:relative;display:inline-block}
+.eg-ok{
+  display:none;position:absolute;left:.45rem;top:50%;transform:translateY(-50%);
+  color:var(--green);font-weight:700;font-size:.8rem;line-height:1;pointer-events:none;
+}
+.eg-ok.show{display:block}
+input.eg-loc{border-color:var(--green);background:#fff}
+input.eg-has{border-color:var(--green);background:var(--green-bg)}
+input.eg-in{
+  padding:.4rem .45rem;border:1.5px solid #c9cfdd;border-radius:6px;background:#fff;
+  font-family:'Inter',Arial,sans-serif;font-size:.85rem;color:var(--ink);
+}
+input.eg-in:focus{outline:2px solid var(--powder);border-color:var(--powder)}
+input.eg-val{width:4.8rem;max-width:4.8rem;text-align:right}
+input.eg-num{width:3.8rem;max-width:3.8rem;text-align:center;font-weight:600}
+td.eg-cell{padding:.45rem .7rem}
+.rowdot{display:inline-block;width:9px;height:9px;border-radius:50%;border:2px solid #c9cfdd;margin-right:.5rem;vertical-align:1px}
+.rowdot.done{background:var(--green);border-color:var(--green)}
+
+/* NEW COMPONENT: stat-tiles
+   Dashboard summary tiles - same shape as the profile's best-mark tiles
+   but summarizing the whole filtered player pool. */
+.stat-tiles{display:flex;gap:.8rem;flex-wrap:wrap;margin:1rem 0}
+.stat-tile{background:#fff;border-radius:10px;padding:.7rem 1rem;min-width:150px;flex:1;box-shadow:0 12px 26px rgba(3,7,20,.35)}
+.st-val{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-weight:700;font-size:1.45rem;line-height:1.1;color:var(--navy-deep)}
+.st-val span{font-size:.68rem;font-weight:600;color:var(--muted);margin-left:.2rem}
+.st-val.green{color:var(--green)}
+.st-label{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.1em;font-size:.6rem;font-weight:600;color:var(--muted);margin-top:.25rem}
+.st-sub{font-size:.72rem;color:var(--muted);margin-top:.2rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* NEW COMPONENT: trend-badge
+   The dashboard's window delta, same language as the AI Scouting Card:
+   the arrow shows which way the number moved, the color says whether
+   that direction is good for the metric - a falling 60 time is green. */
+.trend{display:inline-flex;align-items:baseline;gap:.35rem;font-weight:700;font-size:.8rem;border-radius:6px;padding:.22rem .55rem;white-space:nowrap}
+.trend.good{background:var(--green-bg);color:var(--green)}
+.trend.bad{background:#f8e3e6;color:var(--red)}
+.trend.flat{background:#e8ebf4;color:var(--navy-deep)}
+/* leaderboard: a mark older than a year reads gold - stale, like the
+   AI card's last-eval badge */
+.stale-date{color:#9a6b0f;font-weight:600}
+
+/* NEW COMPONENT: field-entry
+   The phone-first way to enter testing-day results: search a number or
+   last name, tap the player, tap a metric, type, save. One column,
+   nothing ever scrolls sideways. A saved metric turns green with a
+   check AND its value, so it reads as "in the system" and a fat-finger
+   is visible and tappable to fix. The full grid stays as the desk view
+   of the same data. */
+.fe-col{max-width:560px;margin:0 auto}
+/* The player card rides in a full-screen SHEET over the page, so
+   moving player to player never touches the page scroll: Next starts
+   at the top of the new card with nothing above it, and closing the
+   sheet lands back on the list exactly where it was left. */
+.fe-sheet{
+  position:fixed;inset:0;z-index:90;overflow-y:auto;
+  background:linear-gradient(160deg,var(--navy-bg) 0%,var(--navy-bg-2) 100%);
+  padding:1rem 1rem 2.5rem;
+}
+.fe-find{display:flex;gap:.7rem}
+.fe-find label{flex:1;min-width:0}
+input.fe-search{max-width:100%;font-size:1.05rem;padding:.75rem .9rem}
+.fe-list{display:flex;flex-direction:column;gap:.5rem;margin-top:.9rem}
+.fe-row{
+  display:flex;align-items:center;gap:.8rem;width:100%;
+  background:#fff;border:1.5px solid var(--line);border-radius:10px;
+  padding:.65rem .8rem;cursor:pointer;text-align:left;font-family:'Inter',Arial,sans-serif;
+}
+.fe-row:hover{border-color:var(--powder-dark)}
+.fe-num{
+  font-family:'Oswald',Arial,sans-serif;font-weight:700;font-size:1.05rem;color:var(--navy-deep);
+  min-width:2.7rem;text-align:center;background:var(--row-alt);border-radius:8px;padding:.4rem .3rem;flex:0 0 auto;
+}
+.fe-who{flex:1;min-width:0}
+.fe-name{font-weight:600;color:var(--ink);font-size:.95rem}
+.fe-done{
+  font-size:.72rem;font-weight:700;color:var(--muted);white-space:nowrap;flex:0 0 auto;
+  border:1.5px solid var(--line);border-radius:999px;padding:.25rem .6rem;
+}
+.fe-done.on{background:var(--green-bg);color:var(--green);border-color:var(--green)}
+.fe-nav{display:flex;gap:.6rem;margin-top:1rem;align-items:center}
+.fe-nav .grow{flex:1}
+.fe-met{
+  display:flex;align-items:center;justify-content:space-between;gap:.8rem;width:100%;
+  background:#fff;border:2px solid #c9cfdd;border-radius:10px;padding:.85rem 1rem;margin-top:.6rem;
+  cursor:pointer;text-align:left;font-family:'Inter',Arial,sans-serif;
+}
+.fe-met:hover{border-color:var(--powder-dark)}
+.fe-met.done{background:var(--green-bg);border-color:var(--green)}
+.fe-met.loc{background:#fff;border-color:var(--green)}
+.fe-met.loc .fe-met-val{color:var(--green)}
+.fe-met-label{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.08em;font-weight:600;font-size:.85rem;color:var(--navy-deep)}
+.fe-met-label span{color:var(--muted);font-size:.68rem;margin-left:.35rem}
+.fe-met-val{font-weight:700;font-size:.95rem;color:var(--muted);white-space:nowrap}
+.fe-met.done .fe-met-val{color:var(--green)}
+.fe-met-open{border:2px solid var(--powder-dark);border-radius:10px;padding:.85rem 1rem;margin-top:.6rem;background:#fff}
+.fe-panel{display:flex;gap:.6rem;margin-top:.7rem}
+input.fe-input{flex:1;max-width:100%;font-size:1.15rem;padding:.7rem .8rem}
+.fe-actions{display:flex;gap:1.2rem;margin-top:.7rem;align-items:center}
+.trend .pct{font-weight:600;font-size:.68rem;opacity:.85}
+.trend-none{color:var(--muted);font-size:.78rem}
+
+/* Rank column: top spot reads red, the rest navy */
+.rank{font-family:'Oswald',Arial,sans-serif;font-weight:700;font-size:1rem;color:var(--navy-deep)}
+.rank.r1{color:var(--red)}
+
+/* Team checkbox rows on the wizard's player step */
+.team-pick{display:grid;grid-template-columns:1fr 1fr;gap:.4rem .9rem;margin-top:.5rem}
+.team-pick label{
+  display:flex;align-items:center;gap:.6rem;border:1.5px solid var(--line);border-radius:8px;
+  padding:.5rem .7rem;cursor:pointer;font-size:.86rem;font-weight:600;color:var(--ink);background:#fff;
+}
+.team-pick label:hover{border-color:var(--powder-dark)}
+.team-pick .tp-sub{font-size:.72rem;color:var(--muted);font-weight:400;margin-left:auto;text-align:right}
+
+/* Metric checkbox rows on the wizard's metrics step + the library */
+.met-pick{display:grid;grid-template-columns:1fr 1fr;gap:.4rem .9rem;margin-top:.5rem}
+.met-pick label{
+  display:flex;align-items:center;gap:.6rem;border:1.5px solid var(--line);border-radius:8px;
+  padding:.5rem .7rem;cursor:pointer;font-size:.86rem;font-weight:600;color:var(--ink);background:#fff;
+}
+.met-pick label:hover{border-color:var(--powder-dark)}
+.met-pick .mp-sub{font-size:.72rem;color:var(--muted);font-weight:400;margin-left:auto;text-align:right}
+
+/* Day header card pieces */
+.day-title{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;font-size:1.6rem;font-weight:700;color:var(--navy-deep);line-height:1.1}
+.day-meta{display:flex;gap:.45rem;flex-wrap:wrap;margin-top:.6rem;align-items:center}
+.day-head-row{display:flex;gap:1.2rem;flex-wrap:wrap;align-items:flex-start;justify-content:space-between}
+.day-prog{min-width:220px;flex:0 1 260px}
+.day-prog .hint{margin-bottom:.35rem}
+
+/* ============ MOBILE ============ */
+@media (max-width:640px){
+  .topnav{padding:.85rem 1rem}
+  .page{padding:1.6rem 1rem 4rem}
+  .page-title{font-size:1.9rem}
+  .card-pad{padding:1.1rem 1rem}
+  .form-grid{grid-template-columns:1fr}
+  .choice-row{grid-template-columns:1fr}
+  .team-pick,.met-pick{grid-template-columns:1fr}
+  th.stick2,td.stick2{min-width:150px}
+  .day-prog{flex:1 1 100%}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="brand">
+    <div class="brand-logo">CB<b>U</b></div>
+    <div class="brand-divider"></div>
+    <div class="brand-label">Metrics Hub</div>
+  </div>
+</nav>
+
+<div class="page">
+  <div id="app"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =====================================================================
+   MOCK DATA
+   Seasons, teams, and every player mirror player-management.html so the
+   two pages tell one story - a name on this leaderboard is the same kid
+   whose profile charts these numbers.
+   ===================================================================== */
+let _id = 1;
+const nid = () => _id++;
+
+const SEASONS = [
+  { name: 'Summer 2026', program: 'hs', teams: [
+    { name: 'Fleming',      div: 'Class of 2027' },
+    { name: 'McCoy',        div: 'Class of 2027' },
+    { name: 'Menendez',     div: 'Class of 2027' },
+    { name: 'Olasin',       div: 'Class of 2027' },
+    { name: 'Thomas',       div: 'Class of 2027' },
+    { name: 'DiBenedetto',  div: 'Class of 2028' },
+    { name: 'Hudgins',      div: 'Class of 2028' },
+    { name: 'Lawson',       div: 'Class of 2028' },
+    { name: 'Merrell',      div: 'Class of 2028' },
+    { name: 'Cates',        div: 'Class of 2029' }
+  ]},
+  { name: 'Fall 2026 Youth', program: 'youth', teams: [
+    { name: 'CBU Youth Red',   div: '10U' },
+    { name: 'CBU Youth Navy',  div: '12U' },
+    { name: 'CBU Youth White', div: '14U' }
+  ]}
+];
+
+/* Same seed roster as Player Management:
+   [first, last, grad, pos, pos2, city, team(or null = unassigned), season] */
+const SEED = [
+  ['Aaden','Hernandez',2027,'3B','2B','Wesley Chapel','Thomas','Summer 2026'],
+  ['Adrian','Alfonso',2027,'C','RHP','Miramar','McCoy','Summer 2026'],
+  ['Adrian','Ochoa',2029,'RHP','','Hialeah','Cates','Summer 2026'],
+  ['Aiden "boog"','Trapani',2029,'SS','2B','Tampa','Cates','Summer 2026'],
+  ['Aiden','Cary',2027,'RHP','','Venice','Olasin','Summer 2026'],
+  ['Aiden','Moon',2030,'C','1B','Tampa','CBU Youth White','Fall 2026 Youth'],
+  ['AJ','Ford',2028,'2B','OF','Riverview','Merrell','Summer 2026'],
+  ['AJ','Mackendrick',2028,'2B','UT','Middleburg','Lawson','Summer 2026'],
+  ['AJ','Wright',2027,'RHP','1B','Fort Lauderdale','Thomas','Summer 2026'],
+  ['Alec','Gallardo',2029,'UT','RHP','Fort Lauderdale','Cates','Summer 2026'],
+  ['Alejandro','Fernandez',2027,'CF','LHP','Tampa','Menendez','Summer 2026'],
+  ['Beckett','Riley',2028,'RHP','','Valrico',null,'Summer 2026'],
+  ['Brady','Kowalski',2027,'RHP','3B','Lutz','Fleming','Summer 2026'],
+  ['Bryan','Eberly',2027,'RHP','','Tampa','Menendez','Summer 2026'],
+  ['Bryce','Besece',2027,'C','1B','Brandon','Menendez','Summer 2026'],
+  ['Cameron','Silva',2027,'OF','','Tampa',null,'Summer 2026'],
+  ['Carson','Mixon',2027,'OF','','Brandon','Fleming','Summer 2026'],
+  ['Cole','Davidson',2027,'3B','','Riverview','Menendez','Summer 2026'],
+  ['Devin','Ortiz',2027,'C','','Wesley Chapel','Fleming','Summer 2026'],
+  ['Dominic','Farro',2029,'C','','St. Petersburg',null,'Summer 2026'],
+  ['Eli','Thompson',2027,'SS','RHP','Lakeland','McCoy','Summer 2026'],
+  ['Gavin','Ross',2027,'1B','LHP','Plant City','McCoy','Summer 2026'],
+  ['Hunter','Pate',2027,'CF','','Sarasota','Olasin','Summer 2026'],
+  ['Isaiah','Cruz',2027,'2B','','Bradenton','Olasin','Summer 2026'],
+  ['Isaiah','Maruszak',2027,'SS','2B','Tampa','Menendez','Summer 2026'],
+  ['Jaxon','Reed',2027,'LHP','OF','Tampa','Thomas','Summer 2026'],
+  ['Johnny','Adams',2027,'C','','Tampa','Menendez','Summer 2026'],
+  ['Josiah','Guevara',2027,'SS','','Tampa','Menendez','Summer 2026'],
+  ['Kai','Martinez',2028,'C','3B','Orlando','DiBenedetto','Summer 2026'],
+  ['Landon','Pierce',2028,'RHP','','Ocala','DiBenedetto','Summer 2026'],
+  ['Mason','Duke',2028,'SS','','Clermont','DiBenedetto','Summer 2026'],
+  ['Nico','Alvarez',2028,'2B','SS','Wesley Chapel','Hudgins','Summer 2026'],
+  ['Owen','Brooks',2028,'OF','RHP','Spring Hill','Hudgins','Summer 2026'],
+  ['Preston','Hall',2028,'1B','','Tampa','Lawson','Summer 2026'],
+  ['Quinn','Baxter',2028,'C','OF','Riverview','Merrell','Summer 2026'],
+  ['Rocco','Deluca',2029,'3B','RHP','Naples','Cates','Summer 2026'],
+  ['Ryan','Dejnak',2027,'SS','','Tampa','Menendez','Summer 2026'],
+  ['Ryder','Fogler',2027,'RHP','','Odessa','Menendez','Summer 2026'],
+  ['Sammy','Ortega',2032,'SS','RHP','Tampa','CBU Youth Navy','Fall 2026 Youth'],
+  ['Trey','Glaser',2027,'CF','','Tampa','Menendez','Summer 2026'],
+  ['Tyler','Nguyen',2032,'C','','Tampa','CBU Youth Navy','Fall 2026 Youth'],
+  ['Wesley','Grant',2034,'2B','','Lutz','CBU Youth Red','Fall 2026 Youth'],
+  ['Xavier','Boyd',2030,'OF','','Tampa','CBU Youth White','Fall 2026 Youth']
+];
+
+const players = SEED.map(r => ({
+  id: nid(), first: r[0], last: r[1], grad: r[2], pos: r[3], pos2: r[4] || null,
+  city: r[5], team: r[6], season: r[7]
+}));
+const isaiah = players.find(p => p.last === 'Maruszak');
+
+/* ALUMNI - players from years past who live ONLY in the record books.
+   They hold no current roster spot, never appear in the class pickers
+   or the short windows, and surface exclusively when All Time opens a
+   division record book - the point Addison asked for: the number one
+   of all time can be a guy from years ago.
+   - Marcus Rivera (2019): the speed legend - his 2018 dash times still
+     top the 17U book over Isaiah.
+   - Dre Watkins (2018): tested the summer AFTER graduating, so his
+     marks are 18U marks - the rare division that only exists because
+     this one mark does.
+   - Tommy Osuna (2024): was 12 in 2018; still the 12U record holder. */
+const ALUMNI_SEED = [
+  ['Marcus','Rivera',2019,'CF','',   'Tampa'],
+  ['Dre','Watkins',  2018,'RHP','',  'Brandon'],
+  ['Tommy','Osuna',  2024,'SS','2B', 'Tampa']
+];
+ALUMNI_SEED.forEach(r => players.push({
+  id: nid(), first: r[0], last: r[1], grad: r[2], pos: r[3], pos2: r[4] || null,
+  city: r[5], team: 'CBU Alumni', season: 'CBU Alumni', alumni: true
+}));
+
+/* =====================================================================
+   THE METRIC LIBRARY - "Metrics To Be Tested"
+   STANDARD_METRICS is the same set (same keys, units, and direction) as
+   METRIC_DEFS on player-management.html - the org core, what the whole
+   organization studies and what every affiliate inherits.
+   CUSTOM_METRICS is the separate section Addison asked for: metrics a
+   site adds because it has the gear (the Tampa force plate). They roll
+   up so the org always sees them, but they never sit inside the
+   standard list and never clutter it.
+   ===================================================================== */
+const STANDARD_METRICS = [
+  { key:'d10', cat:'Running',  label:'10-Yard Dash',       short:'10 YD',    unit:'sec', dec:2, best:'low'  },
+  { key:'d30', cat:'Running',  label:'30-Yard Dash',       short:'30 YD',    unit:'sec', dec:2, best:'low'  },
+  { key:'d60', cat:'Running',  label:'60-Yard Dash',       short:'60 YD',    unit:'sec', dec:2, best:'low'  },
+  { key:'ofv', cat:'Defense',  label:'Outfield Velo',      short:'OF VELO',  unit:'mph', dec:1, best:'high' },
+  { key:'ifv', cat:'Defense',  label:'Infield Velo',       short:'IF VELO',  unit:'mph', dec:1, best:'high' },
+  { key:'cv',  cat:'Defense',  label:'Catcher Velo',       short:'C VELO',   unit:'mph', dec:1, best:'high' },
+  { key:'pop', cat:'Defense',  label:'Catcher Pop Time',   short:'POP',      unit:'sec', dec:2, best:'low'  },
+  { key:'fb',  cat:'Pitching', label:'Fastball Peak Velo', short:'FB VELO',  unit:'mph', dec:1, best:'high' },
+  { key:'ev',  cat:'Hitting',  label:'Exit Velo',          short:'EXIT VELO',unit:'mph', dec:1, best:'high' }
+];
+/* Site metrics: added by the site that owns the gear, visible org-wide.
+   These two exist because CBU Tampa (HQ) has a force plate. */
+let CUSTOM_METRICS = [
+  { key:'vert', cat:'Performance', label:'Vertical Jump',  short:'VERT',     unit:'in',  dec:1, best:'high',
+    addedBy:'Addison Maruszak', site:'CBU Tampa (HQ) - force plate', added:'2026-02-20' },
+  { key:'pkpw', cat:'Performance', label:'CMJ Peak Power', short:'PEAK PWR', unit:'W',   dec:0, best:'high',
+    addedBy:'Addison Maruszak', site:'CBU Tampa (HQ) - force plate', added:'2026-02-20' },
+  /* best:'none' - a DIRECTION-NEUTRAL metric. Tracked and charted, but
+     no number is "better": the dashboard lists it alphabetically and
+     shows changes without green or red. */
+  { key:'wt',   cat:'Performance', label:'Body Weight',    short:'WEIGHT',   unit:'lbs', dec:0, best:'none',
+    addedBy:'Addison Maruszak', site:'CBU Tampa (HQ)', added:'2026-02-20' }
+];
+const METRIC_CATS = ['Running','Defense','Pitching','Hitting','Performance'];
+function allMetrics(){ return STANDARD_METRICS.concat(CUSTOM_METRICS); }
+function metricDef(key){ return allMetrics().find(d => d.key === key) || null; }
+function fmtVal(def, v){ return v.toFixed(def.dec); }
+const STD_KEYS = STANDARD_METRICS.map(d => d.key);
+
+/* =====================================================================
+   TESTING DAYS
+   Each day: a season stamp (like evals, so history reads right), the
+   PLAYER POOL it drew from, which library metrics ran that day (the
+   per-day pick - only the March and June days had the force plate),
+   and how testing numbers were assigned.
+   Four days of history power the dashboard's windows; the Fall youth
+   day is upcoming and empty - numbers get assigned at check-in.
+   ===================================================================== */
+let days = [
+  { id:'tda1', name:'Summer 2018 Testing',      date:'2018-06-16', season:'Summer 2018',
+    loc:'CBU Training Complex - Tampa', poolSeason:'CBU Alumni', teams:'all', unassigned:true,
+    metrics: STD_KEYS.slice(), numbersMode:'auto' },
+  { id:'td1', name:'Summer 2025 Testing',       date:'2025-06-14', season:'Summer 2025',
+    loc:'CBU Training Complex - Tampa', poolSeason:'Summer 2026', teams:'all', unassigned:true,
+    metrics: STD_KEYS.slice(), numbersMode:'auto' },
+  { id:'td2', name:'Fall 2025 Testing',         date:'2025-09-20', season:'Fall 2025',
+    loc:'CBU Training Complex - Tampa', poolSeason:'Summer 2026', teams:'all', unassigned:true,
+    metrics: STD_KEYS.slice(), numbersMode:'auto' },
+  { id:'td3', name:'Spring Testing Day',        date:'2026-03-14', season:'Spring 2026',
+    loc:'CBU Training Complex - Tampa', poolSeason:'Summer 2026', teams:'all', unassigned:true,
+    metrics: STD_KEYS.concat(['vert','pkpw','wt']), numbersMode:'auto' },
+  { id:'tdy1', name:'Spring Youth Testing',     date:'2026-04-11', season:'Spring 2026 Youth',
+    loc:'CBU Training Complex - Tampa', poolSeason:'Fall 2026 Youth', teams:'all', unassigned:true,
+    metrics:['d10','d30','d60','ifv','ofv','fb','ev'], numbersMode:'auto' },
+  { id:'td4', name:'Summer Mid-Season Testing', date:'2026-06-20', season:'Summer 2026',
+    loc:'CBU Training Complex - Tampa', poolSeason:'Summer 2026', teams:'all', unassigned:true,
+    metrics: STD_KEYS.concat(['vert','pkpw','wt']), numbersMode:'auto' },
+  { id:'td5', name:'Fall Youth Kickoff Testing', date:'2026-08-15', season:'Fall 2026 Youth',
+    loc:'CBU Training Complex - Tampa', poolSeason:'Fall 2026 Youth', teams:'all', unassigned:true,
+    metrics:['d10','d30','d60','ifv','ofv','fb','ev','vert','wt'], numbersMode:'checkin' }
+];
+let dayAuto = 5;
+
+function dayById(id){ return days.find(d => d.id === id); }
+function dayRoster(day){
+  return players.filter(p => {
+    if (p.season !== day.poolSeason) return false;
+    if (day.teams === 'all') return p.team ? true : !!day.unassigned;
+    if (!p.team) return !!day.unassigned;
+    return day.teams.includes(p.team);
+  });
+}
+
+/* Testing numbers, per day: NUM[dayId][playerId] = number.
+   Auto-assigned days hand out 1..N alphabetically by last name - the
+   same order the check-in sheet prints in. */
+const NUM = {};
+function autoAssign(day){
+  const map = {};
+  dayRoster(day)
+    .slice().sort((a, b) => (a.last + a.first).localeCompare(b.last + b.first))
+    .forEach((p, i) => { map[p.id] = i + 1; });
+  NUM[day.id] = map;
+}
+
+/* Results, per day: RES[dayId][playerId][metricKey] = value */
+const RES = {};
+
+/* ---------------------------------------------------------------------
+   Seeded sample results. Deterministic (no Math.random) so the demo
+   reads the same on every load. Each player gets a talent anchor, an
+   age adjustment off grad year, day-to-day noise, and real improvement
+   from one testing day to the next. Isaiah Maruszak's values are pinned
+   by hand so his newest marks here exactly match the best-mark tiles
+   and chart endpoints on his profile.
+   --------------------------------------------------------------------- */
+function r01(a, b, c){
+  const x = Math.sin(a * 127.1 + b * 311.7 + c * 74.7 + 13.13) * 43758.5453;
+  return x - Math.floor(x);
+}
+/* Per metric: a = average for a 17u player, s = spread, y = typical
+   gain per year of age (and roughly per year of training) */
+const BASE = {
+  d10:{a:1.75,s:.22,y:.05},  d30:{a:4.05,s:.40,y:.09},  d60:{a:7.25,s:.70,y:.18},
+  ofv:{a:84,s:12,y:3},       ifv:{a:80,s:10,y:3},       cv:{a:78,s:9,y:2.5},
+  pop:{a:2.05,s:.20,y:.05},  fb:{a:84,s:10,y:3},        ev:{a:92,s:12,y:4},
+  vert:{a:26,s:7,y:1.5},     pkpw:{a:4300,s:900,y:250}, wt:{a:168,s:28,y:9}
+};
+/* Which metrics a player realistically tests: everyone runs and hits,
+   arms test by position, catcher gear only for catchers. */
+function applicable(p, key){
+  if (p === isaiah) return true;                       /* demo star tests everything */
+  const pos = [p.pos, p.pos2].filter(Boolean);
+  const has = list => pos.some(x => list.includes(x));
+  if (key === 'cv' || key === 'pop') return has(['C']);
+  if (key === 'ofv') return has(['OF','CF','LF','RF','UT']);
+  if (key === 'ifv') return has(['1B','2B','3B','SS','UT','C']);
+  if (key === 'fb')  return has(['RHP','LHP']);
+  return true;                                         /* dashes, exit velo, force plate */
+}
+/* Isaiah, pinned per day - the td4 row IS his profile's best marks */
+const ISA_PIN = {
+  td1:{d10:1.70,d30:3.99,d60:6.95,ofv:94.0,ifv:93.0,cv:90.0,pop:1.94,fb:91.5,ev:102.8},
+  td2:{d10:1.66,d30:3.93,d60:6.84,ofv:95.4,ifv:94.6,cv:91.6,pop:1.90,fb:93.5,ev:105.2},
+  td3:{d10:1.61,d30:3.86,d60:6.70,ofv:97.1,ifv:96.0,cv:93.2,pop:1.85,fb:95.8,ev:107.9,vert:30.5,pkpw:5410,wt:171},
+  td4:{d10:1.58,d30:3.82,d60:6.62,ofv:98.0,ifv:97.0,cv:94.0,pop:1.82,fb:97.0,ev:109.8,vert:31.5,pkpw:5750,wt:175}
+};
+(function seedResults(){
+  const KEYS = STD_KEYS.concat(['vert','pkpw','wt']);
+  const hist = ['td1','td2','td3','tdy1','td4'];       /* chronological */
+  hist.forEach((id, di) => {
+    const day = dayById(id);
+    const steps = hist.length - 1 - di;                /* how far before "now" */
+    RES[id] = {};
+    dayRoster(day).forEach(p => {
+      /* the finished 2025/spring days recorded everyone; the June day is
+         still being entered, so a slice of it is open on purpose */
+      const missDay = id === 'td4' && r01(p.id, di, 1) < 0.15;
+      if (missDay && p !== isaiah) return;
+      const row = {};
+      day.metrics.forEach(key => {
+        if (!applicable(p, key)) return;
+        const ki = KEYS.indexOf(key);
+        if (p !== isaiah && r01(p.id, di + 3, ki) < 0.05) return;   /* skipped one station */
+        const b = BASE[key], def = metricDef(key);
+        const age = Math.min(17, 2044 - p.grad);
+        const q = r01(p.id, 0, ki + 20);               /* talent anchor, 0..1 */
+        let cur = def.best === 'low'
+          ? b.a + (17 - age) * b.y - (q - .5) * b.s
+          : b.a - (17 - age) * b.y + (q - .5) * b.s;
+        const gain = b.y * 0.35 * (0.6 + 0.8 * r01(p.id, 5, ki));
+        const noise = (r01(p.id, di + 7, ki) - 0.5) * b.s * 0.12;
+        let v = (def.best === 'low' ? cur + steps * gain : cur - steps * gain) + noise;
+        row[key] = parseFloat(v.toFixed(def.dec));
+      });
+      if (Object.keys(row).length) RES[id][p.id] = row;
+    });
+    if (ISA_PIN[id]) RES[id][isaiah.id] = Object.assign({}, ISA_PIN[id]);
+  });
+  /* The 2018 legends, pinned by hand. Rivera's dashes and Osuna's 12U
+     line are all-time records on purpose - the demo of a number one
+     from years ago. Watkins is the lone 18U mark in the system. */
+  const alum = last => players.find(p => p.alumni && p.last === last);
+  RES.tda1 = {};
+  RES.tda1[alum('Rivera').id]  = { d10:1.49, d30:3.68, d60:6.48, ofv:95.0, ev:99.5 };
+  RES.tda1[alum('Watkins').id] = { d10:1.62, d30:3.95, d60:6.95, fb:98.5,  ev:98.0 };
+  RES.tda1[alum('Osuna').id]   = { d10:1.88, d30:4.29, d60:7.62, ifv:71.5, ev:79.5 };
+  days.forEach(d => { if (d.numbersMode === 'auto') autoAssign(d); });
+  RES.td5 = {}; NUM.td5 = {};
+})();
+
+/* =====================================================================
+   LOCAL PERSISTENCE - the offline story, made real in the demo.
+   Every save already commits as-you-go; this layer also writes the
+   whole entry state (marks, testing numbers, created days, added
+   metrics) to THIS DEVICE's localStorage. A laptop at a field with no
+   internet keeps everything through shutdowns and reopens; in the real
+   app the same local write feeds a sync queue that uploads on its own
+   the moment a connection appears. Marks are one-player-one-metric, so
+   stations never collide and catch-up sync is instant.
+   ===================================================================== */
+const LS_KEY = 'cbu-metrics-hub-v1';
+function persist(){
+  try{
+    localStorage.setItem(LS_KEY, JSON.stringify({
+      RES, NUM,
+      userDays: days.filter(d => d.userMade),
+      userMets: CUSTOM_METRICS.filter(m => m.userMade),
+      dayAuto, cmAuto: _cmAuto, pend: [...PEND]
+    }));
+  }catch(e){ /* private mode or no storage - entry still works in memory */ }
+}
+function restore(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    (s.userDays || []).forEach(d => { if (!dayById(d.id)) days.push(d); });
+    (s.userMets || []).forEach(m => { if (!metricDef(m.key)) CUSTOM_METRICS.push(m); });
+    if (s.RES) Object.keys(s.RES).forEach(k => { RES[k] = s.RES[k]; });
+    if (s.NUM) Object.keys(s.NUM).forEach(k => { NUM[k] = s.NUM[k]; });
+    if (s.dayAuto) dayAuto = Math.max(dayAuto, s.dayAuto);
+    if (s.cmAuto) _cmAuto = Math.max(_cmAuto, s.cmAuto);
+    (s.pend || []).forEach(k => PEND.add(k));   /* still-unsynced marks survive restarts */
+  }catch(e){}
+}
+
+/* ---------------------------------------------------------------------
+   THE SYNC QUEUE - Addison's two-stage peace of mind. A fresh save is
+   PENDING: check mark, green border, white field - "saved on this
+   device". Once it reaches CBU's system it turns FULLY GREEN. The demo
+   simulates the upload with a short delay when online; with no
+   connection, marks hold at the check state (surviving restarts via
+   localStorage) and sweep to green by themselves when the connection
+   returns. Seeded historical marks are already synced.
+   --------------------------------------------------------------------- */
+const PEND = new Set();                      /* 'dayId|playerId|metricKey' */
+function pendKey(d, p, k){ return d + '|' + p + '|' + k; }
+function isPend(d, p, k){ return PEND.has(pendKey(d, p, k)); }
+function isOnline(){ return typeof navigator === 'undefined' || navigator.onLine !== false; }
+let syncTimer = null;
+function markPending(d, p, k){ PEND.add(pendKey(d, p, k)); persist(); scheduleSync(); }
+function unmarkPending(d, p, k){ PEND.delete(pendKey(d, p, k)); }
+function scheduleSync(){
+  if (!isOnline() || syncTimer || !PEND.size) return;
+  syncTimer = setTimeout(() => { syncTimer = null; flushSync(); }, 1200);
+}
+function flushSync(){
+  if (!isOnline() || !PEND.size) return;
+  const items = [...PEND];
+  PEND.clear();
+  persist();
+  /* flip anything on screen from pending to synced without a re-render,
+     so typing in another cell is never interrupted */
+  items.forEach(id => {
+    const parts = id.split('|');
+    const inp = document.getElementById('in' + parts[1] + '_' + parts[2]);
+    if (inp && inp.classList){ inp.classList.remove('eg-loc'); inp.classList.add('eg-has'); }
+    const fm = document.getElementById('fm' + parts[1] + '_' + parts[2]);
+    if (fm && fm.classList){ fm.classList.remove('loc'); fm.classList.add('done'); }
+  });
+  toast(items.length === 1 ? 'Mark synced to CBU' : items.length + ' marks synced to CBU');
+}
+if (typeof window !== 'undefined' && window.addEventListener){
+  window.addEventListener('online', () => { toast('Back online - syncing saved marks'); scheduleSync(); });
+}
+
+/* =====================================================================
+   HELPERS
+   ===================================================================== */
+function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2600);
+}
+function todayIso(){
+  const d = new Date();
+  return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+}
+function isoDaysAgo(n){
+  const d = new Date(); d.setDate(d.getDate() - n);
+  return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+}
+function fmtDate(iso){
+  if (!iso) return '';
+  const d = new Date(iso + 'T12:00:00');
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+function recordedCount(day){
+  const res = RES[day.id] || {};
+  return dayRoster(day).filter(p => res[p.id] && Object.keys(res[p.id]).length).length;
+}
+function dayStatus(day){
+  const total = dayRoster(day).length, rec = recordedCount(day);
+  if (day.date > todayIso() && rec === 0) return { label: 'Upcoming', pill: 'pill-blue' };
+  if (total > 0 && rec >= total) return { label: 'Complete', pill: 'pill-green' };
+  if (rec > 0) return { label: 'In Progress', pill: 'pill-gold' };
+  return { label: 'Awaiting Results', pill: 'pill-navy' };
+}
+function usedOnCount(key){ return days.filter(d => d.metrics.includes(key)).length; }
+/* Three directions, not two: lower wins (clocks), higher wins (velos),
+   or neutral - tracked and charted but never ranked (body weight). */
+function dirPill(def){
+  if (def.best === 'low')  return '<span class="pill pill-blue">Lower wins</span>';
+  if (def.best === 'high') return '<span class="pill pill-navy">Higher wins</span>';
+  return '<span class="pill pill-gold">Direction neutral</span>';
+}
+/* Dashboard names deep-link to the player's METRICS TAB in Player
+   Management, opened in a NEW TAB so the dashboard stays put and the
+   next name can be checked right after - Addison's call. Alumni live
+   only in the record books; the demo has no profile to open for them. */
+function slugName(p){ return (p.first + ' ' + p.last).toLowerCase().replace(/[^a-z0-9]+/g, '.').replace(/^\.|\.$/g, ''); }
+function gotoPlayerMgmt(pid){
+  const p = players.find(x => x.id === pid);
+  if (!p) return;
+  if (p.alumni){
+    toast(p.first + ' ' + p.last + ' is an alum - the record keeps the mark, but profiles in this demo cover the current roster only');
+    return;
+  }
+  const url = 'app-shell.html?open=player-management&player=' + slugName(p) + '&ptab=metrics';
+  try { window.open(url, '_blank'); }
+  catch(e){ location.href = url; }
+}
+
+/* =====================================================================
+   STATE
+   ===================================================================== */
+let tab = 'days';            /* days | library | dash */
+let view = 'list';           /* list | grid | wizard (grid + wizard belong to the days tab) */
+let gridId = null;           /* which testing day is open in the grid */
+let gq = '';                 /* grid search: by name */
+let gqn = '';                /* grid search: by number */
+let gmiss = false;           /* grid: only players not recorded yet */
+let gsort = 'num';           /* grid sort: num | name */
+let gview = 'grid';          /* how a day shows: grid (desk) | field (phone) */
+let fpid = null;             /* field entry: selected player, null = search list */
+let fopen = null;            /* field entry: which metric is expanded */
+let fq = '';                 /* field entry: search by name */
+let fqn = '';                /* field entry: search by number */
+let fteam = 'all';           /* field entry: filter to one team */
+let fgroup = 'all';          /* field entry: filter to one grad class / age division */
+let gteam = 'all';           /* grid: same team filter */
+let ggroup = 'all';          /* grid: same group filter */
+let addMetricOpen = false;   /* library: add-a-metric form */
+let wiz = null;              /* wizard state while creating a day */
+let dash = { mode:'metric', metric:'d60', season:'all', grad:'all', team:'all',
+             win:'6mo', from:'2025-06-01', to: todayIso(),
+             group:'infield', prog:'hs', klass:'2027', ydiv:'12U', sdiv:'14', hsdiv:'17' };
+
+/* =====================================================================
+   RENDER
+   ===================================================================== */
+function render(){
+  const app = document.getElementById('app');
+  if (view === 'grid'){
+    app.innerHTML = renderGrid();
+    if (gview === 'grid') applyGridFilter();
+    else {
+      feFilter();
+      if (fopen){
+        const fi = document.getElementById('fe-in');
+        if (fi && typeof fi.focus === 'function'){ fi.focus(); if (fi.select) fi.select(); }
+      }
+    }
+    return;
+  }
+  if (view === 'wizard'){ app.innerHTML = renderWizard(); return; }
+  app.innerHTML = `
+    <div class="title-row">
+      <div class="grow">
+        <div class="eyebrow">CBU App</div>
+        <h1 class="page-title">Metrics Hub</h1>
+        <p class="page-title-sub">Create metric testing days, keep the org's metrics to be tested in one library, and study every result on the dashboard.</p>
+        <div class="title-rule"></div>
+      </div>
+      ${tab === 'days' ? `<button class="btn btn-primary" onclick="startWizard()">+ Create A Testing Day</button>` : ''}
+    </div>
+    <div class="chip-row tab-row">
+      <button class="chip ${tab === 'days' ? 'active' : ''}" onclick="setTab('days')">Testing Days</button>
+      <button class="chip ${tab === 'library' ? 'active' : ''}" onclick="setTab('library')">Metrics To Be Tested</button>
+      <button class="chip ${tab === 'dash' ? 'active' : ''}" onclick="setTab('dash')">Dashboard</button>
+    </div>
+    ${tab === 'days' ? renderDays() : tab === 'library' ? renderLibrary() : renderDash()}`;
+}
+function setTab(t){ tab = t; addMetricOpen = false; render(); }
+
+/* ---------------------------------------------------------------------
+   TAB 1: TESTING DAYS - the list
+   --------------------------------------------------------------------- */
+function renderDays(){
+  const rows = days.slice().sort((a, b) => b.date.localeCompare(a.date)).map(d => {
+    const total = dayRoster(d).length, rec = recordedCount(d), st = dayStatus(d);
+    const mets = d.metrics.map(k => metricDef(k)).filter(Boolean);
+    return `
+      <tr style="cursor:pointer" onclick="openDay('${d.id}')">
+        <td>
+          <div class="cell-strong">${esc(d.name)}</div>
+          <div class="cell-sub">${esc(d.loc)}</div>
+        </td>
+        <td><span class="cell-strong">${fmtDate(d.date)}</span></td>
+        <td><span class="pill pill-navy">${esc(d.season)}</span></td>
+        <td>
+          <div class="cell-strong">${mets.length} metrics</div>
+          <div class="cell-sub">${esc(mets.slice(0, 4).map(m => m.label).join(', '))}${mets.length > 4 ? ' +' + (mets.length - 4) + ' more' : ''}</div>
+        </td>
+        <td><span class="cell-strong">${total}</span></td>
+        <td>
+          <span class="pill ${st.pill}">${st.label}</span>
+          <div class="cell-sub">${rec} of ${total} recorded</div>
+        </td>
+        <td><button class="btn btn-navy btn-sm" onclick="event.stopPropagation();openDay('${d.id}')">Open</button></td>
+      </tr>`;
+  }).join('');
+  return `
+    <p class="count-line">${days.length} testing days<span class="spacer"></span>Click a day to open its entry grid</p>
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Testing Day</th><th>Date</th><th>Season</th><th>Metrics Tested</th><th>Players</th><th>Results</th><th></th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+/* ---------------------------------------------------------------------
+   THE BULK ENTRY GRID - open one testing day
+   Number column first (how you find a kid at the field), sticky with
+   the player column so the metric columns can scroll. Sort by number,
+   or by last name when numbers were not assigned. Values save as they
+   are typed - no submit step, entry happens live at the event.
+   --------------------------------------------------------------------- */
+function openDay(id){
+  const day = dayById(id);
+  gridId = id; view = 'grid'; gq = ''; gmiss = false;
+  gsort = Object.keys(NUM[id] || {}).length ? 'num' : 'name';
+  /* phones open straight into field entry; desks get the grid.
+     The toggle on the day header flips either way. */
+  gview = (window.innerWidth && window.innerWidth <= 760) ? 'field' : 'grid';
+  fpid = null; fopen = null; fq = ''; fqn = ''; gqn = '';
+  fteam = 'all'; fgroup = 'all'; gteam = 'all'; ggroup = 'all';
+  render();
+  window.scrollTo(0, 0);
+}
+function setGView(v){ gview = v; fpid = null; fopen = null; fq = ''; fqn = ''; render(); }
+function closeGrid(){ view = 'list'; gridId = null; render(); }
+function setGridSort(s){ gsort = s; render(); }
+function toggleMiss(){ gmiss = !gmiss; render(); }
+
+function sortedRoster(day){
+  const nums = NUM[day.id] || {};
+  const list = dayRoster(day).slice();
+  if (gsort === 'num'){
+    list.sort((a, b) => {
+      const na = nums[a.id], nb = nums[b.id];
+      if (na != null && nb != null) return na - nb;
+      if (na != null) return -1;
+      if (nb != null) return 1;
+      return (a.last + a.first).localeCompare(b.last + b.first);
+    });
+  } else {
+    list.sort((a, b) => (a.last + a.first).localeCompare(b.last + b.first));
+  }
+  return list;
+}
+
+function renderGrid(){
+  const day = dayById(gridId);
+  if (!day) { view = 'list'; return renderDays(); }
+  const roster = sortedRoster(day);
+  const nums = NUM[day.id] || {};
+  const res = RES[day.id] || {};
+  const mets = day.metrics.map(k => metricDef(k)).filter(Boolean);
+  const total = roster.length, rec = recordedCount(day), st = dayStatus(day);
+  const hasNums = Object.keys(nums).length > 0;
+
+  const metHead = mets.map(def =>
+    `<th class="eg-mh" title="${esc(def.label)} (${def.unit})">${esc(def.short)}<span>${def.unit}</span></th>`).join('');
+
+  const rows = roster.map(p => {
+    const r = res[p.id] || {};
+    const done = Object.keys(r).length > 0;
+    const num = nums[p.id];
+    const cells = mets.map(def => {
+      const v = r[def.key];
+      const stateCls = v == null ? '' : isPend(day.id, p.id, def.key) ? 'eg-loc' : 'eg-has';
+      return `<td class="eg-cell"><span class="eg-wrap"><span class="eg-ok ${v != null ? 'show' : ''}" id="ok${p.id}_${def.key}">&#10003;</span><input id="in${p.id}_${def.key}" class="eg-in eg-val ${stateCls}" type="text" inputmode="decimal"
+        value="${v != null ? fmtVal(def, v) : ''}" placeholder="-"
+        aria-label="${esc(def.label)} for ${esc(p.first + ' ' + p.last)}"
+        onchange="gridSet('${day.id}',${p.id},'${def.key}',this)"></span></td>`;
+    }).join('');
+    return `
+      <tr data-num="${num != null ? num : ''}" data-name="${esc((p.first + ' ' + p.last).toLowerCase())}"
+          data-team="${esc(p.team || 'Unassigned')}" data-group="${esc(groupOf(day, p))}" data-empty="${done ? '0' : '1'}">
+        <td class="stick1 eg-cell"><input class="eg-in eg-num" type="text" inputmode="numeric"
+          value="${num != null ? num : ''}" placeholder="-"
+          aria-label="Testing number for ${esc(p.first + ' ' + p.last)}"
+          onchange="numSet('${day.id}',${p.id},this)"></td>
+        <td class="stick2">
+          <span class="rowdot ${done ? 'done' : ''}" id="dot${p.id}"></span>
+          <span class="cell-strong">${esc(p.last)}, ${esc(p.first)}</span>
+          <div class="cell-sub" style="margin-left:1.15rem">Class of ${p.grad} &middot; ${esc(p.pos)}${p.pos2 ? ' / ' + esc(p.pos2) : ''}</div>
+        </td>
+        <td><span class="cell-sub" style="margin-top:0">${esc(p.team || 'Unassigned')}</span></td>
+        ${cells}
+      </tr>`;
+  }).join('');
+
+  return `
+    <button class="btn btn-outline btn-sm" onclick="closeGrid()">&larr; Back To Testing Days</button>
+    <div class="card card-pad" style="margin-top:1rem">
+      <div class="day-head-row">
+        <div style="flex:1;min-width:240px">
+          <div class="day-title">${esc(day.name)}</div>
+          <div class="day-meta">
+            <span class="pill pill-navy">${esc(day.season)}</span>
+            <span class="pill ${st.pill}">${st.label}</span>
+            <span class="hint" style="margin:0">${fmtDate(day.date)} &middot; ${esc(day.loc)}</span>
+          </div>
+          <div class="day-meta">${mets.map(m => `<span class="pill pill-blue">${esc(m.label)}</span>`).join('')}</div>
+        </div>
+        <div class="day-prog">
+          <p class="hint"><span id="prog-text">${rec} of ${total} players recorded</span></p>
+          <div class="progress"><i id="prog-fill" style="width:${total ? Math.round(rec / total * 100) : 0}%"></i></div>
+          ${!hasNums ? `<button class="btn btn-outline-dark btn-sm" style="margin-top:.7rem" onclick="assignNow('${day.id}')">Assign Numbers 1-${total} By Last Name</button>` : ''}
+        </div>
+      </div>
+      <div class="chip-row" style="margin-top:1.2rem">
+        <button class="chip ${gview === 'field' ? 'active' : ''}" onclick="setGView('field')">Field Entry</button>
+        <button class="chip ${gview === 'grid' ? 'active' : ''}" onclick="setGView('grid')">Full Grid</button>
+      </div>
+      ${gview === 'grid' ? `
+      <div class="filter-bar" style="margin-top:1.2rem">
+        <label class="f-select"><span class="field-label">Search By Number</span>
+          <input type="text" inputmode="numeric" placeholder="e.g. 47" value="${esc(gqn)}"
+            oninput="gqn=this.value;applyGridFilter()"></label>
+        <label class="f-select"><span class="field-label">Search By Name</span>
+          <input type="text" placeholder="e.g. Maruszak" value="${esc(gq)}"
+            oninput="gq=this.value;applyGridFilter()"></label>
+        <label class="f-select"><span class="field-label">Filter By Team</span>
+          <select onchange="gteam=this.value;applyGridFilter()">
+            <option value="all">All teams</option>
+            ${dayTeams(day).map(t => `<option value="${esc(t)}" ${gteam === t ? 'selected' : ''}>${esc(t)}</option>`).join('')}
+          </select></label>
+        <label class="f-select"><span class="field-label">Filter By ${dayProg(day) === 'youth' ? 'Age Division' : 'Grad Class'}</span>
+          <select onchange="ggroup=this.value;applyGridFilter()">
+            <option value="all">All groups</option>
+            ${dayGroups(day).map(g => `<option value="${esc(g)}" ${ggroup === g ? 'selected' : ''}>${groupLabel(day, g)}</option>`).join('')}
+          </select></label>
+        <div>
+          <span class="field-label">Sort By</span>
+          <div class="chip-row">
+            <button class="chip ${gsort === 'num' ? 'active' : ''}" onclick="setGridSort('num')">Testing Number</button>
+            <button class="chip ${gsort === 'name' ? 'active' : ''}" onclick="setGridSort('name')">Last Name</button>
+            <button class="chip ${gmiss ? 'active' : ''}" onclick="toggleMiss()">Missing Only</button>
+          </div>
+        </div>
+      </div>
+      ${!hasNums ? `<p class="hint" style="margin-top:.8rem">No testing numbers assigned yet - the grid is sorted by last name. Type numbers into the first column as players check in, or assign them all at once above.</p>`
+                 : `<p class="hint" style="margin-top:.8rem">Numbers were assigned alphabetically by last name. Type a number in the search box to jump straight to a player. Results save as you type them - a check with a white field means saved on this device, fully green means synced to CBU.</p>`}`
+      : `<p class="hint" style="margin-top:.8rem">Built for a phone at the event: search a number, tap the player, tap a metric. Saved marks turn green with the value on them. The grid is the desk view of the same data.</p>`}
+    </div>
+    ${gview === 'grid' ? `
+    <p class="count-line"><span id="gshown">${total} players</span><span class="spacer"></span>Blank cells mean not tested. A metric a player does not test just stays blank.</p>
+    <div class="card">
+      <div class="grid-wrap">
+        <table>
+          <thead><tr><th class="stick1">#</th><th class="stick2">Player</th><th>Team</th>${metHead}</tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>` : renderField(day)}`;
+}
+
+/* ---------------------------------------------------------------------
+   FIELD ENTRY - the phone flow. Players in TESTING-NUMBER ORDER (how a
+   field runs), Prev / Next at the top AND bottom of the player card,
+   and skipped stations just stay blank - moving on never needs a value.
+   --------------------------------------------------------------------- */
+/* The day's GROUPS: grad classes on a HS day, age divisions on a youth
+   day - whatever the person at the station is actually sitting on. */
+function dayProg(day){ return SEASON_PROG[day.poolSeason] === 'youth' ? 'youth' : 'hs'; }
+function groupOf(day, p){ return dayProg(day) === 'youth' ? ageOf(p.grad) + 'U' : String(p.grad); }
+function groupLabel(day, g){
+  if (dayProg(day) === 'youth') return g;
+  const a = curSeasonYear() + 18 - parseInt(g, 10);
+  return 'Class of ' + g + (a >= 8 && a <= 18 ? ' (' + a + 'U)' : '');
+}
+function dayTeams(day){ return [...new Set(dayRoster(day).map(p => p.team || 'Unassigned'))].sort(); }
+function dayGroups(day){ return [...new Set(dayRoster(day).map(p => groupOf(day, p)))].sort(); }
+
+/* The field roster honors the team/group filter, so the LIST, PREV /
+   NEXT order, and the jump fields all stay inside the filtered set -
+   "Next Player" means the next kid in the group being run. */
+function feRoster(day){
+  const nums = NUM[day.id] || {};
+  return dayRoster(day).filter(p =>
+    (fteam === 'all' || (p.team || 'Unassigned') === fteam) &&
+    (fgroup === 'all' || groupOf(day, p) === fgroup)
+  ).sort((a, b) => {
+    const na = nums[a.id], nb = nums[b.id];
+    if (na != null && nb != null) return na - nb;
+    if (na != null) return -1;
+    if (nb != null) return 1;
+    return (a.last + a.first).localeCompare(b.last + b.first);
+  });
+}
+
+function renderField(day){
+  const nums = NUM[day.id] || {};
+  const res = RES[day.id] || {};
+  const mets = day.metrics.map(k => metricDef(k)).filter(Boolean);
+  const roster = feRoster(day);
+  const filledOf = p => mets.filter(d => res[p.id] && res[p.id][d.key] != null).length;
+
+  /* Screen A: search + tap a player. Always rendered - the player
+     sheet floats OVER it, so its scroll position survives the trip. */
+  {
+    const rows = roster.map(p => {
+      const num = nums[p.id];
+      const filled = filledOf(p);
+      return `
+        <button class="fe-row" data-num="${num != null ? num : ''}" data-name="${esc((p.first + ' ' + p.last).toLowerCase())}" onclick="fePick(${p.id})">
+          <span class="fe-num">${num != null ? num : '-'}</span>
+          <span class="fe-who">
+            <span class="fe-name">${esc(p.last)}, ${esc(p.first)}</span>
+            <div class="cell-sub">Class of ${p.grad} &middot; ${esc(p.pos)}${p.pos2 ? ' / ' + esc(p.pos2) : ''} &middot; ${esc(p.team || 'Unassigned')}</div>
+          </span>
+          <span class="fe-done ${filled > 0 ? 'on' : ''}">${filled}/${mets.length}</span>
+        </button>`;
+    }).join('');
+    var listHtml = `
+    <div class="fe-col">
+      <div class="card card-pad" style="margin-top:1rem">
+        <div class="fe-find">
+          <label><span class="field-label">Filter By Team</span>
+            <select onchange="fteam=this.value;render()">
+              <option value="all">All teams</option>
+              ${dayTeams(day).map(t => `<option value="${esc(t)}" ${fteam === t ? 'selected' : ''}>${esc(t)}</option>`).join('')}
+            </select></label>
+          <label><span class="field-label">Filter By ${dayProg(day) === 'youth' ? 'Age Division' : 'Grad Class'}</span>
+            <select onchange="fgroup=this.value;render()">
+              <option value="all">All groups</option>
+              ${dayGroups(day).map(g => `<option value="${esc(g)}" ${fgroup === g ? 'selected' : ''}>${groupLabel(day, g)}</option>`).join('')}
+            </select></label>
+        </div>
+        <div class="fe-find" style="margin-top:.7rem">
+          <label><span class="field-label">Search By Number</span>
+            <input class="fe-search" type="text" inputmode="numeric" placeholder="e.g. 47"
+              value="${esc(fqn)}" oninput="fqn=this.value;feFilter()"></label>
+          <label><span class="field-label">Search By Name</span>
+            <input class="fe-search" type="text" placeholder="e.g. Maruszak"
+              value="${esc(fq)}" oninput="fq=this.value;feFilter()"></label>
+        </div>
+        <p class="hint" style="margin-top:.6rem">${fteam !== 'all' || fgroup !== 'all'
+          ? 'Filtered to ' + (roster.length) + ' players - Prev / Next and the jump fields stay inside this filter. Set both back to All to see everyone.'
+          : 'Players run in testing-number order. Filter to the team or group you are running so the list stays short.'}</p>
+      </div>
+      <div class="fe-list">${rows}</div>
+    </div>`;
+  }
+  if (fpid == null) return listHtml;
+
+  /* Screen B: one player as a full-screen sheet over the list */
+  const idx = roster.findIndex(p => p.id === fpid);
+  if (idx === -1){ fpid = null; return listHtml; }
+  const p = roster[idx];
+  const filled = filledOf(p);
+  const navRow = `
+    <div class="fe-nav">
+      <button class="btn btn-outline btn-sm" onclick="feNav(-1)" ${idx === 0 ? 'disabled' : ''}>&larr; Prev</button>
+      <span class="grow"></span>
+      <button class="btn btn-primary btn-sm" onclick="feNav(1)" ${idx === roster.length - 1 ? 'disabled' : ''}>Next Player &rarr;</button>
+    </div>`;
+  const metRows = mets.map(def => {
+    const v = res[p.id] ? res[p.id][def.key] : null;
+    if (fopen === def.key){
+      return `
+      <div class="fe-met-open">
+        <div class="fe-met-label">${esc(def.label)}<span>${def.unit}</span></div>
+        <div class="fe-panel">
+          <input id="fe-in" class="fe-input" type="text" inputmode="decimal" placeholder="${def.unit}"
+            value="${v != null ? fmtVal(def, v) : ''}">
+          <button class="btn btn-primary" onclick="feSave('${day.id}',${p.id},'${def.key}')">Save</button>
+        </div>
+        <div class="fe-actions">
+          <button class="link-muted" onclick="feCancel()">Cancel</button>
+          ${v != null ? `<button class="link-red" onclick="feClear('${day.id}',${p.id},'${def.key}')">Remove this mark</button>` : ''}
+        </div>
+      </div>`;
+    }
+    const stateCls = v == null ? '' : isPend(day.id, p.id, def.key) ? 'loc' : 'done';
+    return `
+      <button class="fe-met ${stateCls}" id="fm${p.id}_${def.key}" onclick="feOpen('${def.key}')">
+        <span class="fe-met-label">${esc(def.label)}<span>${def.unit}</span></span>
+        <span class="fe-met-val">${v != null ? '&#10003; ' + fmtVal(def, v) + ' ' + def.unit : 'Tap to enter'}</span>
+      </button>`;
+  }).join('');
+  return listHtml + `
+  <div class="fe-sheet" id="feSheet">
+  <div class="fe-col">
+    <div class="fe-nav" style="margin-top:0">
+      <button class="btn btn-outline btn-sm" onclick="feBack()">&larr; All Players</button>
+    </div>
+    ${navRow}
+    <div class="card card-pad" style="margin-top:.7rem">
+      <div style="display:flex;align-items:center;gap:.9rem">
+        <span class="fe-num" style="font-size:1.2rem;min-width:3.1rem;padding:.5rem .3rem">${nums[p.id] != null ? nums[p.id] : '-'}</span>
+        <div style="min-width:0">
+          <div class="day-title" style="font-size:1.25rem">${esc(p.last)}, ${esc(p.first)}</div>
+          <div class="hint" style="margin:0">Class of ${p.grad} &middot; ${esc(p.pos)}${p.pos2 ? ' / ' + esc(p.pos2) : ''} &middot; ${esc(p.team || 'Unassigned')}</div>
+        </div>
+      </div>
+      <div style="margin-top:.8rem;display:flex;align-items:center;gap:.7rem;flex-wrap:wrap">
+        <label style="display:flex;align-items:center;gap:.45rem"><span class="field-label" style="margin:0">Testing #</span>
+          <input class="eg-in eg-num" type="text" inputmode="numeric" value="${nums[p.id] != null ? nums[p.id] : ''}"
+            placeholder="-" onchange="numSet('${day.id}',${p.id},this);feRefresh()"></label>
+        <span class="hint" style="margin:0">${filled} of ${mets.length} recorded - a skipped station just stays blank. A check means saved on this device; fully green means it is in CBU's system.</span>
+      </div>
+      ${metRows}
+    </div>
+    ${navRow}
+    <div class="card card-pad" style="margin-top:.7rem;padding:.8rem 1rem">
+      <div class="fe-find">
+        <label><span class="field-label">Jump To Number</span>
+          <input class="fe-search" type="text" inputmode="numeric" placeholder="e.g. 12"
+            onchange="feJumpNum(this)"></label>
+        <label><span class="field-label">Jump To Name</span>
+          <input class="fe-search" type="text" placeholder="e.g. Adams"
+            onchange="feJumpName(this)"></label>
+      </div>
+    </div>
+  </div>
+  </div>`;
+}
+
+function feFilter(){
+  const q = fq.trim().toLowerCase();
+  const qn = fqn.trim();
+  document.querySelectorAll('.fe-row').forEach(b => {
+    const numOk = !qn || (b.dataset.num && b.dataset.num.indexOf(qn) === 0);
+    const nameOk = !q || b.dataset.name.includes(q);
+    b.style.display = (numOk && nameOk) ? '' : 'none';
+  });
+}
+/* Quick jump from the player card: type the next number (or a name)
+   and land on that player without going back to the list - the
+   station coach's flow when the next kid walks up out of order. */
+function feJumpNum(el){
+  const n = parseInt(el.value.trim(), 10);
+  if (isNaN(n)) return;
+  const day = dayById(gridId), nums = NUM[day.id] || {};
+  const hit = feRoster(day).find(p => nums[p.id] === n);
+  el.value = '';
+  if (hit) fePick(hit.id);
+  else toast('No player is wearing #' + n + ' today');
+}
+function feJumpName(el){
+  const raw = el.value.trim();
+  const q = raw.toLowerCase();
+  if (!q) return;
+  const hit = feRoster(dayById(gridId)).find(p => (p.last + ' ' + p.first).toLowerCase().includes(q));
+  el.value = '';
+  if (hit) fePick(hit.id);
+  else toast('No player matches "' + raw + '"');
+}
+/* Re-render while keeping the sheet's own scroll position - saving or
+   expanding a metric halfway down the card must not bounce the view */
+function feRefresh(){
+  const s = document.getElementById('feSheet');
+  const y = s && typeof s.scrollTop === 'number' ? s.scrollTop : 0;
+  render();
+  const s2 = document.getElementById('feSheet');
+  if (s2) s2.scrollTop = y;
+}
+function fePick(pid){ fpid = pid; fopen = null; render(); }
+function feBack(){ fpid = null; fopen = null; render(); }
+function feOpen(key){ fopen = key; feRefresh(); }
+function feCancel(){ fopen = null; feRefresh(); }
+function feNav(dir){
+  const roster = feRoster(dayById(gridId));
+  const idx = roster.findIndex(p => p.id === fpid);
+  const next = roster[idx + dir];
+  /* a fresh sheet renders at its own top - the page never scrolls */
+  if (next){ fpid = next.id; fopen = null; render(); }
+}
+function feSave(dayId, pid, key){
+  const def = metricDef(key);
+  const el = document.getElementById('fe-in');
+  const raw = el ? el.value.trim() : '';
+  if (raw === ''){ toast('Type a number, or Cancel to skip this station'); return; }
+  const v = parseFloat(raw);
+  if (isNaN(v)){ toast('Numbers only'); return; }
+  if (!RES[dayId]) RES[dayId] = {};
+  if (!RES[dayId][pid]) RES[dayId][pid] = {};
+  RES[dayId][pid][key] = parseFloat(v.toFixed(def.dec));
+  fopen = null;
+  const p = players.find(x => x.id === pid);
+  markPending(dayId, pid, key);              /* stage 1: saved on this device */
+  toast(isOnline()
+    ? 'Saved - ' + def.label + ' ' + fmtVal(def, RES[dayId][pid][key]) + ' ' + def.unit + ' for ' + p.first + ' ' + p.last
+    : 'Saved on this device - will sync when internet returns');
+  feRefresh();
+}
+function feClear(dayId, pid, key){
+  const def = metricDef(key);
+  if (RES[dayId] && RES[dayId][pid]) delete RES[dayId][pid][key];
+  unmarkPending(dayId, pid, key);
+  fopen = null;
+  persist();
+  toast(def.label + ' removed');
+  feRefresh();
+}
+
+/* Search + missing filter flip row visibility in place - no re-render,
+   so the inputs (and focus) survive while typing */
+function applyGridFilter(){
+  const q = gq.trim().toLowerCase();
+  const qn = gqn.trim();
+  let shown = 0, total = 0;
+  document.querySelectorAll('tr[data-name]').forEach(tr => {
+    total++;
+    const numOk = !qn || (tr.dataset.num && tr.dataset.num.indexOf(qn) === 0);
+    const nameOk = !q || tr.dataset.name.includes(q);
+    const teamOk = gteam === 'all' || tr.dataset.team === gteam;
+    const groupOk = ggroup === 'all' || tr.dataset.group === ggroup;
+    const missOk = !gmiss || tr.dataset.empty === '1';
+    const show = numOk && nameOk && teamOk && groupOk && missOk;
+    tr.style.display = show ? '' : 'none';
+    if (show) shown++;
+  });
+  const el = document.getElementById('gshown');
+  if (el) el.textContent = (shown === total ? total + ' players' : shown + ' of ' + total + ' players shown');
+}
+
+function gridSet(dayId, pid, key, el){
+  const def = metricDef(key);
+  if (!RES[dayId]) RES[dayId] = {};
+  if (!RES[dayId][pid]) RES[dayId][pid] = {};
+  const raw = el.value.trim();
+  if (raw === ''){
+    delete RES[dayId][pid][key];
+    unmarkPending(dayId, pid, key);
+  } else {
+    const v = parseFloat(raw);
+    if (isNaN(v)){ el.value = ''; toast('Numbers only in the grid'); delete RES[dayId][pid][key]; unmarkPending(dayId, pid, key); }
+    else {
+      RES[dayId][pid][key] = parseFloat(v.toFixed(def.dec));
+      el.value = fmtVal(def, RES[dayId][pid][key]);
+      markPending(dayId, pid, key);          /* stage 1: saved on this device */
+      if (!isOnline()) toast('Saved on this device - will sync when internet returns');
+    }
+  }
+  /* stage indicator on the cell: check = on this device, full green = synced */
+  const has = RES[dayId][pid] && RES[dayId][pid][key] != null;
+  if (el.classList){
+    el.classList.toggle('eg-loc', !!has && isPend(dayId, pid, key));
+    el.classList.toggle('eg-has', !!has && !isPend(dayId, pid, key));
+  }
+  const ok = document.getElementById('ok' + pid + '_' + key);
+  if (ok && ok.classList) ok.classList.toggle('show', !!has);
+  persist();
+  /* refresh the row dot + progress without re-rendering (keeps focus) */
+  const day = dayById(dayId);
+  const done = RES[dayId][pid] && Object.keys(RES[dayId][pid]).length > 0;
+  const dot = document.getElementById('dot' + pid);
+  if (dot) dot.classList.toggle('done', done);
+  const tr = el.closest('tr');
+  if (tr) tr.dataset.empty = done ? '0' : '1';
+  const total = dayRoster(day).length, rec = recordedCount(day);
+  const pt = document.getElementById('prog-text'), pf = document.getElementById('prog-fill');
+  if (pt) pt.textContent = rec + ' of ' + total + ' players recorded';
+  if (pf) pf.style.width = (total ? Math.round(rec / total * 100) : 0) + '%';
+}
+
+function numSet(dayId, pid, el){
+  if (!NUM[dayId]) NUM[dayId] = {};
+  const raw = el.value.trim();
+  if (raw === ''){ delete NUM[dayId][pid]; return; }
+  const n = parseInt(raw, 10);
+  if (isNaN(n)){ el.value = NUM[dayId][pid] != null ? NUM[dayId][pid] : ''; toast('Testing numbers are whole numbers'); return; }
+  NUM[dayId][pid] = n; el.value = n;
+  persist();
+  const tr = el.closest('tr');
+  if (tr && tr.dataset) tr.dataset.num = String(n);
+}
+
+function assignNow(dayId){
+  autoAssign(dayById(dayId));
+  gsort = 'num';
+  persist();
+  toast('Testing numbers assigned by last name');
+  render();
+}
+
+/* ---------------------------------------------------------------------
+   TAB 2: METRICS TO BE TESTED - the library
+   --------------------------------------------------------------------- */
+function renderLibrary(){
+  const stdRows = STANDARD_METRICS.map(def => `
+    <tr>
+      <td><span class="cell-strong">${esc(def.label)}</span></td>
+      <td>${esc(def.cat)}</td>
+      <td>${def.unit}</td>
+      <td>${dirPill(def)}</td>
+      <td><span class="cell-strong">${usedOnCount(def.key)}</span><div class="cell-sub">testing days</div></td>
+    </tr>`).join('');
+  const cusRows = CUSTOM_METRICS.map(def => `
+    <tr>
+      <td><span class="cell-strong">${esc(def.label)}</span></td>
+      <td>${esc(def.cat)}</td>
+      <td>${def.unit}</td>
+      <td>${dirPill(def)}</td>
+      <td>
+        <div class="cell-strong">${esc(def.site || '')}</div>
+        <div class="cell-sub">${esc(def.addedBy || '')}${def.added ? ' &middot; ' + fmtDate(def.added) : ''}</div>
+      </td>
+      <td><span class="cell-strong">${usedOnCount(def.key)}</span><div class="cell-sub">testing days</div></td>
+    </tr>`).join('');
+  return `
+    <div class="card card-pad">
+      <p class="hint" style="font-size:.84rem">
+        The <strong>standard set</strong> is what the whole organization studies - the same nine metrics every player profile
+        charts, loaded into every affiliate automatically. <strong>Custom and site metrics</strong> live in their own section
+        on purpose: a site with special gear (the Tampa force plate) can add what it can test without cluttering the
+        standard list. Affiliate-created metrics always roll up here, so the org sees everything. Each testing day picks
+        which library metrics run that day.
+      </p>
+    </div>
+    <div class="section-head" style="margin-top:1.6rem">Standard Metrics - The Org Core Set</div>
+    <div class="card section-body flush">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Metric</th><th>Category</th><th>Unit</th><th>Direction</th><th>Used On</th></tr></thead>
+          <tbody>${stdRows}</tbody>
+        </table>
+      </div>
+    </div>
+    <div class="section-head red">Custom &amp; Site Metrics
+      <button class="btn btn-outline btn-sm" style="border-color:rgba(255,255,255,.5)" onclick="addMetricOpen=!addMetricOpen;render()">${addMetricOpen ? 'Close' : '+ Add A Metric'}</button>
+    </div>
+    <div class="card section-body flush">
+      ${addMetricOpen ? renderAddMetric() : ''}
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Metric</th><th>Category</th><th>Unit</th><th>Direction</th><th>Added By</th><th>Used On</th></tr></thead>
+          <tbody>${cusRows || '<tr><td colspan="6"><span class="cell-sub">No custom metrics yet.</span></td></tr>'}</tbody>
+        </table>
+      </div>
+      <p class="hint" style="padding:0 1.1rem 1rem">New metrics land here as custom. Promoting one into the standard set is an org-level call and comes later.</p>
+    </div>`;
+}
+
+function renderAddMetric(){
+  return `
+    <div style="padding:1.1rem;border-bottom:1.5px solid var(--line)">
+      <div class="form-grid">
+        <label><span class="field-label">Metric Name</span>
+          <input type="text" id="nm-name" placeholder="e.g. Broad Jump"></label>
+        <label><span class="field-label">Category</span>
+          <select id="nm-cat">${METRIC_CATS.map(c => `<option${c === 'Performance' ? ' selected' : ''}>${c}</option>`).join('')}</select></label>
+        <label><span class="field-label">Unit</span>
+          <input type="text" id="nm-unit" placeholder="e.g. in, mph, sec, W"></label>
+        <label><span class="field-label">Decimals</span>
+          <select id="nm-dec"><option value="0">0</option><option value="1" selected>1</option><option value="2">2</option></select></label>
+        <div class="full">
+          <span class="field-label">Which Direction Wins?</span>
+          <div class="chip-row">
+            <button class="chip active" id="nm-high" onclick="nmDir('high')">Higher Is Better</button>
+            <button class="chip" id="nm-low" onclick="nmDir('low')">Lower Is Better</button>
+            <button class="chip" id="nm-none" onclick="nmDir('none')">Direction Doesn't Matter</button>
+          </div>
+          <p class="hint" style="margin-top:.5rem">Doesn't Matter fits tracked-only numbers like body weight - recorded and charted, never ranked as better or worse.</p>
+        </div>
+      </div>
+      <div style="margin-top:1rem;display:flex;gap:.8rem;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm" onclick="addMetric()">Add To Library</button>
+        <span class="hint">Added as a custom metric under CBU Tampa (HQ). It becomes pickable on every new testing day.</span>
+      </div>
+    </div>`;
+}
+let nmBest = 'high';
+function nmDir(dir){
+  nmBest = dir;
+  ['high', 'low', 'none'].forEach(d =>
+    document.getElementById('nm-' + d).classList.toggle('active', d === dir));
+}
+function addMetric(){
+  const name = document.getElementById('nm-name').value.trim();
+  const unit = document.getElementById('nm-unit').value.trim();
+  if (!name || !unit){ toast('A metric needs a name and a unit'); return; }
+  const cat = document.getElementById('nm-cat').value;
+  const dec = parseInt(document.getElementById('nm-dec').value, 10);
+  const key = 'cm' + (++_cmAuto);
+  CUSTOM_METRICS.push({
+    key, cat, label: name, short: name.toUpperCase().slice(0, 9), unit, dec, best: nmBest,
+    addedBy: 'Addison Maruszak', site: 'CBU Tampa (HQ)', added: todayIso(), userMade: true
+  });
+  persist();
+  addMetricOpen = false; nmBest = 'high';
+  toast('"' + name + '" added to the custom metrics');
+  render();
+}
+let _cmAuto = 0;
+
+/* ---------------------------------------------------------------------
+   TAB 3: DASHBOARD - the org-wide leaderboard
+   At the organization level this sees every affiliate; an affiliate
+   login only sees its own teams (the same scoping rule as the rest of
+   the app - noted here because this demo blends both roles).
+   --------------------------------------------------------------------- */
+function dashSet(k, v){
+  dash[k] = v;
+  if (k === 'season'){ dash.team = 'all'; dash.grad = 'all'; }
+  /* Smart preselect for the HS record book: on All Time the age
+     division preloads from the selected grad class and the current
+     season year (in 2029 looking at 2030s, All Time preselects 17U).
+     Picking a division by hand sticks until the class or window moves. */
+  if (['win', 'grad', 'klass', 'mode', 'prog'].indexOf(k) !== -1 && dash.win === 'all' && dash.prog === 'hs'){
+    const g = dash.mode === 'board' ? parseInt(dash.klass, 10)
+            : (dash.grad !== 'all' ? parseInt(dash.grad, 10) : NaN);
+    if (!isNaN(g)){
+      const a = curSeasonYear() + 18 - g;
+      if (a >= 14 && a <= 18) dash.hsdiv = String(a);
+    }
+  }
+  render();
+}
+function winRange(){
+  if (dash.win === '6mo') return [isoDaysAgo(183), todayIso()];
+  if (dash.win === '1yr') return [isoDaysAgo(365), todayIso()];
+  if (dash.win === 'custom') return [dash.from || '2000-01-01', dash.to || todayIso()];
+  return ['2000-01-01', todayIso()];
+}
+function readingsFor(p, key, from, to){
+  const out = [];
+  days.forEach(d => {
+    const v = RES[d.id] && RES[d.id][p.id] ? RES[d.id][p.id][key] : null;
+    if (v != null && d.date >= from && d.date <= to)
+      out.push({ date: d.date, v, sy: seasonYearOfDay(d) });
+  });
+  out.sort((a, b) => a.date.localeCompare(b.date));
+  return out;
+}
+function dashPool(){
+  return players.filter(p => {
+    if (dash.season !== 'all' && p.season !== dash.season) return false;
+    if (dash.grad !== 'all' && p.grad !== parseInt(dash.grad, 10)) return false;
+    if (dash.team !== 'all' && p.team !== dash.team) return false;
+    return true;
+  });
+}
+
+/* ---------------------------------------------------------------------
+   THE CLASS LEADERBOARD - Addison's apples-to-apples rule, twice over.
+   Cohorts are grad classes (a 2027 is only ever measured against
+   2027s), and inside a class players are ranked in POSITION GROUPINGS
+   so nobody scores extra points for testing extra stations: pitching
+   stays pure arm, hitting stays pure bat, and the three position
+   groups are arm + bat + legs. Membership comes from the DATA, not the
+   roster - test catcher velo and you are in the catching rankings; a
+   two-way kid holds a pitching score and an infield score.
+   CBU STANDARD METRICS ONLY feed these scores - a custom or site
+   metric (or anything direction neutral) never touches a ranking.
+   The overall grouping score averages the player's PERCENTILE place
+   across the metrics he has data in - place divided by how many are
+   ranked in that metric - so 5th of 8 in pop time and 55th of 90 in
+   the 60 compare honestly. Equal weights for now, by design.
+   ranks use the MOST RECENT mark inside the window (never best - an
+   old best can hide a slide), and the window chips fence out stale
+   marks from players who have not tested in a long time.
+   --------------------------------------------------------------------- */
+/* HIGH SCHOOL AND YOUTH ARE SEPARATED BY A PROGRAM BUTTON - never mixed
+   on one board. On the HS side a cohort is a GRAD CLASS; on the youth
+   side it is an AGE DIVISION (14U / 12U / 10U), because that is how the
+   youth program is organized and how those families think. Same
+   groupings, same math, same windows on both sides. The org sees both
+   programs; an affiliate still ranks only its own players. */
+const SEASON_PROG = {};
+SEASONS.forEach(s => { SEASON_PROG[s.name] = s.program; });
+function playerProgram(p){ return SEASON_PROG[p.season] || 'hs'; }
+/* Grad year to baseball age for the 2026-27 season: 2027 plays at 17
+   (same rule as player-management.html), so 2030 = 14U, 2032 = 12U. */
+const ageOf = g => 2044 - g;
+/* THE SEASON YEAR OF A TESTING DAY - the key to the record books. A
+   mark belongs to the division the player was in the day it was made,
+   and that division = seasonYear + 18 - grad. HS classes roll to the
+   next division in August, so a Fall stamp belongs to the NEXT season
+   year (a Fall 2026 day makes the 2027s 18U - Addison's rule; 18U days
+   will be rare and 18U only appears once such a mark exists). Youth
+   divisions roll on the spring birthdate cutoff instead, so youth fall
+   stamps keep their label year. */
+function seasonYearOfDay(day){
+  const m = day.season.match(/\d{4}/);
+  let y = m ? parseInt(m[0], 10) : parseInt(day.date.slice(0, 4), 10);
+  if (/^Fall/i.test(day.season) && SEASON_PROG[day.poolSeason] !== 'youth') y += 1;
+  return y;
+}
+/* The season year today - August flips it, same rule as above */
+function curSeasonYear(){
+  const d = new Date();
+  return (d.getMonth() + 1) >= 8 ? d.getFullYear() + 1 : d.getFullYear();
+}
+/* Dual label: HS cohorts speak both languages, and the division part
+   rolls by itself each August - "Class of 2027 (17U)" becomes (18U) */
+function gradLabel(g){ return 'Class of ' + g + ' (' + (curSeasonYear() + 18 - g) + 'U)'; }
+/* Every age division that actually holds a mark, from all testing days */
+function agesWithData(){
+  const ages = new Set();
+  days.forEach(d => {
+    const res = RES[d.id] || {};
+    const sy = seasonYearOfDay(d);
+    players.forEach(p => {
+      if (res[p.id] && Object.keys(res[p.id]).length) ages.add(sy + 18 - p.grad);
+    });
+  });
+  return ages;
+}
+
+const GROUPINGS = [
+  { key:'pitching', label:'Pitching', mets:['fb'],                              sig:['fb'] },
+  { key:'infield',  label:'Infield',  mets:['ifv','ev','d10','d30','d60'],      sig:['ifv'] },
+  { key:'outfield', label:'Outfield', mets:['ofv','ev','d10','d30','d60'],      sig:['ofv'] },
+  { key:'catching', label:'Catching', mets:['cv','pop','ev','d10','d30','d60'], sig:['cv','pop'] },
+  { key:'hitting',  label:'Hitting',  mets:['ev'],                              sig:['ev'] }
+];
+
+function renderBoard(modeBar){
+  const G = GROUPINGS.find(g => g.key === dash.group) || GROUPINGS[1];
+  const prog = dash.prog;
+  const klass = parseInt(dash.klass, 10);
+  const [from, to] = winRange();
+  const staleBefore = isoDaysAgo(365);
+  /* ALL TIME flips the leaderboard into the division record book too -
+     the cohort becomes everyone who ever held a mark at that age, and
+     every rank reads from marks made at that age only. Shorter windows
+     keep following the selected class / current division. */
+  const record = dash.win === 'all';
+  const div = record ? parseInt(prog === 'hs' ? dash.hsdiv : dash.ydiv, 10) : null;
+  const cohort = record ? players
+    : players.filter(p => playerProgram(p) === prog &&
+        (prog === 'hs' ? p.grad === klass : ageOf(p.grad) + 'U' === dash.ydiv));
+  const cohortLabel = record ? div + 'U all-time' : (prog === 'hs' ? 'Class of ' + klass : dash.ydiv);
+  const recentOf = (p, key) => {
+    let r = readingsFor(p, key, from, to);
+    if (div) r = r.filter(x => x.sy + 18 - p.grad === div);
+    return r.length ? r[r.length - 1] : null;
+  };
+  /* in the grouping = has a mark in one of its signature metrics -
+     running a dash alone does not make anyone an infielder */
+  const members = cohort.filter(p => G.sig.some(k => recentOf(p, k)));
+
+  /* place table per metric, ranked among grouping members with a mark */
+  const places = {};
+  G.mets.forEach(key => {
+    const def = metricDef(key);
+    const list = members.map(p => ({ p, r: recentOf(p, key) })).filter(x => x.r);
+    list.sort((a, b) => def.best === 'low' ? a.r.v - b.r.v : b.r.v - a.r.v);
+    const map = {};
+    list.forEach((x, i) => { map[x.p.id] = { place: i + 1, n: list.length, r: x.r }; });
+    places[key] = map;
+  });
+
+  const rows = members.map(p => {
+    const per = G.mets.map(key => ({ key, e: places[key][p.id] || null }));
+    const have = per.filter(x => x.e);
+    const fracs = have.map(x => x.e.n === 1 ? 1 : (x.e.n - x.e.place) / (x.e.n - 1));
+    const score = Math.round(fracs.reduce((s, f) => s + f, 0) / fracs.length * 100);
+    return { p, per, have: have.length, score };
+  });
+  rows.sort((a, b) => b.score - a.score || (a.p.last + a.p.first).localeCompare(b.p.last + b.p.first));
+
+  const klassOpts = [...new Set(players.filter(p => !p.alumni && playerProgram(p) === 'hs').map(p => p.grad))].sort();
+  const ydivOpts = [...new Set(players.filter(p => playerProgram(p) === 'youth').map(p => ageOf(p.grad)))]
+    .sort((a, b) => b - a).map(a => a + 'U');
+  const hsDivAges = (() => {
+    const opts = [...agesWithData()].filter(a => a >= 14 && a <= 18);
+    const cur = parseInt(dash.hsdiv, 10);
+    if (cur >= 14 && cur <= 18 && opts.indexOf(cur) === -1) opts.push(cur);
+    return opts.sort((a, b) => b - a);
+  })();
+  const metHead = G.mets.map(k => {
+    const def = metricDef(k);
+    return `<th class="eg-mh" title="${esc(def.label)} (${def.unit})">${esc(def.short)}<span>${def.unit}</span></th>`;
+  }).join('');
+
+  const tableRows = rows.map((r, i) => {
+    const cells = r.per.map(x => {
+      if (!x.e) return `<td><span class="trend-none">-</span></td>`;
+      const def = metricDef(x.key);
+      const stale = x.e.r.date < staleBefore;
+      return `<td>
+        <span class="cell-strong">${fmtVal(def, x.e.r.v)}</span> <span class="cell-sub" style="display:inline">${def.unit}</span>
+        <div class="cell-sub" style="white-space:nowrap">#${x.e.place} of ${x.e.n} &middot; <span class="${stale ? 'stale-date' : ''}">${fmtDate(x.e.r.date)}</span></div>
+      </td>`;
+    }).join('');
+    return `
+      <tr>
+        <td><span class="rank ${i === 0 ? 'r1' : ''}">${i + 1}</span></td>
+        <td>
+          <button class="link-red" style="font-size:.88rem" title="Opens this player's Metrics tab in a new tab"
+            onclick="gotoPlayerMgmt(${r.p.id})">${esc(r.p.first)} ${esc(r.p.last)}</button>
+          <div class="cell-sub">${record ? 'Class of ' + r.p.grad + ' &middot; ' : ''}${esc(r.p.pos)}${r.p.pos2 ? ' / ' + esc(r.p.pos2) : ''} &middot; ${esc(r.p.team || 'Unassigned')}</div>
+        </td>
+        ${cells}
+        <td>
+          <span class="rank ${i === 0 ? 'r1' : ''}" style="font-size:1.2rem">${r.score}</span>
+          <div class="cell-sub">ranked in ${r.have} of ${G.mets.length}</div>
+        </td>
+      </tr>`;
+  }).join('');
+
+  return `
+    <div class="card card-pad">
+      ${modeBar}
+      <div class="filter-bar">
+        <div style="flex:0 1 220px">
+          <span class="field-label">Program</span>
+          <div class="chip-row">
+            <button class="chip ${prog === 'hs' ? 'active' : ''}" onclick="dashSet('prog','hs')">High School</button>
+            <button class="chip ${prog === 'youth' ? 'active' : ''}" onclick="dashSet('prog','youth')">Youth</button>
+          </div>
+        </div>
+        ${prog === 'hs' ? `
+        <label class="f-select" style="flex:0 1 180px"><span class="field-label">Grad Class</span>
+          <select onchange="dashSet('klass',this.value)">
+            ${klassOpts.map(g => `<option value="${g}" ${String(dash.klass) === String(g) ? 'selected' : ''}>${gradLabel(g)}</option>`).join('')}
+          </select></label>
+        ${record ? `
+        <label class="f-select" style="flex:0 1 150px"><span class="field-label">Age Division</span>
+          <select onchange="dashSet('hsdiv',this.value)">
+            ${hsDivAges.map(a => `<option value="${a}" ${String(dash.hsdiv) === String(a) ? 'selected' : ''}>${a}U</option>`).join('')}
+          </select></label>` : ''}` : `
+        <label class="f-select" style="flex:0 1 180px"><span class="field-label">Age Division</span>
+          <select onchange="dashSet('ydiv',this.value)">
+            ${ydivOpts.map(d => `<option value="${d}" ${dash.ydiv === d ? 'selected' : ''}>${d}</option>`).join('')}
+          </select></label>`}
+        <div style="flex:2;min-width:260px">
+          <span class="field-label">Grouping</span>
+          <div class="chip-row">
+            ${GROUPINGS.map(g => `<button class="chip ${dash.group === g.key ? 'active' : ''}" onclick="dashSet('group','${g.key}')">${g.label}</button>`).join('')}
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:1rem">
+        <span class="field-label">Window</span>
+        <div class="chip-row">
+          <button class="chip ${dash.win === '6mo' ? 'active' : ''}" onclick="dashSet('win','6mo')">Last 6 Months</button>
+          <button class="chip ${dash.win === '1yr' ? 'active' : ''}" onclick="dashSet('win','1yr')">Last Year</button>
+          <button class="chip ${dash.win === 'all' ? 'active' : ''}" onclick="dashSet('win','all')">All Time</button>
+          <button class="chip ${dash.win === 'custom' ? 'active' : ''}" onclick="dashSet('win','custom')">Custom Range</button>
+        </div>
+        ${dash.win === 'custom' ? `
+        <div class="filter-bar" style="margin-top:.8rem">
+          <label class="f-select"><span class="field-label">From</span>
+            <input type="date" value="${dash.from}" onchange="dashSet('from',this.value)"></label>
+          <label class="f-select"><span class="field-label">To</span>
+            <input type="date" value="${dash.to}" onchange="dashSet('to',this.value)"></label>
+        </div>` : ''}
+      </div>
+      <p class="hint" style="margin-top:1rem">${record
+        ? 'THE ' + div + 'U RECORD BOOK: All Time means every mark ever made at ' + div + 'U, any class, any era, measured in the season it was made' + (prog === 'hs' ? ' - preselected from the grad class, flip it to any HS division' : '') + '. '
+        : ''}High school and youth never mix on one board - HS ranks by grad class, youth by age division. One row per player, apples to apples inside the cohort. You are in a grouping once you have tested its position metric - the bat and the legs then count with the arm (pitching and hitting stay pure). Ranks use the MOST RECENT mark in the window, never an old best, and a gold date is over a year old - tighten the range to fence stale marks out. The score averages the player's percentile place across the metrics he has data in, equal weights for now. CBU standard metrics only - custom and site metrics never feed a score. The org ranks across every affiliate; an affiliate ranks its own players, and the real app adds a second line showing the player's org-wide place without exposing anyone else's.</p>
+    </div>
+    ${rows.length ? `
+    <p class="count-line">${rows.length} players in the ${cohortLabel} ${G.label} rankings<span class="spacer"></span>Sorted by grouping score</p>
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Rank</th><th style="min-width:190px">Player</th>${metHead}<th>Score</th></tr></thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+      </div>
+    </div>`
+    : `
+    <div class="card" style="margin-top:1rem"><div class="card-pad" style="text-align:center;padding:3rem 1.5rem">
+      <h3 style="font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;font-size:1.3rem;color:var(--navy-deep);letter-spacing:.04em">No ${G.label} Rankings Yet</h3>
+      <p class="hint" style="max-width:460px;margin:.7rem auto 0;font-size:.88rem">${record
+        ? 'No ' + G.label.toLowerCase() + ' marks at ' + div + 'U yet - the record book grows as testing days pile up.'
+        : prog === 'youth'
+        ? 'No ' + G.label.toLowerCase() + ' marks for ' + dash.ydiv + ' inside this window yet. The youth side tests next at Fall Youth Kickoff Testing on Aug 15.'
+        : 'Nobody in the ' + cohortLabel + ' has a ' + G.label.toLowerCase() + ' mark inside this window. Widen the date range or pick another grouping.'}</p>
+    </div></div>`}`;
+}
+
+function renderDash(){
+  const modeBar = `
+    <div class="chip-row" style="margin-bottom:1.1rem">
+      <button class="chip ${dash.mode !== 'board' ? 'active' : ''}" onclick="dashSet('mode','metric')">Single Metric</button>
+      <button class="chip ${dash.mode === 'board' ? 'active' : ''}" onclick="dashSet('mode','board')">Class Leaderboard</button>
+    </div>`;
+  if (dash.mode === 'board') return renderBoard(modeBar);
+  const def = metricDef(dash.metric) || STANDARD_METRICS[2];
+  const neutral = def.best === 'none';   /* tracked, not ranked */
+  const [from, to] = winRange();
+  const prog = dash.prog;
+  /* RECORD-BOOK MODE. Youth is ALWAYS the division record book. The HS
+     side becomes one only on All Time - Addison's rule: the short
+     windows keep following the class, All Time follows the AGE, so the
+     board holds every mark ever made at that division, any class, any
+     era. A mark's division is fixed the day it was made - the 2027s'
+     January marks stay 17U marks even after they roll to 18U in the
+     fall. */
+  const divAge = prog === 'youth' ? parseInt(dash.sdiv, 10)
+               : dash.win === 'all' ? parseInt(dash.hsdiv, 10) : null;
+  const pool = divAge ? players : dashPool().filter(p => playerProgram(p) === 'hs');
+
+  const rows = pool.map(p => {
+    let reads = readingsFor(p, def.key, from, to);
+    if (divAge) reads = reads.filter(r => r.sy + 18 - p.grad === divAge);
+    if (!reads.length) return null;
+    const recent = reads[reads.length - 1];
+    const best = neutral ? recent
+      : reads.reduce((a, b) => (def.best === 'low' ? b.v < a.v : b.v > a.v) ? b : a);
+    let trend = null;
+    if (reads.length >= 2){
+      const base = reads[0];
+      const delta = recent.v - base.v;
+      trend = {
+        delta,
+        pct: base.v ? delta / Math.abs(base.v) * 100 : 0,
+        good: neutral ? null : (def.best === 'low' ? delta < 0 : delta > 0),
+        since: base.date
+      };
+    }
+    return { p, reads, recent, best, trend };
+  }).filter(Boolean);
+
+  /* a neutral metric has no leaderboard order - it reads alphabetically */
+  if (neutral) rows.sort((a, b) => (a.p.last + a.p.first).localeCompare(b.p.last + b.p.first));
+  else rows.sort((a, b) => def.best === 'low' ? a.best.v - b.best.v : b.best.v - a.best.v);
+
+  /* summary tiles */
+  const withTrend = rows.filter(r => r.trend);
+  const improving = withTrend.filter(r => r.trend.good);
+  const avgRecent = rows.length ? rows.reduce((s, r) => s + r.recent.v, 0) / rows.length : null;
+  const orgBest = rows[0] || null;
+
+  /* filter options */
+  const seasonOpts = ['all'].concat(SEASONS.filter(s => s.program === 'hs').map(s => s.name));
+  const gradOpts = [...new Set(players
+    .filter(p => !p.alumni && playerProgram(p) === 'hs')
+    .filter(p => dash.season === 'all' || p.season === dash.season)
+    .map(p => p.grad))].sort();
+  /* divisions that actually hold a mark - 13U (or 18U) appears the day
+     such a mark exists, never before. The HS list also always carries
+     the smart-preselected division so the empty state can be honest. */
+  const allAges = agesWithData();
+  const divAges = [...allAges].filter(a => a >= 7 && a <= 14).sort((a, b) => b - a);
+  const hsDivAges = (() => {
+    const opts = [...allAges].filter(a => a >= 14 && a <= 18);
+    const cur = parseInt(dash.hsdiv, 10);
+    if (cur >= 14 && cur <= 18 && opts.indexOf(cur) === -1) opts.push(cur);
+    return opts.sort((a, b) => b - a);
+  })();
+  const teamOpts = (dash.season === 'all' ? SEASONS.flatMap(s => s.teams) :
+    (SEASONS.find(s => s.name === dash.season) || { teams: [] }).teams).map(t => t.name);
+
+  const metricOpts = METRIC_CATS.map(cat => {
+    const std = STANDARD_METRICS.filter(d => d.cat === cat);
+    if (!std.length) return '';
+    return `<optgroup label="${cat}">` + std.map(d =>
+      `<option value="${d.key}" ${d.key === dash.metric ? 'selected' : ''}>${esc(d.label)} (${d.unit})</option>`).join('') + `</optgroup>`;
+  }).join('') + (CUSTOM_METRICS.length ? `<optgroup label="Custom &amp; Site Metrics">` + CUSTOM_METRICS.map(d =>
+    `<option value="${d.key}" ${d.key === dash.metric ? 'selected' : ''}>${esc(d.label)} (${d.unit})</option>`).join('') + `</optgroup>` : '');
+
+  const staleBefore = isoDaysAgo(365);
+  const dateSub = iso => `<div class="cell-sub ${iso < staleBefore ? 'stale-date' : ''}">${fmtDate(iso)}</div>`;
+  const tableRows = rows.map((r, i) => {
+    const t = r.trend;
+    const arrow = t ? (t.delta > 0 ? '&#9650;' : t.delta < 0 ? '&#9660;' : '&bull;') : '';
+    const sign = t && t.delta > 0 ? '+' : '';
+    const trendCls = t ? (neutral ? 'flat' : t.good ? 'good' : 'bad') : '';
+    return `
+      <tr>
+        ${neutral ? '' : `<td><span class="rank ${i === 0 ? 'r1' : ''}">${i + 1}</span></td>`}
+        <td>
+          <button class="link-red" style="font-size:.88rem" title="Opens this player's Metrics tab in a new tab"
+            onclick="gotoPlayerMgmt(${r.p.id})">${esc(r.p.first)} ${esc(r.p.last)}</button>
+          <div class="cell-sub">Class of ${r.p.grad} &middot; ${esc(r.p.pos)}${r.p.pos2 ? ' / ' + esc(r.p.pos2) : ''}</div>
+        </td>
+        <td>${esc(r.p.team || 'Unassigned')}</td>
+        ${neutral ? '' : `<td>
+          <span class="cell-strong">${fmtVal(def, r.best.v)}</span> <span class="cell-sub" style="display:inline">${def.unit}</span>
+          ${dateSub(r.best.date)}
+        </td>`}
+        <td>
+          <span class="cell-strong">${fmtVal(def, r.recent.v)}</span> <span class="cell-sub" style="display:inline">${def.unit}</span>
+          ${dateSub(r.recent.date)}
+        </td>
+        <td>
+          ${t ? `<span class="trend ${trendCls}">${arrow} ${sign}${fmtVal(def, t.delta)} ${def.unit}
+                  <span class="pct">${t.pct > 0 ? '+' : ''}${t.pct.toFixed(1)}%</span></span>
+                 <div class="cell-sub">vs ${fmtDate(t.since)}</div>`
+              : `<span class="trend-none">Only one reading in this window</span>`}
+        </td>
+        <td><span class="cell-strong">${r.reads.length}</span></td>
+      </tr>`;
+  }).join('');
+
+  const emptyMsg = prog === 'youth'
+    ? 'No ' + def.label + ' marks recorded at ' + dash.sdiv + 'U inside this window. Widen the range - the record book grows as testing days pile up.'
+    : divAge
+      ? 'No ' + def.label + ' marks recorded at ' + divAge + 'U yet - the record book grows as testing days pile up. 18U days especially will be rare.'
+      : usedOnCount(def.key) === 0
+        ? 'This metric has not run on a testing day yet.'
+        : 'No results for this metric inside the current filters and window.';
+
+  return `
+    <div class="card card-pad">
+      ${modeBar}
+      <div class="filter-bar">
+        <div style="flex:0 1 220px">
+          <span class="field-label">Program</span>
+          <div class="chip-row">
+            <button class="chip ${prog === 'hs' ? 'active' : ''}" onclick="dashSet('prog','hs')">High School</button>
+            <button class="chip ${prog === 'youth' ? 'active' : ''}" onclick="dashSet('prog','youth')">Youth</button>
+          </div>
+        </div>
+        <label class="f-select" style="flex:1.4"><span class="field-label">Metric</span>
+          <select onchange="dashSet('metric',this.value)">${metricOpts}</select></label>
+        ${prog === 'hs' && divAge ? `
+        <label class="f-select"><span class="field-label">Grad Year</span>
+          <select onchange="dashSet('grad',this.value)">
+            <option value="all">All years</option>
+            ${gradOpts.map(g => `<option value="${g}" ${String(dash.grad) === String(g) ? 'selected' : ''}>${gradLabel(g)}</option>`).join('')}
+          </select></label>
+        <label class="f-select"><span class="field-label">Age Division</span>
+          <select onchange="dashSet('hsdiv',this.value)">
+            ${hsDivAges.map(a => `<option value="${a}" ${String(dash.hsdiv) === String(a) ? 'selected' : ''}>${a}U</option>`).join('')}
+          </select></label>` : prog === 'hs' ? `
+        <label class="f-select"><span class="field-label">Season</span>
+          <select onchange="dashSet('season',this.value)">
+            ${seasonOpts.map(s => `<option value="${s}" ${dash.season === s ? 'selected' : ''}>${s === 'all' ? 'All seasons' : s}</option>`).join('')}
+          </select></label>
+        <label class="f-select"><span class="field-label">Grad Year</span>
+          <select onchange="dashSet('grad',this.value)">
+            <option value="all">All years</option>
+            ${gradOpts.map(g => `<option value="${g}" ${String(dash.grad) === String(g) ? 'selected' : ''}>${gradLabel(g)}</option>`).join('')}
+          </select></label>
+        <label class="f-select"><span class="field-label">Team</span>
+          <select onchange="dashSet('team',this.value)">
+            <option value="all">All teams</option>
+            ${teamOpts.map(t => `<option value="${esc(t)}" ${dash.team === t ? 'selected' : ''}>${esc(t)}</option>`).join('')}
+          </select></label>` : `
+        <label class="f-select"><span class="field-label">Age Division</span>
+          <select onchange="dashSet('sdiv',this.value)">
+            ${divAges.map(a => `<option value="${a}" ${String(dash.sdiv) === String(a) ? 'selected' : ''}>${a}U</option>`).join('')}
+          </select></label>`}
+      </div>
+      <div style="margin-top:1rem">
+        <span class="field-label">Window</span>
+        <div class="chip-row">
+          <button class="chip ${dash.win === '6mo' ? 'active' : ''}" onclick="dashSet('win','6mo')">Last 6 Months</button>
+          <button class="chip ${dash.win === '1yr' ? 'active' : ''}" onclick="dashSet('win','1yr')">Last Year</button>
+          <button class="chip ${dash.win === 'all' ? 'active' : ''}" onclick="dashSet('win','all')">All Time</button>
+          <button class="chip ${dash.win === 'custom' ? 'active' : ''}" onclick="dashSet('win','custom')">Custom Range</button>
+        </div>
+        ${dash.win === 'custom' ? `
+        <div class="filter-bar" style="margin-top:.8rem">
+          <label class="f-select"><span class="field-label">From</span>
+            <input type="date" value="${dash.from}" onchange="dashSet('from',this.value)"></label>
+          <label class="f-select"><span class="field-label">To</span>
+            <input type="date" value="${dash.to}" onchange="dashSet('to',this.value)"></label>
+        </div>` : ''}
+      </div>
+      <p class="hint" style="margin-top:1rem">${prog === 'youth'
+        ? 'THE DIVISION RECORD BOOK: a mark counts for the division the player was in the day it was made. With All Time on, the best ' + dash.sdiv + 'U ever can be a player long since in high school - the record stands forever. '
+        : divAge
+        ? 'THE ' + divAge + 'U RECORD BOOK: All Time here means every ' + divAge + 'U mark ever recorded, any class, measured in the season it was made. Preselected from the grad class - flip it to any HS division. '
+        : ''}${neutral
+        ? 'This metric is direction neutral - tracked and charted, never ranked as better or worse. The list reads alphabetically and window changes stay neutral, no green or red.'
+        : 'Ranked by best mark in the window. The trend compares the most recent reading against where the window started - on the clocks (dashes, pop time) a falling number is the good direction and shows green.'}
+        At the organization level this sees every affiliate; an affiliate only sees its own teams.</p>
+    </div>
+
+    ${rows.length ? `
+    <div class="stat-tiles">
+      <div class="stat-tile">
+        <div class="st-val">${rows.length}</div>
+        <div class="st-label">Players With A Mark</div>
+        <div class="st-sub">${esc(def.label)}, this window</div>
+      </div>
+      ${neutral ? '' : `<div class="stat-tile">
+        <div class="st-val">${fmtVal(def, orgBest.best.v)}<span>${def.unit}</span></div>
+        <div class="st-label">Best In Window</div>
+        <div class="st-sub">${esc(orgBest.p.first)} ${esc(orgBest.p.last)}</div>
+      </div>`}
+      <div class="stat-tile">
+        <div class="st-val">${fmtVal(def, avgRecent)}<span>${def.unit}</span></div>
+        <div class="st-label">Average Most Recent</div>
+        <div class="st-sub">across the filtered pool</div>
+      </div>
+      ${neutral ? '' : `<div class="stat-tile">
+        <div class="st-val green">${improving.length}</div>
+        <div class="st-label">Improving</div>
+        <div class="st-sub">of ${withTrend.length} with a trend</div>
+      </div>`}
+    </div>
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            ${neutral ? '' : '<th>Rank</th>'}<th>Player</th><th>Team</th>${neutral ? '' : '<th>Best In Window</th>'}<th>Most Recent</th><th>${neutral ? 'Change In Window' : 'Trend'}</th><th>Readings</th>
+          </tr></thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+      </div>
+    </div>`
+    : `
+    <div class="card" style="margin-top:1rem"><div class="tab-placeholder card-pad" style="text-align:center;padding:3rem 1.5rem">
+      <h3 style="font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;font-size:1.3rem;color:var(--navy-deep);letter-spacing:.04em">No Results In This View</h3>
+      <p class="hint" style="max-width:460px;margin:.7rem auto 0;font-size:.88rem">${emptyMsg}</p>
+    </div></div>`}`;
+}
+
+/* ---------------------------------------------------------------------
+   THE WIZARD - Create A Testing Day
+   Five steps, same spirit as the tryout registration wizard: the basics,
+   who is testing, which library metrics run that day, how testing
+   numbers get assigned, then review and create.
+   --------------------------------------------------------------------- */
+function startWizard(){
+  wiz = {
+    step: 1, name: '', date: '', loc: '',
+    season: SEASONS[0].name,
+    teams: new Set(SEASONS[0].teams.map(t => t.name)), unassigned: true,
+    metrics: new Set(STD_KEYS),          /* the standard set starts checked */
+    numbers: 'auto',
+    addMet: false
+  };
+  view = 'wizard';
+  render();
+  window.scrollTo(0, 0);
+}
+function cancelWizard(){ wiz = null; view = 'list'; render(); }
+function wizSeasonPool(){
+  return players.filter(p => p.season === wiz.season);
+}
+function wizPlayerCount(){
+  return wizSeasonPool().filter(p => p.team ? wiz.teams.has(p.team) : wiz.unassigned).length;
+}
+function wizSet(k, el){ wiz[k] = el.value; }
+function wizSeason(el){
+  wiz.season = el.value;
+  const s = SEASONS.find(x => x.name === wiz.season);
+  wiz.teams = new Set(s ? s.teams.map(t => t.name) : []);
+  render();
+}
+function wizTeam(name, on){
+  if (on) wiz.teams.add(name); else wiz.teams.delete(name);
+  const c = document.getElementById('wiz-count');
+  if (c) c.textContent = wizPlayerCount();
+}
+function wizUnassigned(on){
+  wiz.unassigned = on;
+  const c = document.getElementById('wiz-count');
+  if (c) c.textContent = wizPlayerCount();
+}
+function wizTeamsAll(on){
+  const s = SEASONS.find(x => x.name === wiz.season);
+  wiz.teams = on ? new Set(s.teams.map(t => t.name)) : new Set();
+  wiz.unassigned = on;
+  render();
+}
+function wizMetric(key, on){
+  if (on) wiz.metrics.add(key); else wiz.metrics.delete(key);
+  const c = document.getElementById('wiz-mcount');
+  if (c) c.textContent = wiz.metrics.size;
+}
+function wizNumbers(mode){ wiz.numbers = mode; render(); }
+function wizBack(){ wiz.step--; render(); window.scrollTo(0, 0); }
+function wizNext(){
+  if (wiz.step === 1){
+    if (!wiz.name.trim()){ toast('Give the testing day a name'); return; }
+    if (!wiz.date){ toast('Pick the testing date'); return; }
+  }
+  if (wiz.step === 2 && wizPlayerCount() === 0){ toast('Pick at least one team'); return; }
+  if (wiz.step === 3 && wiz.metrics.size === 0){ toast('Pick at least one metric to test'); return; }
+  wiz.step++;
+  render();
+  window.scrollTo(0, 0);
+}
+function wizCreate(){
+  const s = SEASONS.find(x => x.name === wiz.season);
+  const allTeams = s && wiz.teams.size === s.teams.length && wiz.unassigned;
+  const order = allMetrics().map(d => d.key).filter(k => wiz.metrics.has(k));
+  const day = {
+    id: 'td' + (++dayAuto),
+    name: wiz.name.trim(), date: wiz.date, loc: wiz.loc.trim() || 'CBU Training Complex - Tampa',
+    season: wiz.season, poolSeason: wiz.season,
+    teams: allTeams ? 'all' : [...wiz.teams], unassigned: wiz.unassigned,
+    metrics: order, numbersMode: wiz.numbers, userMade: true
+  };
+  days.push(day);
+  RES[day.id] = {}; NUM[day.id] = {};
+  if (wiz.numbers === 'auto') autoAssign(day);
+  persist();
+  wiz = null;
+  toast('Testing day created');
+  openDay(day.id);
+}
+
+function renderWizard(){
+  const steps = ['The Basics', 'Who Is Testing', 'Metrics To Test', 'Testing Numbers', 'Review'];
+  const stepChips = steps.map((s, i) => {
+    const n = i + 1;
+    const cls = n === wiz.step ? 'active' : n < wiz.step ? 'done' : '';
+    return `<li class="${cls}"><span class="n">${n < wiz.step ? '&#10003;' : n}</span>${s}</li>`;
+  }).join('');
+  return `
+    <button class="btn btn-outline btn-sm" onclick="cancelWizard()">&larr; Cancel</button>
+    <div style="margin-top:1.2rem">
+      <div class="eyebrow">New Testing Day</div>
+      <h1 class="page-title" style="font-size:2rem">Create A Testing Day</h1>
+      <div class="title-rule"></div>
+    </div>
+    <!-- NEW COMPONENT: wizard-steps (styles in the head) - a numbered
+         progress banner for the multi-step create flow -->
+    <ol class="wizard-steps">${stepChips}</ol>
+    <div class="card card-pad">
+      ${wiz.step === 1 ? wizStep1() : wiz.step === 2 ? wizStep2() : wiz.step === 3 ? wizStep3() : wiz.step === 4 ? wizStep4() : wizStep5()}
+      <div style="display:flex;gap:.8rem;margin-top:1.6rem;flex-wrap:wrap">
+        ${wiz.step > 1 ? `<button class="btn btn-outline-dark" onclick="wizBack()">Back</button>` : ''}
+        ${wiz.step < 5 ? `<button class="btn btn-primary" onclick="wizNext()">Next</button>`
+                       : `<button class="btn btn-primary" onclick="wizCreate()">Create Testing Day</button>`}
+        <button class="link-muted" style="align-self:center" onclick="cancelWizard()">Cancel</button>
+      </div>
+    </div>`;
+}
+
+function wizStep1(){
+  return `
+    <div class="form-grid">
+      <label><span class="field-label">Testing Day Name</span>
+        <input type="text" value="${esc(wiz.name)}" placeholder="e.g. Fall Preseason Testing" onchange="wizSet('name',this)"></label>
+      <label><span class="field-label">Date</span>
+        <input type="date" value="${wiz.date}" onchange="wizSet('date',this)"></label>
+      <label><span class="field-label">Location</span>
+        <input type="text" value="${esc(wiz.loc)}" placeholder="CBU Training Complex - Tampa" onchange="wizSet('loc',this)"></label>
+      <label><span class="field-label">Season</span>
+        <select onchange="wizSeason(this)">${SEASONS.map(s => `<option ${wiz.season === s.name ? 'selected' : ''}>${s.name}</option>`).join('')}</select></label>
+    </div>
+    <p class="hint" style="margin-top:1rem">The season stamp works like it does on evals - results recorded on this day file under this season, and the dashboard's history reads right.</p>`;
+}
+
+function wizStep2(){
+  const s = SEASONS.find(x => x.name === wiz.season);
+  const pool = wizSeasonPool();
+  const teamRows = (s ? s.teams : []).map(t => {
+    const n = pool.filter(p => p.team === t.name).length;
+    return `<label><input type="checkbox" ${wiz.teams.has(t.name) ? 'checked' : ''} onchange="wizTeam('${esc(t.name)}',this.checked)">
+      ${esc(t.name)}<span class="tp-sub">${esc(t.div)} &middot; ${n} players</span></label>`;
+  }).join('');
+  const un = pool.filter(p => !p.team).length;
+  return `
+    <span class="field-label">Teams In ${esc(wiz.season)}</span>
+    <div class="chip-row" style="margin-bottom:.4rem">
+      <button class="chip" onclick="wizTeamsAll(true)">Select All</button>
+      <button class="chip" onclick="wizTeamsAll(false)">Clear</button>
+    </div>
+    <div class="team-pick">${teamRows}</div>
+    ${un ? `<div class="team-pick" style="margin-top:.4rem"><label>
+      <input type="checkbox" ${wiz.unassigned ? 'checked' : ''} onchange="wizUnassigned(this.checked)">
+      Unassigned pool<span class="tp-sub">${un} players not on a team yet</span></label></div>` : ''}
+    <p class="hint" style="margin-top:1rem"><strong id="wiz-count">${wizPlayerCount()}</strong> players will be on this testing day's grid.</p>`;
+}
+
+function wizStep3(){
+  const stdRows = STANDARD_METRICS.map(d => `
+    <label><input type="checkbox" ${wiz.metrics.has(d.key) ? 'checked' : ''} onchange="wizMetric('${d.key}',this.checked)">
+      ${esc(d.label)}<span class="mp-sub">${d.cat} &middot; ${d.unit}</span></label>`).join('');
+  const cusRows = CUSTOM_METRICS.map(d => `
+    <label><input type="checkbox" ${wiz.metrics.has(d.key) ? 'checked' : ''} onchange="wizMetric('${d.key}',this.checked)">
+      ${esc(d.label)}<span class="mp-sub">${esc(d.site || d.cat)} &middot; ${d.unit}</span></label>`).join('');
+  return `
+    <span class="field-label">Standard Metrics</span>
+    <p class="hint">The org core set starts checked - most testing days run all of it. Uncheck anything this day skips.</p>
+    <div class="met-pick">${stdRows}</div>
+    <span class="field-label" style="margin-top:1.3rem">Custom &amp; Site Metrics</span>
+    <p class="hint">Only pick these where the site has the gear - the force plate metrics run in Tampa. Need something new? Add it in Metrics To Be Tested and it shows up here.</p>
+    <div class="met-pick">${cusRows || '<span class="hint">No custom metrics in the library yet.</span>'}</div>
+    <p class="hint" style="margin-top:1rem"><strong id="wiz-mcount">${wiz.metrics.size}</strong> metrics will be columns on the entry grid.</p>`;
+}
+
+function wizStep4(){
+  return `
+    <span class="field-label">Testing Numbers</span>
+    <p class="hint">Players get a number because at the field you find "47", not a last name - it is what gets called out at the line and what the search box jumps to.</p>
+    <div class="choice-row">
+      <button class="choice ${wiz.numbers === 'auto' ? 'sel' : ''}" onclick="wizNumbers('auto')">
+        <h4>Assign Numbers Now</h4>
+        <p>Numbers 1 through ${wizPlayerCount()} handed out alphabetically by last name. The check-in sheet prints in the same order, so every kid already has a number when they walk up.</p>
+      </button>
+      <button class="choice ${wiz.numbers === 'checkin' ? 'sel' : ''}" onclick="wizNumbers('checkin')">
+        <h4>Assign At Check-In</h4>
+        <p>The grid starts with the number column blank and sorts by last name so anyone is easy to find. Type each player's number as they check in - or assign all of them later with one click.</p>
+      </button>
+    </div>`;
+}
+
+function wizStep5(){
+  const mets = allMetrics().filter(d => wiz.metrics.has(d.key));
+  const s = SEASONS.find(x => x.name === wiz.season);
+  const teamLabel = s && wiz.teams.size === s.teams.length ? 'All ' + s.teams.length + ' teams' : wiz.teams.size + ' of ' + (s ? s.teams.length : 0) + ' teams';
+  return `
+    <span class="field-label">Review</span>
+    <div style="border:1.5px solid var(--line);border-radius:10px;padding:.4rem 1rem;margin-top:.4rem">
+      <div class="kv-line" style="display:flex;justify-content:space-between;gap:1rem;padding:.55rem 0;border-bottom:1px solid var(--line);font-size:.87rem">
+        <span style="color:var(--muted);font-weight:600">Testing day</span><span class="cell-strong" style="text-align:right">${esc(wiz.name || '-')}</span></div>
+      <div style="display:flex;justify-content:space-between;gap:1rem;padding:.55rem 0;border-bottom:1px solid var(--line);font-size:.87rem">
+        <span style="color:var(--muted);font-weight:600">Date</span><span class="cell-strong">${fmtDate(wiz.date) || '-'}</span></div>
+      <div style="display:flex;justify-content:space-between;gap:1rem;padding:.55rem 0;border-bottom:1px solid var(--line);font-size:.87rem">
+        <span style="color:var(--muted);font-weight:600">Location</span><span class="cell-strong" style="text-align:right">${esc(wiz.loc || 'CBU Training Complex - Tampa')}</span></div>
+      <div style="display:flex;justify-content:space-between;gap:1rem;padding:.55rem 0;border-bottom:1px solid var(--line);font-size:.87rem">
+        <span style="color:var(--muted);font-weight:600">Season</span><span class="cell-strong">${esc(wiz.season)}</span></div>
+      <div style="display:flex;justify-content:space-between;gap:1rem;padding:.55rem 0;border-bottom:1px solid var(--line);font-size:.87rem">
+        <span style="color:var(--muted);font-weight:600">Players</span><span class="cell-strong">${teamLabel}${wiz.unassigned ? ' + unassigned pool' : ''} &middot; ${wizPlayerCount()} players</span></div>
+      <div style="display:flex;justify-content:space-between;gap:1rem;padding:.55rem 0;border-bottom:1px solid var(--line);font-size:.87rem">
+        <span style="color:var(--muted);font-weight:600">Metrics</span><span class="cell-strong" style="text-align:right">${mets.map(m => esc(m.label)).join(', ')}</span></div>
+      <div style="display:flex;justify-content:space-between;gap:1rem;padding:.55rem 0;font-size:.87rem">
+        <span style="color:var(--muted);font-weight:600">Numbers</span><span class="cell-strong">${wiz.numbers === 'auto' ? 'Assigned now, 1-' + wizPlayerCount() + ' by last name' : 'Assigned at check-in'}</span></div>
+    </div>
+    <p class="hint" style="margin-top:1rem">Creating the day opens its entry grid straight away - results can go in live at the event or after.</p>`;
+}
+
+restore();       /* pick up anything saved on this device from a prior session */
+scheduleSync();  /* marks still pending from an offline session sync once online */
+render();
+</script>
+</body>
+</html>

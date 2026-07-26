@@ -39,6 +39,18 @@ Open questions Addison has not decided yet (do not assume):
 - Whether later changes to the org library re-sync to existing affiliates
   or only seed new ones.
 
+## Metric verification (from Addison, July 2026)
+
+Players are PLATFORM-LEVEL accounts (Athengine), not org property -
+every travel org runs its own jurisdiction, but a player's identity and
+metric history live with their account. When an organization runs a
+metric testing day, it acts as the METRIC VERIFIER: a mark is stamped
+with who recorded it and which org's testing day verified it, so a
+number carries the weight of the organization behind it. Adding a
+player to a testing day - including walk-ups - requires that the player
+exists as an Athengine account first. Addison flagged this as a core
+part of the platform story: "we need to be metric verifiers."
+
 ## Where the current mockups sit
 
 CBU is playing both roles right now: Addison is the organization AND the
