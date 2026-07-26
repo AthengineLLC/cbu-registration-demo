@@ -1,0 +1,3099 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CBU App — Player Management</title>
+<script>
+/* This page always lives inside the app shell. Opened bare, it re-opens
+   itself in app-shell.html so the left menu is there on desktop and phone. */
+if (window.self === window.top) location.replace('app-shell.html?open=player-management');
+</script>
+<!--
+  ============================================================
+  CBU APP — PLAYER MANAGEMENT (clickable demo, mock data)
+  ============================================================
+  Every player in the org, across every season, in one list.
+  Modeled on the current system's Player Management screen but
+  rebuilt on the navy design system:
+  - No Guardian column (Addison: not needed at this level).
+  - Filters: search, SEASON (new - it is how CBU is organized),
+    team, grad year, plus Clear all.
+  - Roster / Evals / Recruiting tabs. Evals and Recruiting are
+    placeholders until those systems get built.
+  - Per-row three-dot menu: Change Team, Unassign, Start
+    Evaluation, and the two log-in-as items (grayed until
+    player/guardian accounts exist).
+  - Clicking a player opens the INTERNAL profile - first pass.
+    The player's own view and the public recruiting profile are
+    separate screens that come later.
+  Navy design system, same conventions as teams.html.
+  ============================================================
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============ TOKENS ============ */
+:root{
+  --navy-bg:#0c1327;
+  --navy-bg-2:#141d3a;
+  --navy-deep:#0e1730;
+  --card:#ffffff;
+  --row-alt:#f5f6fa;
+  --red:#b91e2d;
+  --red-dark:#8f1622;
+  --powder:#6daed4;
+  --powder-dark:#4d8fb6;
+  --ink:#16203c;
+  --muted:#6b7590;
+  --line:#e3e6ee;
+  --green:#1e7a44;
+  --green-bg:#e2f2e8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;overflow-x:hidden}
+body{
+  font-family:'Inter',-apple-system,'Segoe UI',Arial,sans-serif;
+  background:
+    radial-gradient(1200px 600px at 70% -10%, rgba(185,30,45,.12), transparent 60%),
+    linear-gradient(160deg,var(--navy-bg) 0%,var(--navy-bg-2) 100%);
+  background-attachment:fixed;
+  color:#eef1f8;min-height:100vh;overflow-x:hidden;max-width:100vw;
+}
+
+/* ============ TOP NAV ============ */
+.topnav{
+  position:sticky;top:0;z-index:50;background:var(--navy-deep);
+  border-bottom:1px solid rgba(255,255,255,.07);
+  display:flex;align-items:center;justify-content:space-between;padding:.85rem 2rem;
+}
+.brand{display:flex;align-items:center;gap:.9rem}
+.brand-logo{font-family:'Oswald',Arial,sans-serif;font-weight:700;font-size:1.55rem;color:#fff;line-height:1}
+.brand-logo b{color:var(--red)}
+.brand-divider{width:1px;height:26px;background:rgba(255,255,255,.18)}
+.brand-label{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.2em;font-size:.78rem;color:#c6cde0;font-weight:600}
+
+/* ============ LAYOUT ============ */
+.page{max-width:1120px;margin:0 auto;padding:2.4rem 2rem 5rem}
+.eyebrow{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.28em;font-size:.72rem;font-weight:600;color:var(--powder)}
+.page-title{font-family:'Oswald','Arial Narrow',Arial,sans-serif;text-transform:uppercase;font-size:2.5rem;font-weight:700;color:#fff;line-height:1.05}
+.page-title-sub{color:#aab3cc;font-size:.92rem;margin-top:.5rem;max-width:640px}
+.title-rule{width:64px;height:4px;background:var(--red);margin-top:.85rem;border-radius:2px}
+.title-row{display:flex;align-items:flex-end;gap:1rem;flex-wrap:wrap}
+.title-row .grow{flex:1;min-width:220px}
+
+/* ============ BUTTONS / LINKS ============ */
+.btn{
+  display:inline-flex;align-items:center;gap:.5rem;justify-content:center;
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.09em;
+  font-weight:600;font-size:.85rem;border-radius:8px;cursor:pointer;
+  padding:.72rem 1.35rem;border:2px solid transparent;transition:all .15s ease;
+  text-decoration:none;user-select:none;
+}
+.btn:focus-visible{outline:3px solid var(--powder);outline-offset:2px}
+.btn-primary{background:var(--red);color:#fff}
+.btn-primary:hover{background:var(--red-dark)}
+.btn-outline{background:transparent;color:#fff;border-color:rgba(255,255,255,.35)}
+.btn-outline:hover{border-color:#fff}
+.btn-outline-dark{background:transparent;color:var(--ink);border-color:#c6ccdb}
+.btn-outline-dark:hover{border-color:var(--ink)}
+.btn-sm{padding:.45rem .9rem;font-size:.74rem}
+.btn[disabled]{opacity:.4;cursor:not-allowed;pointer-events:none}
+.link-red{color:var(--red);font-weight:600;font-size:.8rem;text-decoration:none;cursor:pointer;background:none;border:none;font-family:inherit;padding:0}
+.link-red:hover{text-decoration:underline}
+.link-muted{color:var(--muted);font-weight:600;font-size:.8rem;text-decoration:none;cursor:pointer;background:none;border:none;font-family:inherit;padding:0}
+.link-muted:hover{text-decoration:underline}
+.hint{font-size:.78rem;color:var(--muted);line-height:1.55}
+
+/* ============ CARDS & TABLES ============ */
+.card{background:var(--card);border-radius:12px;color:var(--ink);box-shadow:0 18px 40px rgba(3,7,20,.45);overflow:hidden}
+.card-pad{padding:1.4rem 1.6rem}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+thead th{
+  background:var(--navy-deep);color:#fff;text-align:left;
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.12em;
+  font-size:.7rem;font-weight:600;padding:.85rem 1.1rem;white-space:nowrap;
+}
+tbody td{padding:.9rem 1.1rem;border-bottom:1px solid var(--line);vertical-align:middle}
+tbody tr:nth-child(even){background:var(--row-alt)}
+tbody tr:last-child td{border-bottom:none}
+.cell-strong{font-weight:600;color:var(--ink)}
+.cell-sub{font-size:.76rem;color:var(--muted);margin-top:.15rem}
+
+/* ============ PILLS ============ */
+.pill{
+  display:inline-block;font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;
+  letter-spacing:.1em;font-size:.66rem;font-weight:600;
+  padding:.28rem .65rem;border-radius:999px;white-space:nowrap;
+}
+.pill-green{background:var(--green-bg);color:var(--green)}
+.pill-red{background:#f8e3e6;color:var(--red)}
+.pill-blue{background:#e2eef7;color:#2d6f96}
+.pill-navy{background:#e8ebf4;color:var(--navy-deep)}
+.pill-gold{background:#fdf3dc;color:#9a6b0f}
+
+/* ============ CHIPS (tabs + quick filters) ============ */
+.chip-row{display:flex;gap:.5rem;flex-wrap:wrap}
+.chip{
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.08em;font-size:.72rem;font-weight:600;
+  border:1.5px solid #c9cfdd;background:#fff;color:var(--ink);border-radius:999px;padding:.4rem .85rem;cursor:pointer;
+}
+.chip:hover{border-color:var(--red);color:var(--red)}
+.chip.active{background:var(--red);color:#fff;border-color:var(--red)}
+.chip.active:hover{background:var(--red-dark);border-color:var(--red-dark);color:#fff}
+.tab-row{margin:1.6rem 0 1.1rem}
+
+/* ============ FORMS ============ */
+.field-label{display:block;font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.14em;font-size:.68rem;font-weight:600;color:var(--muted);margin-bottom:.4rem}
+input[type=text],input[type=email],input[type=tel],input[type=date],select{
+  width:100%;max-width:420px;padding:.6rem .75rem;border:1.5px solid #c9cfdd;border-radius:8px;
+  font-family:'Inter',Arial,sans-serif;font-size:.9rem;color:var(--ink);background:#fff;
+}
+input:focus,select:focus{outline:2px solid var(--powder);border-color:var(--powder)}
+input[type=checkbox]{width:17px;height:17px;accent-color:var(--red);cursor:pointer;vertical-align:middle}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem 1.4rem}
+.form-grid .full{grid-column:1 / -1}
+
+/* ============ SECTION HEADERS ============ */
+.section-head{
+  background:var(--navy-deep);color:#fff;padding:.6rem 1rem;border-radius:8px 8px 0 0;
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.12em;font-size:.74rem;font-weight:600;margin-top:1.5rem;
+}
+.section-head.red{background:var(--red)}
+.section-body{border:1.5px solid var(--line);border-top:none;border-radius:0 0 8px 8px;padding:1.1rem}
+
+/* ============ TOAST ============ */
+.toast{
+  position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--navy-deep);color:#fff;padding:.8rem 1.4rem;border-radius:10px;font-size:.88rem;
+  opacity:0;pointer-events:none;transition:all .25s ease;z-index:99;border:1px solid rgba(255,255,255,.15);max-width:90vw;text-align:center;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ============ PAGE-SPECIFIC: PLAYER MANAGEMENT ============ */
+
+/* Filter bar: search + season/team/grad selects on one white card */
+.filter-bar{display:flex;gap:1rem 1.4rem;flex-wrap:wrap;align-items:flex-end}
+.filter-bar .f-search{flex:2;min-width:230px}
+.filter-bar .f-select{flex:1;min-width:150px}
+.filter-bar select,.filter-bar input{max-width:100%}
+.filter-clear{padding-bottom:.55rem}
+
+/* Count line above the table */
+.count-line{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin:.9rem 0 .7rem;color:#aab3cc;font-size:.84rem}
+.count-line .spacer{margin-left:auto}
+
+/* Row action menu (three-dot / kebab). New to the navy system -
+   nothing in teams.html needed a per-row overflow menu before. */
+.row-menu-wrap{position:relative;display:inline-block}
+.kebab{
+  background:#fff;border:1.5px solid #c9cfdd;border-radius:8px;cursor:pointer;
+  width:34px;height:30px;color:var(--muted);font-size:1rem;line-height:1;letter-spacing:.08em;
+  display:inline-flex;align-items:center;justify-content:center;padding-bottom:.45rem;
+}
+.kebab:hover{border-color:var(--ink);color:var(--ink)}
+/* fixed-position so the menu floats above the table instead of getting
+   clipped by the card's rounded corners or the table's scroll container;
+   the JS anchors it to the kebab button and flips it up near the bottom */
+.row-menu{
+  position:fixed;z-index:80;min-width:200px;
+  background:#fff;border:1.5px solid var(--line);border-radius:10px;
+  box-shadow:0 14px 30px rgba(3,7,20,.25);padding:.35rem;text-align:left;
+}
+.row-menu button{
+  display:block;width:100%;text-align:left;background:none;border:none;cursor:pointer;
+  font-family:'Inter',Arial,sans-serif;font-size:.84rem;font-weight:600;color:var(--ink);
+  padding:.55rem .7rem;border-radius:7px;
+}
+.row-menu button:hover{background:var(--row-alt)}
+.row-menu button.danger{color:var(--red)}
+.row-menu button[disabled]{color:#b6bdd0;cursor:not-allowed}
+.row-menu button[disabled]:hover{background:none}
+.row-menu .menu-note{font-size:.72rem;color:var(--muted);padding:.5rem .7rem .35rem;line-height:1.5}
+
+/* Inline panel that opens under a row (change team / add player) */
+.row-panel{background:var(--row-alt);border-bottom:1px solid var(--line)}
+.row-panel td{padding:1rem 1.1rem 1.2rem}
+.row-panel .panel-title{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.12em;font-size:.7rem;font-weight:600;color:var(--navy-deep);margin-bottom:.6rem}
+
+/* Bulk action bar: appears when rows are checked */
+.bulk-bar{
+  display:flex;align-items:center;gap:.9rem;flex-wrap:wrap;
+  background:var(--navy-deep);color:#fff;border-radius:10px;padding:.6rem .9rem;margin-bottom:.8rem;
+  font-size:.84rem;font-weight:600;
+}
+.bulk-bar .bulk-count{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.1em;font-size:.72rem}
+
+/* Internal player profile (first pass) */
+.profile-head{display:flex;gap:1.3rem;align-items:center;flex-wrap:wrap}
+.profile-avatar{
+  width:76px;height:76px;border-radius:50%;flex:0 0 76px;
+  background:var(--navy-deep);color:#fff;display:flex;align-items:center;justify-content:center;
+  font-family:'Oswald',Arial,sans-serif;font-weight:700;font-size:1.5rem;letter-spacing:.04em;
+}
+.profile-name{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;font-size:1.9rem;font-weight:700;color:var(--navy-deep);line-height:1.05}
+.profile-sub{color:var(--muted);font-size:.88rem;margin-top:.35rem}
+.profile-pills{display:flex;gap:.45rem;flex-wrap:wrap;margin-top:.6rem}
+.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 1.6rem}
+.kv{display:flex;justify-content:space-between;gap:1rem;padding:.5rem 0;border-bottom:1px solid var(--line);font-size:.86rem}
+.kv:last-child{border-bottom:none}
+.kv .k{color:var(--muted);font-weight:600}
+.kv .v{color:var(--ink);font-weight:600;text-align:right;overflow-wrap:anywhere}
+
+/* Placeholder body for the Evals / Recruiting tabs */
+.tab-placeholder{text-align:center;padding:3rem 1.5rem}
+.tab-placeholder h3{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;font-size:1.3rem;color:var(--navy-deep);letter-spacing:.04em}
+.tab-placeholder p{color:var(--muted);font-size:.88rem;margin:.7rem auto 0;max-width:460px;line-height:1.6}
+
+/* Portrait photo frame: fixed 3:4 up-down rectangle. Every photo gets
+   cropped to this shape - families send all kinds of photos, so the
+   admin (or family) drags to reposition and zooms until it fits. */
+.profile-photo{width:190px;flex:0 0 190px;aspect-ratio:3/4;border-radius:12px;overflow:hidden;position:relative;background:linear-gradient(160deg,#1b2749,#0e1730);border:1.5px solid var(--line)}
+.photo-bg{position:absolute;inset:0;background-repeat:no-repeat;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Oswald',Arial,sans-serif;font-weight:700;font-size:2.4rem;letter-spacing:.05em}
+.photo-bg.adjusting{cursor:grab;touch-action:none}
+.photo-tools{display:flex;flex-direction:column;gap:.4rem;margin-top:.55rem;width:190px}
+.photo-tools input[type=range]{width:100%;accent-color:var(--red);padding:0}
+
+/* Per-section Edit button in the navy section headers: the Player
+   Overview sections are locked by default because their values come
+   from what the family enters at registration - editing is deliberate */
+.sec-edit{
+  background:none;border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:6px;
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.1em;
+  font-size:.58rem;font-weight:600;padding:.2rem .6rem;cursor:pointer;
+}
+.sec-edit:hover{border-color:#fff;background:rgba(255,255,255,.12)}
+.kv-sub{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.12em;font-size:.62rem;font-weight:600;color:var(--red);margin:.8rem 0 .1rem}
+
+/* Current jersey number, riding next to the name on the profile header */
+.jersey-num{font-family:'Oswald',Arial,sans-serif;font-weight:600;font-size:1.15rem;color:var(--muted);margin-left:.55rem;letter-spacing:.02em}
+
+/* The red hat: committed players trade the navy hat for a red one.
+   Shows next to the name everywhere once a commitment is recorded. */
+.redhat{width:15px;height:15px;fill:var(--red);display:inline-block;vertical-align:-2px;margin-left:.4rem;flex:0 0 auto}
+.redhat-lg{width:24px;height:24px;vertical-align:-3px;margin-left:.55rem}
+
+/* Recruiting tab: two-column card grid */
+.rec-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.3rem;align-items:start}
+.college-search-list{border:1.5px solid var(--line);border-radius:8px;max-height:250px;overflow:auto;margin-top:.6rem;background:#fff}
+.college-row{display:block;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--line);padding:.5rem .7rem;cursor:pointer;font-family:'Inter',Arial,sans-serif;font-size:.84rem;font-weight:600;color:var(--ink)}
+.college-row:last-child{border-bottom:none}
+.college-row:hover{background:var(--row-alt)}
+.college-row.sel{background:var(--navy-deep);color:#fff}
+.college-row .cr-meta{color:var(--muted);font-size:.74rem;font-weight:400;margin-left:.4rem}
+.college-row.sel .cr-meta{color:#aab3cc}
+.contact-entry{padding:.7rem 0;border-bottom:1px solid var(--line);font-size:.85rem;line-height:1.5}
+.contact-entry:last-child{border-bottom:none;padding-bottom:0}
+
+/* Best-metrics strip on the profile header: one small tile per metric
+   the player actually has data for - their BEST mark, not their latest.
+   Full history and charts live on the Metrics tab. */
+.metric-tiles{display:flex;gap:.7rem;flex-wrap:wrap;margin-top:1.2rem;border-top:1px solid var(--line);padding-top:1.1rem}
+.metric-tile{background:var(--row-alt);border:1.5px solid var(--line);border-radius:10px;padding:.5rem .85rem;min-width:104px}
+.mt-val{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-weight:700;font-size:1.3rem;line-height:1.1;color:var(--navy-deep)}
+.mt-val span{font-size:.68rem;font-weight:600;color:var(--muted);margin-left:.2rem}
+.mt-label{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.1em;font-size:.6rem;font-weight:600;color:var(--muted);margin-top:.2rem}
+
+/* Metric rows on the Metrics tab: best mark plus the history behind it */
+.metric-row{display:flex;align-items:baseline;gap:.9rem;padding:.6rem 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.metric-row:last-child{border-bottom:none}
+.mr-label{font-weight:600;color:var(--ink);font-size:.86rem;min-width:150px}
+.mr-best{font-family:'Oswald',Arial,sans-serif;font-weight:700;font-size:1.05rem;color:var(--red)}
+.mr-best span{font-size:.68rem;color:var(--muted);font-weight:600;margin-left:.15rem}
+.mr-hist{font-size:.76rem;color:var(--muted)}
+
+/* Development charts: one small SVG line chart per metric, two to a row.
+   Built inline - no chart library, matching the no-dependency rule. */
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.chart-card{border:1.5px solid var(--line);border-radius:10px;padding:.8rem .9rem;background:#fff}
+.chart-card svg{width:100%;height:auto;display:block;margin-top:.4rem}
+
+/* Schedule tab: the player's team schedule, ported from the parent-facing
+   team-schedule.html so both read identically. Day-grouped list + month
+   calendar. */
+.game-days{border:1.5px solid var(--line);border-radius:10px;overflow:hidden}
+.game-day{
+  background:var(--navy-deep);color:#fff;font-family:'Oswald',Arial,sans-serif;
+  text-transform:uppercase;letter-spacing:.16em;font-size:.66rem;font-weight:600;padding:.5rem .95rem;
+}
+.game-row{display:flex;gap:.9rem;padding:.8rem .95rem;border-bottom:1px solid var(--line);align-items:flex-start;flex-wrap:wrap;background:#fff}
+.game-row:last-child{border-bottom:none}
+.game-time{font-family:'Oswald',Arial,sans-serif;font-weight:600;font-size:.8rem;color:var(--ink);min-width:62px;padding-top:.1rem}
+.game-vs{color:var(--muted);font-size:.78rem;min-width:24px;padding-top:.14rem}
+.game-main{flex:1;min-width:210px}
+.game-opp{font-weight:700;color:var(--ink);font-size:.9rem}
+.game-venue{font-size:.76rem;color:var(--muted);margin-top:.15rem}
+.game-rot{font-size:.76rem;margin-top:.4rem;color:var(--ink)}
+.game-rot .rot-label{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.1em;font-size:.62rem;font-weight:600;color:var(--red);margin-right:.35rem}
+.game-side{display:flex;flex-direction:column;align-items:flex-end;gap:.45rem;margin-left:auto}
+.game-result{
+  font-family:'Oswald',Arial,sans-serif;font-weight:600;font-size:.72rem;letter-spacing:.05em;
+  color:#fff;background:var(--green);border-radius:999px;padding:.24rem .7rem;white-space:nowrap;
+}
+.game-result.loss{background:var(--red)}
+.game-result.tie{background:var(--muted)}
+.practice-line{font-weight:700;color:var(--ink);font-size:.9rem}
+.canceled .practice-line,.canceled .game-venue{text-decoration:line-through;color:var(--muted)}
+.tour-banner{
+  display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;background:#f6ecd2;color:#7a5f14;
+  padding:.6rem .95rem;font-size:.8rem;font-weight:600;border-bottom:1px solid var(--line);
+}
+.tour-banner .tb-note{font-weight:400;color:#8a7635}
+/* Tournament schedule rows (mirrors the Events tab look in teams.html) */
+.tour-row{display:flex;gap:.9rem;padding:.85rem .2rem;border-bottom:1px solid var(--line);flex-wrap:wrap;align-items:baseline}
+.tour-row:last-child{border-bottom:none}
+.tour-org{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.08em;font-size:.7rem;font-weight:600;color:var(--red);min-width:120px}
+.tour-main{flex:1;min-width:200px}
+.tour-name{font-weight:700;color:var(--ink)}
+.tour-sub{font-size:.78rem;color:var(--muted);margin-top:.2rem}
+.tour-side{margin-left:auto;display:flex;align-items:center;gap:.5rem}
+.cal-title{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.1em;font-size:1.05rem;font-weight:600;color:var(--ink);min-width:150px;text-align:center}
+.cal-nav{background:#fff;border:1.5px solid #c9cfdd;border-radius:8px;width:32px;height:32px;cursor:pointer;color:var(--ink);font-size:.85rem;line-height:1;padding:0}
+.cal-nav:hover{border-color:var(--ink)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--line);border:1.5px solid var(--line);border-radius:10px;overflow:hidden;margin-top:1rem}
+.cal-dow{background:var(--navy-deep);color:#fff;font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.12em;font-size:.6rem;font-weight:600;padding:.45rem .3rem;text-align:center}
+.cal-cell{background:#fff;min-height:92px;padding:.35rem .4rem;display:flex;flex-direction:column;gap:.28rem;min-width:0}
+.cal-cell.blank{background:var(--row-alt)}
+.cal-daynum{font-size:.68rem;font-weight:600;color:var(--muted)}
+.cal-cell.today{box-shadow:inset 0 0 0 2px var(--red)}
+.cal-cell.today .cal-daynum{background:var(--red);color:#fff;border-radius:999px;padding:.08rem .4rem;align-self:flex-start}
+.cal-chip{
+  display:block;width:100%;text-align:left;border:none;cursor:pointer;border-radius:6px;
+  font-family:'Inter',Arial,sans-serif;font-weight:600;font-size:.62rem;line-height:1.3;padding:.24rem .4rem;overflow:hidden;
+}
+.cal-chip.game{background:#f8e3e6;color:var(--red-dark)}
+.cal-chip.practice{background:#e8ebf4;color:var(--navy-deep)}
+.cal-chip.practice.canceled{text-decoration:line-through;opacity:.55}
+.cal-chip.tour{background:#f6ecd2;color:#7a5f14}
+.cal-legend{display:flex;gap:1.1rem;flex-wrap:wrap;margin-top:.8rem;font-size:.74rem;color:var(--muted);align-items:center}
+.cal-legend .swatch{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:.35rem;vertical-align:-1px}
+.detail-card{background:var(--row-alt);border:1.5px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin-top:1rem}
+.detail-title{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.1em;font-size:.8rem;font-weight:600;color:var(--navy-deep)}
+.detail-line{font-size:.84rem;color:var(--ink);margin-top:.45rem}
+.detail-line b{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.1em;font-size:.64rem;font-weight:600;color:var(--muted);margin-right:.4rem}
+
+/* Stats tab: season-by-season hitting and pitching lines. Lots of
+   columns, so the cells go compact and the table scrolls inside its
+   wrapper on small screens. */
+/* headers and numbers share the same right alignment so every column
+   reads as one straight edge; only the Season column is left-aligned */
+.stats-table th{padding:.55rem .55rem;font-size:.6rem;letter-spacing:.08em;text-align:right}
+.stats-table td{padding:.55rem .55rem;font-size:.78rem;white-space:nowrap;text-align:right}
+.stats-table td:first-child,.stats-table th:first-child{text-align:left}
+.stats-table td.season-cell{font-weight:600;color:var(--ink)}
+.stats-table tr.career td{background:#e8ebf4;font-weight:700;color:var(--navy-deep);border-top:2px solid var(--navy-deep)}
+
+/* Videos tab: X-link library. Toggleable tag chips for adding and
+   filtering, static tag chips on each saved link. */
+.vtag{
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.06em;
+  font-size:.62rem;font-weight:600;border:1.5px solid #c9cfdd;background:#fff;color:var(--ink);
+  border-radius:999px;padding:.28rem .68rem;cursor:pointer;
+}
+.vtag:hover{border-color:var(--red);color:var(--red)}
+.vtag.on{background:var(--navy-deep);color:#fff;border-color:var(--navy-deep)}
+.vtag.on:hover{color:#fff;border-color:var(--navy-deep)}
+.vtag-static{
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.06em;
+  font-size:.6rem;font-weight:600;background:#e8ebf4;color:var(--navy-deep);
+  border-radius:6px;padding:.2rem .45rem;white-space:nowrap;
+}
+.video-row{display:flex;gap:.9rem;padding:.8rem .2rem;border-bottom:1px solid var(--line);flex-wrap:wrap;align-items:baseline}
+.video-row:last-child{border-bottom:none}
+.video-main{flex:1;min-width:220px}
+.video-title{font-weight:700;color:var(--ink);font-size:.92rem}
+.video-sub{font-size:.76rem;color:var(--muted);margin-top:.2rem}
+.video-tags{display:flex;gap:.3rem;flex-wrap:wrap;margin-top:.4rem}
+.x-handle{
+  display:inline-flex;align-items:center;gap:.5rem;font-weight:700;color:var(--ink);font-size:1rem;
+  text-decoration:none;
+}
+.x-handle:hover{color:var(--red)}
+.x-mark{
+  font-family:'Oswald',Arial,sans-serif;font-weight:700;background:var(--navy-deep);color:#fff;
+  border-radius:6px;width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;font-size:.85rem;
+}
+
+/* Player + Family view: the public-profile questions panel and its
+   yes/no switches (same switch as the gear library uses) */
+.pub-panel{border:1.5px solid var(--line);background:var(--row-alt);border-radius:10px;padding:1rem 1.1rem;margin-top:1.1rem}
+.pub-q{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap}
+.pub-label{font-weight:700;font-size:.9rem;color:var(--ink)}
+.switch{width:46px;height:25px;border-radius:999px;background:#c9cfdd;border:none;cursor:pointer;position:relative;transition:background .15s;flex:0 0 auto}
+.switch::after{content:'';position:absolute;top:3px;left:3px;width:19px;height:19px;border-radius:50%;background:#fff;transition:left .15s;box-shadow:0 1px 3px rgba(3,7,20,.3)}
+.switch.on{background:var(--green)}
+.switch.on::after{left:24px}
+.pub-warn{background:#fdf3f4;border:1.5px solid #ecc7cc;border-radius:8px;padding:.8rem .9rem;margin-top:.7rem;font-size:.84rem;line-height:1.55;color:var(--ink)}
+/* the college-targets interview: full-sentence question labels and
+   free-text answer boxes */
+.q-label{display:block;font-weight:700;font-size:.88rem;color:var(--ink);margin:1rem 0 .4rem;line-height:1.45}
+/* the shield note: appears under the playing-time buttons and spells
+   out the mindset behind the chosen answer */
+.mind-note{
+  display:flex;gap:.7rem;align-items:flex-start;
+  background:#e8ebf4;border:1.5px solid #c9cfdd;border-left:4px solid var(--navy-deep);
+  border-radius:8px;padding:.8rem .95rem;margin-top:.6rem;font-size:.84rem;line-height:1.6;color:var(--ink);
+}
+.mind-note .shield{font-size:1.2rem;line-height:1;flex:0 0 auto;padding-top:.1rem}
+/* the welcome-to-Red-Hat-Nation note that appears once a commitment is
+   recorded - CBU's congratulations, right on the profile */
+.commit-note{
+  background:#fdf3f4;border:1.5px solid #ecc7cc;border-left:4px solid var(--red);
+  border-radius:8px;padding:.9rem 1.05rem;margin-top:1rem;font-size:.86rem;line-height:1.65;color:var(--ink);
+}
+.commit-note .cn-head{
+  font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.12em;
+  font-size:.82rem;font-weight:700;color:var(--red);display:flex;align-items:center;gap:.2rem;
+}
+textarea{
+  width:100%;min-height:88px;padding:.7rem .8rem;border:1.5px solid #c9cfdd;border-radius:8px;
+  font-family:'Inter',Arial,sans-serif;font-size:.88rem;color:var(--ink);background:#fff;
+  resize:vertical;line-height:1.5;
+}
+textarea:focus{outline:2px solid var(--powder);border-color:var(--powder)}
+/* removable chips for the family's college targets */
+.tgt-chip{
+  display:inline-flex;align-items:center;gap:.35rem;
+  font-family:'Oswald',Arial,sans-serif;font-size:.66rem;font-weight:600;letter-spacing:.06em;
+  background:var(--navy-deep);color:#fff;border-radius:6px;padding:.28rem .3rem .28rem .55rem;text-transform:uppercase;
+}
+.tgt-chip button{background:none;border:none;color:#9aa5c2;cursor:pointer;font-size:.72rem;line-height:1;padding:.1rem .25rem}
+.tgt-chip button:hover{color:#fff}
+
+/* DEMO ONLY - the view-as bar. Lets Addison flip between the three
+   profile audiences (admin/coach, player+family, public site) without
+   logging in and out. Not part of the real app's UI. */
+.viewas-bar{
+  display:flex;align-items:center;gap:.55rem;flex-wrap:wrap;
+  border:1.5px dashed rgba(255,255,255,.28);border-radius:10px;
+  padding:.55rem .85rem;margin-bottom:1.4rem;
+}
+.viewas-label{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.16em;font-size:.64rem;font-weight:600;color:#8b96b5}
+.viewas-bar .chip{font-size:.66rem;padding:.32rem .7rem}
+
+/* AI scouting card teaser: navy inner card, placeholder until evals and
+   metrics exist to feed it */
+.ai-teaser{background:linear-gradient(160deg,var(--navy-bg) 0%,var(--navy-bg-2) 100%);border-radius:10px;color:#eef1f8;padding:1.3rem 1.4rem}
+.ai-teaser h4{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;letter-spacing:.14em;font-size:.8rem;color:var(--powder)}
+.ai-teaser p{font-size:.84rem;color:#aab3cc;line-height:1.6;margin-top:.5rem}
+
+@media (max-width:760px){
+  .page{padding:1.6rem 1rem 4rem}
+  .page-title{font-size:1.9rem}
+  .topnav{padding:.7rem .9rem}
+  .card-pad{padding:1.1rem 1rem}
+  .profile-grid{grid-template-columns:1fr}
+  .rec-grid{grid-template-columns:1fr}
+  .chart-grid{grid-template-columns:1fr}
+  .cal-cell{min-height:58px;padding:.22rem .25rem}
+  .cal-chip{font-size:.5rem;padding:.16rem .25rem}
+  .cal-daynum{font-size:.58rem}
+  .game-side{flex-direction:row;width:100%;margin-left:0;align-items:center}
+  .profile-photo{width:150px;flex-basis:150px}
+  .photo-tools{width:150px}
+  thead th,tbody td{padding-left:.7rem;padding-right:.7rem}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="brand">
+    <div class="brand-logo">CB<b>U</b></div>
+    <div class="brand-divider"></div>
+    <div class="brand-label">Player Management</div>
+  </div>
+</nav>
+
+<div class="page">
+  <div id="app"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =====================================================================
+   MOCK DATA
+   Seasons and teams mirror the Team Management demo (teams.html sample
+   data), so the two pages tell one story. Players carry no guardian
+   column here - guardians live on the internal profile only.
+   ===================================================================== */
+let _id = 1;
+const nid = () => _id++;
+
+/* program drives the smart filters: HS seasons filter by grad year,
+   youth seasons by age division */
+const SEASONS = [
+  { name: 'Summer 2026', program: 'hs', teams: [
+    { name: 'Fleming',      div: 'Class of 2027' },
+    { name: 'McCoy',        div: 'Class of 2027' },
+    { name: 'Menendez',     div: 'Class of 2027' },
+    { name: 'Olasin',       div: 'Class of 2027' },
+    { name: 'Thomas',       div: 'Class of 2027' },
+    { name: 'DiBenedetto',  div: 'Class of 2028' },
+    { name: 'Hudgins',      div: 'Class of 2028' },
+    { name: 'Lawson',       div: 'Class of 2028' },
+    { name: 'Merrell',      div: 'Class of 2028' },
+    { name: 'Cates',        div: 'Class of 2029' }
+  ]},
+  { name: 'Fall 2026 Youth', program: 'youth', teams: [
+    { name: 'CBU Youth Red',   div: '10U' },
+    { name: 'CBU Youth Navy',  div: '12U' },
+    { name: 'CBU Youth White', div: '14U' }
+  ]}
+];
+
+/* Grad year to baseball age for the 2026-27 season: 2027 plays at 17. */
+const ageOf = g => 2044 - g;
+
+const GRAD_YEARS = [2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034];
+const POSITIONS = ['C','1B','2B','3B','SS','LF','CF','RF','OF','RHP','LHP','UT'];
+const GUARD_FIRST = ['Maria','James','Karen','Luis','Dana','Robert','Alicia','Steve','Tanya','Carlos','Beth','Mike'];
+
+function slugify(n){ return n.toLowerCase().replace(/[^a-z0-9]+/g, '.').replace(/^\.|\.$/g, ''); }
+
+/* [first, last, grad, pos, pos2, city, team(or null = unassigned), season] */
+const SEED = [
+  ['Aaden','Hernandez',2027,'3B','2B','Wesley Chapel','Thomas','Summer 2026'],
+  ['Adrian','Alfonso',2027,'C','RHP','Miramar','McCoy','Summer 2026'],
+  ['Adrian','Ochoa',2029,'RHP','','Hialeah','Cates','Summer 2026'],
+  ['Aiden "boog"','Trapani',2029,'SS','2B','Tampa','Cates','Summer 2026'],
+  ['Aiden','Cary',2027,'RHP','','Venice','Olasin','Summer 2026'],
+  ['Aiden','Moon',2030,'C','1B','Tampa','CBU Youth White','Fall 2026 Youth'],
+  ['AJ','Ford',2028,'2B','OF','Riverview','Merrell','Summer 2026'],
+  ['AJ','Mackendrick',2028,'2B','UT','Middleburg','Lawson','Summer 2026'],
+  ['AJ','Wright',2027,'RHP','1B','Fort Lauderdale','Thomas','Summer 2026'],
+  ['Alec','Gallardo',2029,'UT','RHP','Fort Lauderdale','Cates','Summer 2026'],
+  ['Alejandro','Fernandez',2027,'CF','LHP','Tampa','Menendez','Summer 2026'],
+  ['Beckett','Riley',2028,'RHP','','Valrico',null,'Summer 2026'],
+  ['Brady','Kowalski',2027,'RHP','3B','Lutz','Fleming','Summer 2026'],
+  ['Bryan','Eberly',2027,'RHP','','Tampa','Menendez','Summer 2026'],
+  ['Bryce','Besece',2027,'C','1B','Brandon','Menendez','Summer 2026'],
+  ['Cameron','Silva',2027,'OF','','Tampa',null,'Summer 2026'],
+  ['Carson','Mixon',2027,'OF','','Brandon','Fleming','Summer 2026'],
+  ['Cole','Davidson',2027,'3B','','Riverview','Menendez','Summer 2026'],
+  ['Devin','Ortiz',2027,'C','','Wesley Chapel','Fleming','Summer 2026'],
+  ['Dominic','Farro',2029,'C','','St. Petersburg',null,'Summer 2026'],
+  ['Eli','Thompson',2027,'SS','RHP','Lakeland','McCoy','Summer 2026'],
+  ['Gavin','Ross',2027,'1B','LHP','Plant City','McCoy','Summer 2026'],
+  ['Hunter','Pate',2027,'CF','','Sarasota','Olasin','Summer 2026'],
+  ['Isaiah','Cruz',2027,'2B','','Bradenton','Olasin','Summer 2026'],
+  ['Isaiah','Maruszak',2027,'SS','2B','Tampa','Menendez','Summer 2026'],
+  ['Jaxon','Reed',2027,'LHP','OF','Tampa','Thomas','Summer 2026'],
+  ['Johnny','Adams',2027,'C','','Tampa','Menendez','Summer 2026'],
+  ['Josiah','Guevara',2027,'SS','','Tampa','Menendez','Summer 2026'],
+  ['Kai','Martinez',2028,'C','3B','Orlando','DiBenedetto','Summer 2026'],
+  ['Landon','Pierce',2028,'RHP','','Ocala','DiBenedetto','Summer 2026'],
+  ['Mason','Duke',2028,'SS','','Clermont','DiBenedetto','Summer 2026'],
+  ['Nico','Alvarez',2028,'2B','SS','Wesley Chapel','Hudgins','Summer 2026'],
+  ['Owen','Brooks',2028,'OF','RHP','Spring Hill','Hudgins','Summer 2026'],
+  ['Preston','Hall',2028,'1B','','Tampa','Lawson','Summer 2026'],
+  ['Quinn','Baxter',2028,'C','OF','Riverview','Merrell','Summer 2026'],
+  ['Rocco','Deluca',2029,'3B','RHP','Naples','Cates','Summer 2026'],
+  ['Ryan','Dejnak',2027,'SS','','Tampa','Menendez','Summer 2026'],
+  ['Ryder','Fogler',2027,'RHP','','Odessa','Menendez','Summer 2026'],
+  ['Sammy','Ortega',2032,'SS','RHP','Tampa','CBU Youth Navy','Fall 2026 Youth'],
+  ['Trey','Glaser',2027,'CF','','Tampa','Menendez','Summer 2026'],
+  ['Tyler','Nguyen',2032,'C','','Tampa','CBU Youth Navy','Fall 2026 Youth'],
+  ['Wesley','Grant',2034,'2B','','Lutz','CBU Youth Red','Fall 2026 Youth'],
+  ['Xavier','Boyd',2030,'OF','','Tampa','CBU Youth White','Fall 2026 Youth']
+];
+
+let players = SEED.map((r, i) => {
+  const name = r[0] + ' ' + r[1];
+  return {
+    id: nid(), first: r[0], last: r[1], grad: r[2], pos: r[3], pos2: r[4] || null,
+    city: r[5], state: 'FL', team: r[6], season: r[7],
+    jersey: r[6] ? String((i * 7) % 44 + 1) : '',
+    bt: (r[3] === 'LHP') ? 'L/L' : (i % 6 === 5 ? 'L/R' : 'R/R'),
+    email: slugify(name) + '@email.com',
+    phone: '(813) 555-0' + ('00' + (110 + i)).slice(-3),
+    guardian: { name: GUARD_FIRST[i % GUARD_FIRST.length] + ' ' + r[1], phone: '(813) 555-0' + ('00' + (410 + i)).slice(-3) },
+    evals: 0
+  };
+});
+/* Profile fields the internal profile edits. Blank until filled in -
+   the profile is also the form. */
+players.forEach(p => {
+  p.bats = p.bt[0]; p.throws = p.bt[2];
+  p.height = ''; p.weight = ''; p.hs = '';
+  p.dob = '';              /* birthday drives the real age once it is set */
+  p.gpa = ''; p.gpaW = ''; p.sat = ''; p.act = '';
+  p.committed = null;      /* {college, date} once they commit - red hat on */
+  p.contacts = [];         /* college contact log entries */
+  p.metrics = {};          /* key -> [{date, v}] result history */
+  p.jerseySize = ''; p.shirtSize = ''; p.pantsSize = '';   /* most recent sizes */
+  /* two parent/guardian slots, exactly how families register: first name,
+     last name, email, phone for each */
+  const gp = (p.guardian.name || '').split(' ');
+  p.g1 = { first: gp[0] || '', last: gp.slice(1).join(' ') || p.last, email: gp[0] ? slugify(p.guardian.name) + '@email.com' : '', phone: p.guardian.phone || '' };
+  p.g2 = { first: '', last: '', email: '', phone: '' };
+  delete p.guardian;
+  p.xUser = '';            /* X handle - powers the video library */
+  p.videos = [];           /* [{url, title, date, tags:[]}] link library */
+  p.socials = { ig: '', tt: '', yt: '' };
+  p.statsH = [];           /* hitting lines, one per season, newest first */
+  p.statsP = [];           /* pitching lines, one per season, newest first */
+  p.publicOn = false;      /* the big question: is the profile on the internet */
+  p.publicMetrics = false; /* second question: do metrics show publicly */
+  p.publicAcademics = false; /* third question: academics on the public page */
+  p.famContacts = [];      /* the family's own log of colleges in contact */
+  p.targets = { divisions: [], conferences: [], colleges: [] };
+  /* the college-targets interview: free-text answers plus button
+     questions (playing time, out-of-state, high-academic), each
+     defaulting to not-applicable */
+  p.interview = { program: '', academics: '', playtime: 'na', outState: 'na', outStateDetail: '', highAcad: 'na', acadStanding: '' };
+});
+const TGT_DIVISIONS = ['D1','D2','D3','NAIA','JUCO'];
+/* Video tags in two tiers: game-or-practice is its own question, asked
+   first; the skill tags follow. Both allow multiple picks, so a search
+   like "Game Video + Hitting" narrows to game at-bats */
+const VIDEO_TYPE_TAGS = ['Game Video','Practice Video'];
+const VIDEO_SKILL_TAGS = ['Hitting','Pitching','Catching','Infield','Outfield','Base Running','Performance'];
+/* Size run matches the gear library's jersey/pants run */
+const SIZE_RUN = ['YS','YM','YL','YXL','AS','AM','AL','AXL','AXXL'];
+
+/* =====================================================================
+   TEAM SCHEDULE (for the profile's Schedule tab)
+   Mirrors the Menendez schedule in Team Management and the parent-facing
+   team-schedule.html - in the real app this flows from what coaches
+   enter there. Only Menendez carries sample data in this demo.
+   ===================================================================== */
+function offIso(days){
+  const d = new Date(); d.setDate(d.getDate() + days);
+  return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+}
+const SCHED_TEAM = 'Menendez';
+const SCHED_TOURS = [
+  { name:'PS Palm Beach Classic', org:'Prospect Select', start:'2026-06-05', end:'2026-06-08', city:'West Palm Beach', state:'FL', released:true },
+  { name:'PS Black Bear', org:'Prospect Select', start:'2026-06-17', end:'2026-06-20', city:'Boone', state:'NC', released:false },
+  { name:'PG WWBA', org:'Perfect Game', start:'2026-06-23', end:'2026-06-28', city:'Fort Myers', state:'FL', released:true },
+  { name:'PS Boston Invitational', org:'Prospect Select', start:'2026-07-06', end:'2026-07-09', city:'Boston', state:'MA', released:false },
+  { name:'PS Sunshine State Championship', org:'Prospect Select', start: offIso(5), end: offIso(8), city:'Orlando', state:'FL', released:true },
+  { name:'PS Gulf Coast Invite', org:'Prospect Select', start: offIso(19), end: offIso(22), city:'Sarasota', state:'FL', released:false }
+];
+const SCHED_GAMES = [
+  { date:'2026-06-05', time:'10:00', at:false, opp:'Palm Beach Select 2027', complex:'Santaluces Athletic Complex', field:'Field 1', city:'Lantana', state:'FL', address:'6250 Lawrence Rd', jersey:'Red Jersey', pitchers:['Bryan Eberly','Ryder Fogler'], us:8, them:2 },
+  { date:'2026-06-06', time:'12:30', at:true, opp:'South Florida Bandits', complex:'The Ballpark of the Palm Beaches', field:'', city:'West Palm Beach', state:'FL', address:'5444 Haverhill Rd', jersey:'White Jersey', pitchers:['Alejandro Fernandez','Bryan Eberly','Josiah Guevara'], us:3, them:5 },
+  { date:'2026-06-07', time:'09:30', at:false, opp:'Treasure Coast Titans', complex:'Santaluces Athletic Complex', field:'Field 3', city:'Lantana', state:'FL', address:'6250 Lawrence Rd', jersey:'Navy Pin Jersey', pitchers:['Ryder Fogler','Alejandro Fernandez'], us:10, them:3 },
+  { date:'2026-06-08', time:'11:00', at:false, opp:'Miami Prospects National', complex:'The Ballpark of the Palm Beaches', field:'', city:'West Palm Beach', state:'FL', address:'5444 Haverhill Rd', jersey:'Red Jersey', pitchers:['Bryan Eberly'], us:6, them:1 },
+  { date:'2026-06-23', time:'10:20', at:false, opp:"Ghost Nation '27", complex:'East Cobb Complex', field:'Field 2', city:'Marietta', state:'GA', address:'825 Fontaine Rd SW', jersey:'Red Jersey', pitchers:['Bryan Eberly','Ryder Fogler'], us:8, them:2 },
+  { date:'2026-06-24', time:'09:00', at:true, opp:'Southside Crew', complex:'Georgia State University', field:'Stadium', city:'Atlanta', state:'GA', address:'755 Hank Aaron Dr SE', jersey:'White Jersey', pitchers:['Alejandro Fernandez','Ryder Fogler'], us:4, them:0 },
+  { date:'2026-06-25', time:'11:20', at:true, opp:'Ninth Inning Prime National 17U', complex:'University of Georgia', field:'Foley Field', city:'Athens', state:'GA', address:'1101 E Campus Rd', jersey:'Navy Pin Jersey', pitchers:['Bryan Eberly','Josiah Guevara','Cole Davidson'], us:14, them:6 },
+  { date:'2026-06-26', time:'15:00', at:false, opp:'Marucci Elite Texas Massengale', complex:'East Cobb Complex', field:'Field 3', city:'Marietta', state:'GA', address:'825 Fontaine Rd SW', jersey:'Red Jersey', pitchers:['Ryder Fogler','Alejandro Fernandez'], us:5, them:2 },
+  { date:'2026-06-27', time:'11:20', at:false, opp:'Elite Baseball Training West - 17u Halverson', complex:'Pickens County High School', field:'', city:'Jasper', state:'GA', address:'500 Dragon Dr', jersey:'White Jersey', pitchers:['Bryan Eberly','Ryder Fogler'], us:10, them:3 },
+  { date:'2026-06-28', time:'08:00', at:false, opp:'5 Star National West Coast 2027', complex:'LakePoint Sports', field:'Field 5', city:'Emerson', state:'GA', address:'261 Stars Way', jersey:'Navy Pin Jersey', pitchers:['Alejandro Fernandez','Bryan Eberly'], us:11, them:0 },
+  { date: offIso(5), time:'09:00', at:false, opp:'Orlando Scorpions 2027', complex:'Boombah Sports Complex', field:'Field 7', city:'Sanford', state:'FL', address:'3450 E Lake Mary Blvd', jersey:'Red Jersey', pitchers:['Bryan Eberly','Ryder Fogler'], us:null, them:null },
+  { date: offIso(5), time:'14:30', at:true, opp:'FTB Rockets 17U', complex:'Boombah Sports Complex', field:'Field 2', city:'Sanford', state:'FL', address:'3450 E Lake Mary Blvd', jersey:'White Jersey', pitchers:['Alejandro Fernandez','Josiah Guevara'], us:null, them:null },
+  { date: offIso(6), time:'11:00', at:false, opp:'Central Florida Gators', complex:'Sylvan Lake Park', field:'Field 1', city:'Sanford', state:'FL', address:'845 Lake Markham Rd', jersey:'', pitchers:[], us:null, them:null }
+];
+/* Practices from the team's two weekly schedules - Mondays 5:45 PM at the
+   training complex, Wednesdays 6:30 PM at Northdale Park - with the next
+   Wednesday canceled to show the exception state. */
+const SCHED_PRACTICES = (function(){
+  const out = [];
+  const d = new Date(); d.setDate(d.getDate() - 49);
+  const end = new Date(); end.setDate(end.getDate() + 28);
+  while (d <= end){
+    const iso = d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+    if (d.getDay() === 1) out.push({ date: iso, time:'17:45', complex:'CBU Training Complex', field:'Field 2', city:'Tampa', state:'FL', address:'4302 Gunn Hwy', canceled:false });
+    else if (d.getDay() === 3) out.push({ date: iso, time:'18:30', complex:'Northdale Park', field:'Field 4', city:'Tampa', state:'FL', address:'15550 Spring Pine Dr', canceled:false });
+    d.setDate(d.getDate() + 1);
+  }
+  const nextWed = out.find(x => x.complex === 'Northdale Park' && x.date >= offIso(0));
+  if (nextWed) nextWed.canceled = true;
+  return out;
+})();
+/* Isaiah Maruszak is the sample player - his profile arrives partly
+   filled so every section has something to look at */
+(function(){
+  const isa = players.find(p => p.last === 'Maruszak');
+  if (!isa) return;
+  isa.height = '5\'11"'; isa.weight = '175'; isa.hs = 'Jesuit High School';
+  isa.dob = '2009-03-14';
+  isa.gpa = '3.8'; isa.gpaW = '4.2';
+  isa.jersey = '38';
+  isa.jerseySize = 'AM'; isa.shirtSize = 'AM'; isa.pantsSize = 'AL';
+  isa.g1 = { first: 'Addison', last: 'Maruszak', email: 'addison.maruszak@email.com', phone: '(813) 555-0042' };
+  isa.g2 = { first: 'Jessica', last: 'Maruszak', email: 'jessica.maruszak@email.com', phone: '(813) 555-0043' };
+  isa.xUser = 'IsaiahMaruszak2027';
+  isa.socials = { ig: 'isaiah.maruszak', tt: '', yt: '' };
+  isa.videos = [
+    { url: 'https://x.com/IsaiahMaruszak2027/status/1001', title: 'BP - oppo gap work',          date: '2026-07-20', tags: ['Hitting','Practice Video'] },
+    { url: 'https://x.com/IsaiahMaruszak2027/status/1002', title: 'Two hits vs FTB Rockets',     date: '2026-06-24', tags: ['Hitting','Game Video'] },
+    { url: 'https://x.com/IsaiahMaruszak2027/status/1003', title: 'Turning two at Boombah',      date: '2026-06-20', tags: ['Infield','Game Video'] },
+    { url: 'https://x.com/IsaiahMaruszak2027/status/1004', title: '60-yard at testing day',      date: '2026-06-20', tags: ['Performance','Practice Video'] }
+  ];
+  isa.famContacts = [
+    { college: 'Tampa (D2, Sunshine State)', date: '2026-07-10', notes: 'Coach replied to my email with fall camp dates.' }
+  ];
+  isa.targets = {
+    divisions: ['D1','D2'],
+    conferences: ['SEC','Sunshine State'],
+    colleges: ['South Florida (D1, AAC)','Tampa (D2, Sunshine State)']
+  };
+  isa.interview = {
+    program: 'I want a program that develops middle infielders and takes strength training seriously. Winning matters to me, but I mostly want coaches who will push me every day.',
+    academics: 'Looking for a strong business school. I keep my grades up and want the degree to matter if baseball ends.',
+    playtime: 'wait',
+    outState: 'yes',
+    outStateDetail: 'Southeast first - Florida and Georgia keep family in the stands - but for the right program I would go anywhere in the country.',
+    highAcad: 'yes',
+    acadStanding: 'ready'
+  };
+  /* Five seasons of stats, newest first, numbers internally consistent
+     (AVG = H/AB and so on) with the climb you would expect age 15 to 17 */
+  isa.statsH = [
+    { season:'Summer 2026', ops:'.846', avg:'.306', obp:'.448', slg:'.398', g:49, ab:98,  r:25, h:30, d2:9, d3:0, hr:0, rbi:27, bb:25, so:26, sb:12, cs:1 },
+    { season:'Spring 2026', ops:'.926', avg:'.329', obp:'.440', slg:'.486', g:24, ab:70,  r:18, h:23, d2:6, d3:1, hr:1, rbi:15, bb:14, so:15, sb:8,  cs:2 },
+    { season:'Fall 2025',   ops:'.768', avg:'.288', obp:'.403', slg:'.365', g:18, ab:52,  r:12, h:15, d2:4, d3:0, hr:0, rbi:9,  bb:10, so:14, sb:6,  cs:1 },
+    { season:'Summer 2025', ops:'.756', avg:'.282', obp:'.383', slg:'.373', g:42, ab:110, r:22, h:31, d2:7, d3:1, hr:0, rbi:19, bb:18, so:28, sb:9,  cs:3 },
+    { season:'Summer 2024', ops:'.635', avg:'.253', obp:'.330', slg:'.305', g:38, ab:95,  r:15, h:24, d2:5, d3:0, hr:0, rbi:12, bb:11, so:27, sb:5,  cs:2 }
+  ];
+  /* A middle infielder who takes the mound now and then - three of the
+     five seasons have pitching lines */
+  isa.statsP = [
+    { season:'Summer 2026', w:0, l:0, sv:0, gp:12, era:'6.38',  ip:'24.0', h:29, r:22, er:17, d2:6, d3:0, hr:0, bb:22, ibb:0, hbp:2, so:18, avg:'.282', ops:'.796', whip:'2.13' },
+    { season:'Summer 2025', w:1, l:1, sv:0, gp:8,  era:'7.20',  ip:'15.0', h:20, r:15, er:12, d2:4, d3:1, hr:0, bb:12, ibb:0, hbp:1, so:11, avg:'.308', ops:'.820', whip:'2.13' },
+    { season:'Summer 2024', w:0, l:1, sv:0, gp:5,  era:'10.13', ip:'8.0',  h:12, r:11, er:9,  d2:3, d3:0, hr:1, bb:9,  ibb:1, hbp:1, so:6,  avg:'.333', ops:'.900', whip:'2.63' }
+  ];
+  isa.contacts = [
+    { college: 'Georgia Tech (D1, ACC)', date: '2026-07-18', by: 'Addison Maruszak',
+      notes: 'Called after the PG WWBA outing - wants summer video.' }
+  ];
+  /* Six years of testing-day history, 20 results per metric (fall 2020
+     through summer 2026, age 11 to 17). Values climb toward the target
+     with small setbacks along the way - development is never a straight
+     line - but the newest mark is always the best one. */
+  function genSeries(start, end, dec){
+    const N = 20, MONTHS = 69, out = [];   /* Sep 2020 -> Jun 2026 */
+    for (let i = 0; i < N; i++){
+      const t = i / (N - 1);
+      const mo = 8 + Math.round(t * MONTHS);
+      const y = 2020 + Math.floor(mo / 12), m = mo % 12, day = 3 + ((i * 7) % 22);
+      let v = start + (end - start) * Math.pow(t, 0.92);
+      if (i > 0 && i < N - 1){
+        const amp = Math.abs(end - start) * 0.05;
+        v += Math.sin(i * 2.6 + Math.abs(end)) * amp;   /* the setbacks */
+        if (end > start) v = Math.min(v, end - Math.abs(end - start) * 0.02);
+        else v = Math.max(v, end + Math.abs(end - start) * 0.02);
+      }
+      if (i === 0) v = start;
+      if (i === N - 1) v = end;
+      out.push({ date: y + '-' + ('0' + (m + 1)).slice(-2) + '-' + ('0' + day).slice(-2), v: parseFloat(v.toFixed(dec)) });
+    }
+    return out;
+  }
+  isa.metrics = {
+    d10: genSeries(2.05, 1.58, 2),    /* 10-yard: made up, trending down */
+    d30: genSeries(4.30, 3.82, 2),    /* 30-yard: 4.30 -> 3.82 */
+    d60: genSeries(8.45, 6.62, 2),    /* 60-yard: made up, trending down */
+    ofv: genSeries(78, 98, 1),        /* outfield velo 78 -> 98 */
+    ifv: genSeries(76, 97, 1),        /* infield velo 76 -> 97 */
+    cv:  genSeries(75, 94, 1),        /* catcher velo rides near the others */
+    pop: genSeries(2.20, 1.82, 2),    /* pop time 2.20 -> 1.82 */
+    fb:  genSeries(79, 97, 1),        /* fastball peak 79 -> 97 */
+    ev:  genSeries(71, 109.8, 1)      /* exit velo 71 -> 109.8 */
+  };
+})();
+
+/* Who is signed in. Every college contact logged gets linked to this
+   name automatically, so staff can see who each college talks to. */
+const CURRENT_USER = 'Addison Maruszak';
+
+/* College list for commitments and the contact log - name, division,
+   conference. A starter list; the real app gets the full database. */
+const COLLEGES = [
+  {n:'Alabama',d:'D1',c:'SEC'},{n:'Auburn',d:'D1',c:'SEC'},{n:'Clemson',d:'D1',c:'ACC'},
+  {n:'Duke',d:'D1',c:'ACC'},{n:'Florida',d:'D1',c:'SEC'},{n:'Florida Atlantic',d:'D1',c:'AAC'},
+  {n:'Florida Gulf Coast',d:'D1',c:'ASUN'},{n:'Florida International',d:'D1',c:'CUSA'},
+  {n:'Florida State',d:'D1',c:'ACC'},{n:'Georgia',d:'D1',c:'SEC'},{n:'Georgia Tech',d:'D1',c:'ACC'},
+  {n:'Jacksonville',d:'D1',c:'ASUN'},{n:'Kentucky',d:'D1',c:'SEC'},{n:'LSU',d:'D1',c:'SEC'},
+  {n:'Louisville',d:'D1',c:'ACC'},{n:'Miami',d:'D1',c:'ACC'},{n:'Mississippi State',d:'D1',c:'SEC'},
+  {n:'North Florida',d:'D1',c:'ASUN'},{n:'Notre Dame',d:'D1',c:'ACC'},{n:'Ole Miss',d:'D1',c:'SEC'},
+  {n:'South Carolina',d:'D1',c:'SEC'},{n:'South Florida',d:'D1',c:'AAC'},{n:'Stetson',d:'D1',c:'ASUN'},
+  {n:'Tennessee',d:'D1',c:'SEC'},{n:'Texas',d:'D1',c:'SEC'},{n:'UCF',d:'D1',c:'Big 12'},
+  {n:'Vanderbilt',d:'D1',c:'SEC'},{n:'Virginia',d:'D1',c:'ACC'},{n:'Wake Forest',d:'D1',c:'ACC'},
+  {n:'Eckerd',d:'D2',c:'Sunshine State'},{n:'Embry-Riddle',d:'D2',c:'Sunshine State'},
+  {n:'Florida Southern',d:'D2',c:'Sunshine State'},{n:'Nova Southeastern',d:'D2',c:'Sunshine State'},
+  {n:'Rollins',d:'D2',c:'Sunshine State'},{n:'Saint Leo',d:'D2',c:'Sunshine State'},
+  {n:'Tampa',d:'D2',c:'Sunshine State'},{n:'Flagler',d:'D2',c:'Peach Belt'},
+  {n:'Chipola',d:'JUCO',c:'Panhandle'},{n:'Polk State',d:'JUCO',c:'Suncoast'},
+  {n:'Santa Fe',d:'JUCO',c:'Mid-Florida'},{n:'St. Johns River State',d:'JUCO',c:'Mid-Florida'},
+  {n:'State College of Florida',d:'JUCO',c:'Suncoast'},
+  {n:'Ave Maria',d:'NAIA',c:'The Sun'},{n:'Keiser',d:'NAIA',c:'The Sun'},
+  {n:'Webber International',d:'NAIA',c:'The Sun'},{n:'Emory',d:'D3',c:'UAA'}
+];
+function collegeLabel(c){ return c.n + ' (' + c.d + (c.c ? ', ' + c.c : '') + ')'; }
+
+/* =====================================================================
+   METRICS
+   Times are seconds to two decimals, lower is better. Velocities are
+   mph to one decimal, higher is better. Pop time reads like a dash
+   time: seconds, two decimals, lower wins. The header shows each
+   metric's BEST mark; the Metrics tab keeps the full history (charts
+   over that history come later). Performance metrics - jump force,
+   vertical (inches) - come later too.
+   ===================================================================== */
+const METRIC_DEFS = [
+  { key:'d10', cat:'Running',  label:'10-Yard Dash',       unit:'sec', dec:2, best:'low'  },
+  { key:'d30', cat:'Running',  label:'30-Yard Dash',       unit:'sec', dec:2, best:'low'  },
+  { key:'d60', cat:'Running',  label:'60-Yard Dash',       unit:'sec', dec:2, best:'low'  },
+  { key:'ofv', cat:'Defense',  label:'Outfield Velo',      unit:'mph', dec:1, best:'high' },
+  { key:'ifv', cat:'Defense',  label:'Infield Velo',       unit:'mph', dec:1, best:'high' },
+  { key:'cv',  cat:'Defense',  label:'Catcher Velo',       unit:'mph', dec:1, best:'high' },
+  { key:'pop', cat:'Defense',  label:'Catcher Pop Time',   unit:'sec', dec:2, best:'low'  },
+  { key:'fb',  cat:'Pitching', label:'Fastball Peak Velo', unit:'mph', dec:1, best:'high' },
+  { key:'ev',  cat:'Hitting',  label:'Exit Velo',          unit:'mph', dec:1, best:'high' }
+];
+const METRIC_CATS = ['Running', 'Defense', 'Pitching', 'Hitting'];
+function metricDef(key){ return METRIC_DEFS.find(d => d.key === key) || null; }
+function fmtMetric(def, v){ return v.toFixed(def.dec) + '<span>' + def.unit + '</span>'; }
+/* Best mark in a list of results - min for times, max for velos */
+function bestIn(list, def){
+  if (!list || !list.length) return null;
+  return list.reduce((a, b) => {
+    return (def.best === 'low' ? b.v < a.v : b.v > a.v) ? b : a;
+  });
+}
+/* Best mark on file, all time - feeds the header tiles */
+function bestOf(p, def){
+  return bestIn((p.metrics && p.metrics[def.key]) || [], def);
+}
+
+/* =====================================================================
+   STATE
+   ===================================================================== */
+let tab = 'roster';                 // roster | evals | recruiting
+let filters = { q: '', season: 'all', grad: 'all', division: 'all', team: 'all' };
+let viewPlayerId = null;            // null = list, otherwise internal profile
+let menuOpenId = null;              // row whose three-dot menu is open
+let unassignArmId = null;           // row menu showing the unassign confirm
+let changeTeamId = null;            // row with the change-team panel open
+let addOpen = false;                // add-player form open
+let selected = new Set();           // checked player ids
+let bulkPanel = null;               // null | 'team' | 'unassign'
+let profileTab = 'info';            // info | evals | recruiting | metrics | stats | schedule | videos | social
+let editSection = null;             // which Player Overview section is unlocked for editing
+let videoDraftTags = new Set();     // tags picked while adding a video link
+let videoFilter = new Set();        // active tag filters on the video library
+let videoXEdit = false;             // editing the X handle on the Videos tab
+let videoDelArm = null;             // video index pending its inline remove confirm
+let socialEdit = false;             // Social tab unlocked for editing
+let nameEdit = false;               // family view: editing the player name
+let famRecTab = 'targets';          // family recruiting sub-tab: targets | contacts
+let pubConfirm = false;             // family view: are-you-sure before going public
+let tgtSearch = '';                 // family view: college search on the targets card
+let viewAs = 'admin';               // DEMO: admin | player | public - flips the audience
+let photoAdjust = false;            // photo reposition mode on the profile
+let photoDrag = null;               // live drag state while repositioning
+let schedView = 'tours';            // schedule tab: tours | cal
+let schedShowPast = false;          // past games behind Show Previous
+let schedCalMonth = '';             // 'YYYY-MM' shown on the calendar
+let schedSel = null;                // {kind, index} calendar detail pick
+let metricPreset = 'all';           // all | 6m | 1y | 2y - chart date range
+let metricFrom = '';                // custom from date (overrides preset)
+let metricTo = '';                  // custom to date
+let commitSearch = '';              // college search text on the commitment card
+let commitPick = null;              // index into COLLEGES chosen to commit to
+let uncommitArm = false;            // inline confirm for removing a commitment
+
+/* =====================================================================
+   PLAYER PHOTOS
+   Photos live at img/players/<first-last>.jpg (or .png) - drop a file
+   there and it appears. Dragging a photo onto the frame in the browser
+   also works; it is downscaled and kept in localStorage. Every photo is
+   cropped to the same 3:4 portrait frame, and the admin or family drags
+   / zooms it into position - that is how mismatched family photos all
+   end up the same shape on the site.
+   ===================================================================== */
+const FRAME_ASPECT = 3 / 4;          /* the portrait frame, width / height */
+const PHOTO_KEY = 'cbuPlayerPhotos';
+let photoStore = {};
+try{ photoStore = JSON.parse(localStorage.getItem(PHOTO_KEY) || '{}') || {}; }catch(e){ photoStore = {}; }
+
+function persistPhotos(){
+  try{
+    const out = {};
+    Object.keys(photoStore).forEach(k => {
+      const v = photoStore[k];
+      if (v && typeof v === 'object') out[k] = v;
+    });
+    localStorage.setItem(PHOTO_KEY, JSON.stringify(out));
+  }catch(e){}
+}
+function photoSlug(p){ return slugify(fullName(p)); }
+function curPhoto(){
+  const p = viewPlayerId != null ? playerById(viewPlayerId) : null;
+  if (!p) return null;
+  const v = photoStore[photoSlug(p)];
+  return (v && typeof v === 'object') ? v : null;
+}
+/* Look for a photo file on disk the first time a profile opens */
+function ensurePhoto(p){
+  const s = photoSlug(p);
+  if (photoStore[s] !== undefined) return;
+  photoStore[s] = 'probing';
+  const exts = ['jpg', 'png', 'jpeg'];
+  (function tryNext(i){
+    if (i >= exts.length){ photoStore[s] = null; return; }
+    const path = 'img/players/' + s + '.' + exts[i];
+    const im = new Image();
+    im.onload = function(){
+      photoStore[s] = { src: path, aspect: im.naturalWidth / im.naturalHeight, ox: .5, oy: .2, zoom: 1 };
+      if (viewPlayerId === p.id) render();
+    };
+    im.onerror = function(){ tryNext(i + 1); };
+    im.src = path;
+  })(0);
+}
+function bgStyleStr(ph){
+  const size = ph.aspect >= FRAME_ASPECT ? ('auto ' + (ph.zoom * 100) + '%') : ((ph.zoom * 100) + '% auto');
+  return "background-image:url('" + ph.src + "');background-size:" + size + ';background-position:' + (ph.ox * 100) + '% ' + (ph.oy * 100) + '%;';
+}
+function applyPhotoStyle(){
+  const ph = curPhoto();
+  const el = document.getElementById('photoFrame');
+  if (!ph || !el) return;
+  el.style.backgroundImage = "url('" + ph.src + "')";
+  el.style.backgroundSize = ph.aspect >= FRAME_ASPECT ? ('auto ' + (ph.zoom * 100) + '%') : ((ph.zoom * 100) + '% auto');
+  el.style.backgroundPosition = (ph.ox * 100) + '% ' + (ph.oy * 100) + '%';
+}
+function photoDown(ev){
+  const ph = curPhoto();
+  if (!photoAdjust || !ph) return;
+  ev.preventDefault();
+  const el = document.getElementById('photoFrame');
+  photoDrag = { x: ev.clientX, y: ev.clientY, ox: ph.ox, oy: ph.oy, r: el.getBoundingClientRect() };
+}
+document.addEventListener('pointermove', ev => {
+  const ph = curPhoto();
+  if (!photoDrag || !ph) return;
+  const r = photoDrag.r;
+  let bgW, bgH;
+  if (ph.aspect >= FRAME_ASPECT){ bgH = r.height * ph.zoom; bgW = bgH * ph.aspect; }
+  else { bgW = r.width * ph.zoom; bgH = bgW / ph.aspect; }
+  const dx = ev.clientX - photoDrag.x, dy = ev.clientY - photoDrag.y;
+  if (bgW - r.width > 1)  ph.ox = Math.min(1, Math.max(0, photoDrag.ox - dx / (bgW - r.width)));
+  if (bgH - r.height > 1) ph.oy = Math.min(1, Math.max(0, photoDrag.oy - dy / (bgH - r.height)));
+  applyPhotoStyle();
+});
+document.addEventListener('pointerup', () => {
+  if (photoDrag){ photoDrag = null; persistPhotos(); }
+});
+function photoZoom(v){
+  const ph = curPhoto();
+  if (!ph) return;
+  ph.zoom = parseFloat(v) || 1;
+  applyPhotoStyle();
+  persistPhotos();
+}
+function togglePhotoAdjust(){
+  photoAdjust = !photoAdjust; photoDrag = null;
+  render();
+}
+function dropPlayerPhoto(ev){
+  ev.preventDefault();
+  const f = ev.dataTransfer.files && ev.dataTransfer.files[0];
+  if (f) readPlayerPhoto(f);
+}
+function pickPlayerPhoto(input){
+  const f = input.files && input.files[0];
+  if (f) readPlayerPhoto(f);
+  input.value = '';
+}
+function readPlayerPhoto(f){
+  if (!/^image\//.test(f.type)){ toast('That file is not an image.'); return; }
+  const p = viewPlayerId != null ? playerById(viewPlayerId) : null;
+  if (!p) return;
+  const rd = new FileReader();
+  rd.onload = function(){
+    const im = new Image();
+    im.onload = function(){
+      /* downscale so the photo survives in localStorage */
+      const MAX = 900;
+      const sc = Math.min(1, MAX / Math.max(im.naturalWidth, im.naturalHeight));
+      const cv = document.createElement('canvas');
+      cv.width = Math.round(im.naturalWidth * sc);
+      cv.height = Math.round(im.naturalHeight * sc);
+      cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height);
+      photoStore[photoSlug(p)] = { src: cv.toDataURL('image/jpeg', .85), aspect: cv.width / cv.height, ox: .5, oy: .2, zoom: 1 };
+      persistPhotos();
+      photoAdjust = true;
+      render();
+      toast('Photo added - drag it into position and zoom until it fits the frame.');
+    };
+    im.src = rd.result;
+  };
+  rd.readAsDataURL(f);
+}
+function removePlayerPhoto(){
+  const p = viewPlayerId != null ? playerById(viewPlayerId) : null;
+  if (!p) return;
+  photoStore[photoSlug(p)] = null;
+  persistPhotos();
+  photoAdjust = false;
+  render();
+  toast('Photo removed.');
+}
+
+/* =====================================================================
+   HELPERS
+   ===================================================================== */
+function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._h);
+  t._h = setTimeout(() => t.classList.remove('show'), 2600);
+}
+function playerById(id){ return players.find(p => p.id === id) || null; }
+function teamInfo(name){
+  for (const s of SEASONS){
+    const t = s.teams.find(x => x.name === name);
+    if (t) return { season: s.name, div: t.div };
+  }
+  return null;
+}
+function fullName(p){ return p.first + ' ' + p.last; }
+function seasonByName(name){ return SEASONS.find(s => s.name === name) || null; }
+/* A player's division: their team's division, or derived from grad year
+   when unassigned (Class of X for HS pool, age-U for youth pool) */
+function playerDivision(p){
+  if (p.team){ const i = teamInfo(p.team); if (i) return i.div; }
+  const s = seasonByName(p.season);
+  if (s && s.program === 'youth') return ageOf(p.grad) + 'U';
+  return 'Class of ' + p.grad;
+}
+/* Does this team survive the current season / grad / division filters?
+   Grad year maps to divisions both ways: Class of 2028 for HS, and the
+   matching age-U division for youth (grad 2030 plays 14U). */
+function teamMatchesFilters(seasonObj, t){
+  if (filters.season !== 'all' && seasonObj.name !== filters.season) return false;
+  if (filters.division !== 'all' && t.div !== filters.division) return false;
+  if (filters.grad !== 'all'){
+    const g = parseInt(filters.grad, 10);
+    if (t.div !== 'Class of ' + g && t.div !== ageOf(g) + 'U') return false;
+  }
+  return true;
+}
+function posLabel(p){ return p.pos + (p.pos2 ? '/' + p.pos2 : ''); }
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+/* Age comes from the birthday when one is on file; until then it falls
+   back to the grad-year estimate. The public profile shows age only -
+   the birthday itself never leaves the internal and family views. */
+function ageDisplay(p){
+  if (p.dob){
+    const d = new Date(p.dob + 'T12:00:00'), now = new Date();
+    if (!isNaN(d)){
+      let a = now.getFullYear() - d.getFullYear();
+      const m = now.getMonth() - d.getMonth();
+      if (m < 0 || (m === 0 && now.getDate() < d.getDate())) a--;
+      return a;
+    }
+  }
+  return ageOf(p.grad);
+}
+/* Exact age in years and months, shown wherever the birthday lives */
+function ageYM(p){
+  if (!p.dob) return null;
+  const d = new Date(p.dob + 'T12:00:00'), now = new Date();
+  if (isNaN(d)) return null;
+  let months = (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth());
+  if (now.getDate() < d.getDate()) months--;
+  const y = Math.floor(months / 12), m = months % 12;
+  return y + ' year' + (y === 1 ? '' : 's') + ', ' + m + ' month' + (m === 1 ? '' : 's');
+}
+function playerSub(p){ return `${p.grad} (${ageDisplay(p)}) · ${posLabel(p)} · ${esc(p.city)}, ${p.state}`; }
+function initials(p){ return (p.first[0] || '') + (p.last[0] || ''); }
+
+function filtered(){
+  const q = filters.q.trim().toLowerCase();
+  return players.filter(p => {
+    if (filters.season !== 'all' && p.season !== filters.season) return false;
+    if (filters.team === 'unassigned'){ if (p.team) return false; }
+    else if (filters.team !== 'all' && p.team !== filters.team) return false;
+    if (filters.grad !== 'all' && String(p.grad) !== filters.grad) return false;
+    if (filters.division !== 'all' && playerDivision(p) !== filters.division) return false;
+    if (q){
+      const hay = (fullName(p) + ' ' + (p.team || 'unassigned') + ' ' + p.city + ' ' + p.state + ' ' + posLabel(p) + ' ' + p.grad).toLowerCase();
+      if (hay.indexOf(q) === -1) return false;
+    }
+    return true;
+  }).sort((a, b) => fullName(a).localeCompare(fullName(b)));
+}
+
+/* Team dropdown options grouped by season - for the move/assign panels,
+   which always offer every team regardless of the list filters */
+function teamOptions(sel, includeUnassigned){
+  let html = '';
+  SEASONS.forEach(s => {
+    html += `<optgroup label="${esc(s.name)}">` +
+      s.teams.map(t => `<option value="${esc(t.name)}" ${sel === t.name ? 'selected' : ''}>${esc(t.name)} (${esc(t.div)})</option>`).join('') +
+      '</optgroup>';
+  });
+  if (includeUnassigned) html = `<option value="" ${!sel ? 'selected' : ''}>Unassigned</option>` + html;
+  return html;
+}
+
+/* =====================================================================
+   FILTER + TAB ACTIONS
+   ===================================================================== */
+function setFilter(key, val){
+  filters[key] = val;
+  /* the filters adapt to the season's program: an HS season has no age
+     divisions, a youth season has no grad classes - drop the one that
+     no longer applies */
+  if (key === 'season'){
+    const s = seasonByName(val);
+    if (s && s.program === 'hs') filters.division = 'all';
+    if (s && s.program === 'youth') filters.grad = 'all';
+  }
+  /* team is the last, dependent filter - reset it if the narrowed team
+     list no longer contains it */
+  if (filters.team !== 'all' && filters.team !== 'unassigned'){
+    let ok = false;
+    SEASONS.forEach(s => s.teams.forEach(t => {
+      if (t.name === filters.team && teamMatchesFilters(s, t)) ok = true;
+    }));
+    if (!ok) filters.team = 'all';
+  }
+  render();
+  const s = document.getElementById('fSearch');
+  if (key === 'q' && s){ s.focus(); const v = s.value; s.value = ''; s.value = v; }
+}
+function clearFilters(){
+  filters = { q: '', season: 'all', grad: 'all', division: 'all', team: 'all' };
+  render();
+}
+function setTab(t){
+  tab = t; menuOpenId = null; changeTeamId = null; addOpen = false;
+  render();
+}
+
+/* =====================================================================
+   ROW + BULK ACTIONS
+   ===================================================================== */
+let menuAnchor = null;              // kebab button rect for the open menu
+function toggleMenu(id, ev){
+  if (menuOpenId === id){
+    menuOpenId = null; menuAnchor = null;
+  } else {
+    menuOpenId = id;
+    const btn = ev && ev.target.closest('.kebab');
+    menuAnchor = btn ? btn.getBoundingClientRect() : null;
+  }
+  unassignArmId = null;
+  render();
+}
+/* The menu is position:fixed - anchor it to the kebab, opening upward
+   when the bottom of the viewport is too close */
+function menuStyle(){
+  if (!menuAnchor) return '';
+  const r = menuAnchor;
+  const est = 220;   /* rough menu height */
+  const right = Math.max(8, window.innerWidth - r.right);
+  const openUp = (r.bottom + est > window.innerHeight) && (r.top > est);
+  return openUp
+    ? `right:${right}px;bottom:${Math.round(window.innerHeight - r.top + 6)}px;`
+    : `right:${right}px;top:${Math.round(r.bottom + 6)}px;`;
+}
+document.addEventListener('click', e => {
+  if (menuOpenId != null && !e.target.closest('.row-menu-wrap')){
+    menuOpenId = null; menuAnchor = null; unassignArmId = null; render();
+  }
+});
+/* Scrolling or resizing would leave a fixed menu floating in the wrong
+   spot - just close it */
+['scroll', 'resize'].forEach(evName => window.addEventListener(evName, () => {
+  if (menuOpenId != null){ menuOpenId = null; menuAnchor = null; unassignArmId = null; render(); }
+}, true));
+
+function armUnassign(id){ unassignArmId = id; render(); }
+function doUnassign(id){
+  const p = playerById(id);
+  if (!p) return;
+  const was = p.team;
+  p.team = null; p.jersey = '';
+  menuOpenId = null; unassignArmId = null;
+  render();
+  toast(fullName(p) + ' unassigned from ' + was + ' - they stay in the player pool.');
+}
+function openChangeTeam(id){
+  changeTeamId = id; menuOpenId = null; unassignArmId = null; addOpen = false;
+  render();
+}
+function applyChangeTeam(id){
+  const p = playerById(id);
+  const sel = document.getElementById('ctSelect');
+  if (!p || !sel || !sel.value) return;
+  const info = teamInfo(sel.value);
+  p.team = sel.value;
+  p.season = info ? info.season : p.season;
+  changeTeamId = null;
+  render();
+  toast(fullName(p) + ' moved to ' + p.team + '.');
+}
+function startEval(id){
+  const p = playerById(id);
+  menuOpenId = null;
+  render();
+  toast('Evaluations are not built yet - this will open ' + (p ? fullName(p) : 'the player') + '’s eval when the Evals tab exists.');
+}
+
+function toggleSel(id, on){
+  if (on) selected.add(id); else selected.delete(id);
+  if (!selected.size) bulkPanel = null;
+  render();
+}
+function toggleSelAll(on){
+  if (on) filtered().forEach(p => selected.add(p.id));
+  else { selected.clear(); bulkPanel = null; }
+  render();
+}
+function clearSel(){ selected.clear(); bulkPanel = null; render(); }
+function openBulk(kind){ bulkPanel = (bulkPanel === kind) ? null : kind; render(); }
+function applyBulkTeam(){
+  const sel = document.getElementById('bulkTeamSelect');
+  if (!sel || !sel.value) return;
+  const info = teamInfo(sel.value);
+  let n = 0;
+  selected.forEach(id => {
+    const p = playerById(id);
+    if (p){ p.team = sel.value; if (info) p.season = info.season; n++; }
+  });
+  toast(n + ' player' + (n === 1 ? '' : 's') + ' moved to ' + sel.value + '.');
+  clearSel();
+}
+function applyBulkUnassign(){
+  let n = 0;
+  selected.forEach(id => {
+    const p = playerById(id);
+    if (p && p.team){ p.team = null; p.jersey = ''; n++; }
+  });
+  toast(n + ' player' + (n === 1 ? '' : 's') + ' unassigned - they stay in the player pool.');
+  clearSel();
+}
+
+/* =====================================================================
+   ADD PLAYER
+   ===================================================================== */
+function openAdd(){
+  addOpen = true; changeTeamId = null; menuOpenId = null;
+  render();
+  const el = document.getElementById('apFirst');
+  if (el) el.focus();
+}
+function closeAdd(){ addOpen = false; render(); }
+function savePlayer(){
+  const val = id => (document.getElementById(id) || { value: '' }).value.trim();
+  const first = val('apFirst'), last = val('apLast');
+  if (!first || !last){ toast('Give the player a first and last name.'); return; }
+  const grad = parseInt(val('apGrad'), 10);
+  const team = val('apTeam') || null;
+  const info = team ? teamInfo(team) : null;
+  players.push({
+    id: nid(), first: first, last: last, grad: grad,
+    pos: val('apPos'), pos2: val('apPos2') || null,
+    city: val('apCity') || 'Tampa', state: val('apState') || 'FL',
+    team: team, season: info ? info.season : (SEASONS[0].name),
+    jersey: '', bt: 'R/R',
+    email: val('apEmail') || slugify(first + ' ' + last) + '@email.com',
+    phone: val('apPhone') || '',
+    g1: { first: '', last: '', email: '', phone: '' },
+    g2: { first: '', last: '', email: '', phone: '' },
+    dob: '', hs: '', gpa: '', gpaW: '', sat: '', act: '',
+    height: '', weight: '', bats: 'R', throws: 'R',
+    jerseySize: '', shirtSize: '', pantsSize: '',
+    committed: null, contacts: [], metrics: {},
+    evals: 0
+  });
+  addOpen = false;
+  render();
+  toast(first + ' ' + last + ' added' + (team ? ' to ' + team : ' - unassigned for now') + '.');
+}
+
+/* =====================================================================
+   PROFILE NAVIGATION + ACTIONS
+   ===================================================================== */
+function openPlayer(id){
+  viewPlayerId = id; menuOpenId = null; changeTeamId = null; addOpen = false;
+  profileTab = 'info'; photoAdjust = false; editSection = null;
+  commitSearch = ''; commitPick = null; uncommitArm = false;
+  videoDraftTags = new Set(); videoFilter = new Set();
+  videoXEdit = false; videoDelArm = null; socialEdit = false;
+  nameEdit = false; pubConfirm = false; tgtSearch = ''; famRecTab = 'targets';
+  schedView = 'tours'; schedShowPast = false; schedSel = null;
+  schedCalMonth = todayIso().slice(0, 7);
+  metricPreset = 'all'; metricFrom = ''; metricTo = '';
+  const p = playerById(id);
+  if (p) ensurePhoto(p);
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function backToList(){ viewPlayerId = null; changeTeamId = null; photoAdjust = false; render(); }
+function setProfileTab(t){
+  profileTab = t; photoAdjust = false; changeTeamId = null;
+  commitSearch = ''; commitPick = null; uncommitArm = false;
+  editSection = null; videoXEdit = false; videoDelArm = null; socialEdit = false;
+  nameEdit = false; pubConfirm = false; tgtSearch = '';
+  render();
+}
+
+/* True while the demo switcher shows the Player + Family audience */
+function famView(){ return viewAs === 'player'; }
+/* True while the demo switcher shows the Public Site audience */
+function pubView(){ return viewAs === 'public'; }
+let pubTab = null;                  // active tab on the public profile
+function setPubTab(t){ pubTab = t; schedSel = null; videoDelArm = null; render(); }
+
+/* ---- Family view: name edit, the two public-profile questions ---- */
+function saveName(){
+  const p = playerById(viewPlayerId);
+  if (!p) return;
+  const f = ((document.getElementById('nFirst') || {}).value || '').trim();
+  const l = ((document.getElementById('nLast') || {}).value || '').trim();
+  if (!f || !l){ toast('First and last name both need something in them.'); return; }
+  p.first = f; p.last = l;
+  nameEdit = false;
+  render();
+  toast('Name updated to ' + fullName(p) + '.');
+}
+function togglePublic(){
+  const p = playerById(viewPlayerId);
+  if (!p) return;
+  if (p.publicOn){
+    p.publicOn = false; pubConfirm = false;
+    render();
+    toast('Public profile turned off - it is no longer on the internet.');
+  } else {
+    pubConfirm = true;
+    render();
+  }
+}
+function confirmPublic(){
+  const p = playerById(viewPlayerId);
+  if (!p) return;
+  p.publicOn = true; pubConfirm = false;
+  render();
+  toast(p.first + '’s public profile is LIVE - anyone with the link can see it.');
+}
+function toggleMetricsPublic(){
+  const p = playerById(viewPlayerId);
+  if (!p) return;
+  p.publicMetrics = !p.publicMetrics;
+  render();
+  toast(p.publicMetrics ? 'Metrics will show on the public profile.' : 'Metrics are hidden from the public profile.');
+}
+function toggleAcademicsPublic(){
+  const p = playerById(viewPlayerId);
+  if (!p) return;
+  p.publicAcademics = !p.publicAcademics;
+  render();
+  toast(p.publicAcademics ? 'Academics will show on the public profile.' : 'Academics are hidden from the public profile.');
+}
+
+/* ---- Family view: their own contact log and college targets ---- */
+function famLogContact(){
+  const p = playerById(viewPlayerId);
+  if (!p) return;
+  const sel = document.getElementById('flCollege');
+  if (!sel || !sel.value){ toast('Pick the college you heard from.'); return; }
+  const date = (document.getElementById('flDate') || {}).value || todayIso();
+  const notes = ((document.getElementById('flNotes') || {}).value || '').trim();
+  p.famContacts.unshift({ college: sel.value, date: date, notes: notes });
+  render();
+  toast('Contact logged.');
+}
+function toggleTgtDiv(d){
+  const p = playerById(viewPlayerId);
+  if (!p) return;
+  const at = p.targets.divisions.indexOf(d);
+  if (at > -1) p.targets.divisions.splice(at, 1); else p.targets.divisions.push(d);
+  render();
+}
+function addTgtConf(){
+  const p = playerById(viewPlayerId);
+  const el = document.getElementById('tcConf');
+  const v = el ? el.value.trim() : '';
+  if (!p || !v) return;
+  if (p.targets.conferences.indexOf(v) > -1){ toast(v + ' is already on the list.'); el.value = ''; return; }
+  p.targets.conferences.push(v);
+  render();
+  const again = document.getElementById('tcConf');
+  if (again) again.focus();
+}
+function removeTgtConf(i){
+  const p = playerById(viewPlayerId);
+  if (!p) return;
+  p.targets.conferences.splice(i, 1);
+  render();
+}
+function setTgtSearch(v){
+  tgtSearch = v;
+  render();
+  const el = document.getElementById('tgtSearchInput');
+  if (el){ el.focus(); const x = el.value; el.value = ''; el.value = x; }
+}
+function addTgtCollege(i){
+  const p = playerById(viewPlayerId);
+  if (!p) return;
+  const label = collegeLabel(COLLEGES[i]);
+  if (p.targets.colleges.indexOf(label) > -1){ toast(COLLEGES[i].n + ' is already a target.'); return; }
+  p.targets.colleges.push(label);
+  tgtSearch = '';
+  render();
+  toast(COLLEGES[i].n + ' added to the target list.');
+}
+function removeTgtCollege(i){
+  const p = playerById(viewPlayerId);
+  if (!p) return;
+  p.targets.colleges.splice(i, 1);
+  render();
+}
+/* Interview answers save as they change - no re-render, so typing in a
+   textarea never loses focus */
+function saveInterview(key, val){
+  const p = playerById(viewPlayerId);
+  if (!p) return;
+  p.interview[key] = typeof val === 'string' ? val.trim() : val;
+  toast('Answer saved.');
+}
+/* Button questions re-render so the picked button lights up and any
+   follow-up field or mindset note appears */
+function setInterview(key, val){
+  const p = playerById(viewPlayerId);
+  if (!p) return;
+  p.interview[key] = val;
+  render();
+  toast('Answer saved.');
+}
+
+function todayIso(){ return new Date().toISOString().slice(0, 10); }
+function fmtDate(iso){
+  const d = new Date(iso + 'T12:00:00');
+  return isNaN(d) ? iso : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+/* The red hat itself - shows next to the name once a player commits */
+function redHat(large){
+  return `<svg class="redhat${large ? ' redhat-lg' : ''}" viewBox="0 0 24 24" role="img" aria-label="Committed - red hat"><path d="M12 3.5c-4.7 0-8.3 3.6-8.3 8.1v2.6c2.7-.9 5.4-1.4 8.3-1.4 1.4 0 2.8.1 4.2.4V11c0-2 1.3-3.6 3.1-4.2C17.9 4.8 15.2 3.5 12 3.5z"/><path d="M20.3 7.9c-1.5.3-2.6 1.6-2.6 3.1v2.6l.4.1c1.7.4 3.4 1 4.9 1.8.4-.7.7-1.6.7-2.5 0-2.4-1.4-4.4-3.4-5.1z"/><path d="M3.7 15.6c-1.2.5-2 1.2-2 2 0 1.5 3.1 2.7 8 3-1.1-1.5-1.8-3.2-2-5.1-1.4.3-2.8.7-4 1.3z" opacity=".85"/><path d="M12 14.4c-1.5 0-3 .1-4.4.4.2 2 1.1 3.8 2.5 5.2.6 0 1.3.1 1.9.1 5.6 0 10.2-1.1 10.2-2.6 0-.8-.8-1.5-2-2-2.5-.8-5.3-1.1-8.2-1.1z" opacity=".85"/></svg>`;
+}
+function committedTo(p){ return p.committed ? p.committed.college.replace(/\s*\(.*\)$/, '') : null; }
+
+/* ---- Player Overview: sections are LOCKED by default - the values come
+   from what the player and family enter in their own system. The Edit
+   button on each section header unlocks just that section. ---- */
+function saveSection(key){
+  const p = playerById(viewPlayerId);
+  if (!p) return;
+  const val = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+  let note = '';
+  if (key === 'baseball'){
+    p.pos = val('bPos'); p.pos2 = val('bPos2') || null;
+    p.height = val('bHeight'); p.weight = val('bWeight');
+    p.bats = val('bBats'); p.throws = val('bThrows');
+    p.bt = p.bats + '/' + p.throws;
+  }
+  if (key === 'academics'){
+    p.hs = val('aHs'); p.gpa = val('aGpa'); p.gpaW = val('aGpaW');
+    p.sat = val('aSat'); p.act = val('aAct');
+  }
+  if (key === 'personal'){
+    p.city = val('hCity') || p.city; p.state = val('hState') || p.state;
+    const m = val('dobM'), d = val('dobD'), y = val('dobY');
+    if (m && d && y) p.dob = y + '-' + m + '-' + d;
+    else if (!m && !d && !y) p.dob = '';
+    else note = ' Birthday needs month, day, AND year - it was not saved.';
+  }
+  if (key === 'contact'){
+    p.email = val('cEmail'); p.phone = val('cPhone');
+    p.g1 = { first: val('g1First'), last: val('g1Last'), email: val('g1Email'), phone: val('g1Phone') };
+    p.g2 = { first: val('g2First'), last: val('g2Last'), email: val('g2Email'), phone: val('g2Phone') };
+  }
+  if (key === 'apparel'){
+    p.jerseySize = val('jSize'); p.shirtSize = val('sSize'); p.pantsSize = val('pSize');
+  }
+  editSection = null;
+  render();
+  toast('Section saved.' + note);
+}
+
+/* ---- Recruiting: commitment ---- */
+function setCommitSearch(v){
+  commitSearch = v; commitPick = null;
+  render();
+  const el = document.getElementById('crSearch');
+  if (el){ el.focus(); const x = el.value; el.value = ''; el.value = x; }
+}
+function pickCommit(i){ commitPick = i; render(); }
+function doCommit(){
+  const p = playerById(viewPlayerId);
+  if (!p || commitPick == null) return;
+  p.committed = { college: collegeLabel(COLLEGES[commitPick]), date: todayIso() };
+  commitPick = null; commitSearch = '';
+  render();
+  toast(fullName(p) + ' is committed to ' + committedTo(p) + ' - red hat on. Red Hat Nation.');
+}
+function doUncommit(){
+  const p = playerById(viewPlayerId);
+  if (!p) return;
+  const was = committedTo(p);
+  p.committed = null; uncommitArm = false;
+  render();
+  toast('Commitment to ' + was + ' removed - back to the navy hat.');
+}
+
+/* ---- Recruiting: college contact log ---- */
+function logContact(){
+  const p = playerById(viewPlayerId);
+  if (!p) return;
+  const sel = document.getElementById('clCollege');
+  if (!sel || !sel.value){ toast('Pick the college that made contact.'); return; }
+  const date = (document.getElementById('clDate') || {}).value || todayIso();
+  const notes = ((document.getElementById('clNotes') || {}).value || '').trim();
+  p.contacts.unshift({ college: sel.value, date: date, by: CURRENT_USER, notes: notes });
+  render();
+  toast('Contact logged and linked to ' + CURRENT_USER + '.');
+}
+
+/* =====================================================================
+   RENDER: LIST
+   ===================================================================== */
+function renderMenu(p){
+  if (unassignArmId === p.id){
+    return `<div class="row-menu" style="${menuStyle()}">
+      <div class="menu-note">Unassign ${esc(fullName(p))} from ${esc(p.team)}? They stay in the player pool.</div>
+      <button class="danger" onclick="doUnassign(${p.id})">Yes, Unassign</button>
+      <button onclick="menuOpenId=null;unassignArmId=null;render()">Keep On Team</button>
+    </div>`;
+  }
+  return `<div class="row-menu" style="${menuStyle()}">
+    ${p.team
+      ? `<button onclick="openChangeTeam(${p.id})">Change Team</button>
+         <button class="danger" onclick="armUnassign(${p.id})">Unassign</button>`
+      : `<button onclick="openChangeTeam(${p.id})">Assign To Team</button>`}
+    <button onclick="startEval(${p.id})">Start Evaluation</button>
+    <button disabled title="Coming with player accounts">Log In As Player</button>
+    <button disabled title="Coming with guardian accounts">Log In As Guardian</button>
+  </div>`;
+}
+
+function renderChangeTeamRow(p){
+  return `<tr class="row-panel"><td colspan="4">
+    <div class="panel-title">${p.team ? 'Move ' + esc(fullName(p)) + ' from ' + esc(p.team) : 'Assign ' + esc(fullName(p)) + ' to a team'}</div>
+    <div style="display:flex;gap:.7rem;flex-wrap:wrap;align-items:center">
+      <select id="ctSelect" style="max-width:320px">
+        <option value="">Choose a team...</option>
+        ${teamOptions(null, false)}
+      </select>
+      <button class="btn btn-primary btn-sm" onclick="applyChangeTeam(${p.id})">${p.team ? 'Move Player' : 'Assign Player'}</button>
+      <button class="link-muted" onclick="changeTeamId=null;render()">Cancel</button>
+    </div>
+    <p class="hint" style="margin-top:.5rem">Moving a player keeps their registration and payments - only the roster changes.</p>
+  </td></tr>`;
+}
+
+function renderAddForm(){
+  const gradOpts = GRAD_YEARS.map(y => `<option value="${y}">${y} (${ageOf(y)})</option>`).join('');
+  const posOpts = sel => POSITIONS.map(x => `<option ${x === sel ? 'selected' : ''}>${x}</option>`).join('');
+  return `
+  <div class="section-head red" style="margin-top:0">Add A Player</div>
+  <div class="section-body" style="background:#fff;margin-bottom:1.4rem">
+    <div class="form-grid">
+      <div><label class="field-label" for="apFirst">First Name</label><input type="text" id="apFirst" placeholder="e.g. Marcus"></div>
+      <div><label class="field-label" for="apLast">Last Name</label><input type="text" id="apLast" placeholder="e.g. Rivera"></div>
+      <div><label class="field-label" for="apGrad">Graduation Year</label><select id="apGrad">${gradOpts}</select></div>
+      <div><label class="field-label" for="apTeam">Team (optional)</label>
+        <select id="apTeam"><option value="">Unassigned - just add to the pool</option>${teamOptions(null, false)}</select></div>
+      <div><label class="field-label" for="apPos">Primary Position</label><select id="apPos">${posOpts('SS')}</select></div>
+      <div><label class="field-label" for="apPos2">Second Position (optional)</label>
+        <select id="apPos2"><option value="">None</option>${posOpts('')}</select></div>
+      <div><label class="field-label" for="apCity">City</label><input type="text" id="apCity" placeholder="Tampa"></div>
+      <div><label class="field-label" for="apState">State</label><input type="text" id="apState" value="FL" style="max-width:90px"></div>
+      <div><label class="field-label" for="apEmail">Email (optional)</label><input type="email" id="apEmail" placeholder="player@email.com"></div>
+      <div><label class="field-label" for="apPhone">Phone (optional)</label><input type="tel" id="apPhone" placeholder="(813) 555-0100"></div>
+    </div>
+    <div style="display:flex;gap:.8rem;margin-top:1.2rem;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-primary btn-sm" onclick="savePlayer()">Add Player</button>
+      <button class="link-muted" onclick="closeAdd()">Cancel</button>
+    </div>
+  </div>`;
+}
+
+function renderBulkBar(list){
+  if (!selected.size) return '';
+  let panel = '';
+  if (bulkPanel === 'team'){
+    panel = `<div style="flex-basis:100%;display:flex;gap:.7rem;flex-wrap:wrap;align-items:center;padding-top:.5rem">
+      <select id="bulkTeamSelect" style="max-width:300px"><option value="">Choose a team...</option>${teamOptions(null, false)}</select>
+      <button class="btn btn-primary btn-sm" onclick="applyBulkTeam()">Move ${selected.size}</button>
+    </div>`;
+  } else if (bulkPanel === 'unassign'){
+    panel = `<div style="flex-basis:100%;display:flex;gap:.8rem;flex-wrap:wrap;align-items:center;padding-top:.5rem;font-weight:400;font-size:.82rem">
+      Unassign ${selected.size} player${selected.size === 1 ? '' : 's'} from their teams? They stay in the player pool.
+      <button class="btn btn-primary btn-sm" onclick="applyBulkUnassign()">Yes, Unassign</button>
+      <button class="btn btn-outline btn-sm" onclick="bulkPanel=null;render()">Cancel</button>
+    </div>`;
+  }
+  return `<div class="bulk-bar">
+    <span class="bulk-count">${selected.size} selected</span>
+    <button class="btn btn-outline btn-sm" onclick="openBulk('team')">Change Team</button>
+    <button class="btn btn-outline btn-sm" onclick="openBulk('unassign')">Unassign</button>
+    <button class="link-muted" style="color:#aab3cc;margin-left:auto" onclick="clearSel()">Clear selection</button>
+    ${panel}
+  </div>`;
+}
+
+function renderRosterTab(){
+  const list = filtered();
+  const allChecked = list.length > 0 && list.every(p => selected.has(p.id));
+
+  const rows = list.map(p => {
+    const info = p.team ? teamInfo(p.team) : null;
+    const teamCell = p.team
+      ? `<div class="cell-strong">${esc(p.team)}</div><div class="cell-sub">${info ? esc(info.season) + ' · ' + esc(info.div) : ''}</div>`
+      : `<span class="pill pill-red">Unassigned</span><div class="cell-sub">${esc(p.season)} pool</div>`;
+    let html = `<tr>
+      <td style="width:34px"><input type="checkbox" ${selected.has(p.id) ? 'checked' : ''} onchange="toggleSel(${p.id}, this.checked)" aria-label="Select ${esc(fullName(p))}"></td>
+      <td>
+        <a class="link-red" style="font-size:.92rem" onclick="openPlayer(${p.id})">${esc(fullName(p))}</a>${p.committed ? redHat(false) : ''}
+        <div class="cell-sub">${playerSub(p)}</div>
+      </td>
+      <td>${teamCell}</td>
+      <td style="width:52px;text-align:right">
+        <span class="row-menu-wrap">
+          <button class="kebab" onclick="toggleMenu(${p.id}, event)" aria-label="Actions for ${esc(fullName(p))}" aria-expanded="${menuOpenId === p.id}">...</button>
+          ${menuOpenId === p.id ? renderMenu(p) : ''}
+        </span>
+      </td>
+    </tr>`;
+    if (changeTeamId === p.id) html += renderChangeTeamRow(p);
+    return html;
+  }).join('');
+
+  const countText = list.length === players.length
+    ? 'Showing all ' + players.length + ' players'
+    : 'Showing ' + list.length + ' of ' + players.length + ' players';
+
+  return `
+    <div class="count-line"><span>${countText}</span></div>
+    ${renderBulkBar(list)}
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th style="width:34px"><input type="checkbox" ${allChecked ? 'checked' : ''} onchange="toggleSelAll(this.checked)" aria-label="Select all shown"></th>
+            <th>Player</th>
+            <th>Team</th>
+            <th></th>
+          </tr></thead>
+          <tbody>${rows || `<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:2.4rem 1rem">
+            No players match these filters. <button class="link-red" onclick="clearFilters()">Clear all filters</button>
+          </td></tr>`}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+function renderPlaceholderTab(kind){
+  const copy = kind === 'evals'
+    ? { title: 'Evaluations', body: 'Player evaluations will live here - who has been evaluated, who is missing one, and the eval form itself. Start Evaluation on any player row will open into this tab once it is built.' }
+    : { title: 'Recruiting', body: 'The recruiting view will live here - the outward-facing player profiles that recruiters see, and the tools to manage what gets published on each one.' };
+  return `
+    <div class="card">
+      <div class="tab-placeholder">
+        <h3>${copy.title} - Coming Soon</h3>
+        <p>${copy.body}</p>
+      </div>
+    </div>`;
+}
+
+function renderList(){
+  const seasonOpts = ['<option value="all">All seasons</option>']
+    .concat(SEASONS.map(s => `<option value="${esc(s.name)}" ${filters.season === s.name ? 'selected' : ''}>${esc(s.name)}</option>`)).join('');
+
+  /* Grad Year and Age Division adapt to the chosen season: HS seasons get
+     grad year, youth seasons get age division, All seasons shows both */
+  const selSeason = seasonByName(filters.season);
+  const showGrad = !selSeason || selSeason.program === 'hs';
+  const showDivision = !selSeason || selSeason.program === 'youth';
+
+  const gradPool = filters.season === 'all' ? players : players.filter(p => p.season === filters.season);
+  const gradsInUse = [...new Set(gradPool.map(p => p.grad))].sort();
+  const gradOpts = ['<option value="all">All years</option>']
+    .concat(gradsInUse.map(y => `<option value="${y}" ${filters.grad === String(y) ? 'selected' : ''}>${y}</option>`)).join('');
+
+  const divPool = [];
+  SEASONS.forEach(s => {
+    if (s.program !== 'youth') return;
+    if (filters.season !== 'all' && s.name !== filters.season) return;
+    s.teams.forEach(t => { if (divPool.indexOf(t.div) === -1) divPool.push(t.div); });
+  });
+  const divOpts = ['<option value="all">All divisions</option>']
+    .concat(divPool.map(d => `<option value="${esc(d)}" ${filters.division === d ? 'selected' : ''}>${esc(d)}</option>`)).join('');
+
+  /* Team comes last and only offers teams that survive the filters above -
+     pick 14U and only 14U teams remain; pick grad 2028 and only Class of
+     2028 teams remain */
+  let teamSel = `<option value="all">All teams</option><option value="unassigned" ${filters.team === 'unassigned' ? 'selected' : ''}>Unassigned</option>`;
+  SEASONS.forEach(s => {
+    const teams = s.teams.filter(t => teamMatchesFilters(s, t));
+    if (!teams.length) return;
+    teamSel += `<optgroup label="${esc(s.name)}">` +
+      teams.map(t => `<option value="${esc(t.name)}" ${filters.team === t.name ? 'selected' : ''}>${esc(t.name)}</option>`).join('') +
+      '</optgroup>';
+  });
+
+  const hasFilters = filters.q || filters.season !== 'all' || filters.grad !== 'all' || filters.division !== 'all' || filters.team !== 'all';
+
+  return `
+  <div class="title-row">
+    <div class="grow">
+      <div class="eyebrow">Affiliate Level</div>
+      <h1 class="page-title">Player Management</h1>
+      <div class="title-rule"></div>
+      <p class="page-title-sub">Every player in the system, across every season - search, filter, move them between teams, or open their internal profile.</p>
+    </div>
+    <div>${addOpen ? '' : '<button class="btn btn-primary" onclick="openAdd()">+ Add Player</button>'}</div>
+  </div>
+
+  <div class="card card-pad" style="margin-top:1.6rem">
+    ${addOpen ? renderAddForm() : ''}
+    <div class="filter-bar">
+      <div class="f-search">
+        <label class="field-label" for="fSearch">Search</label>
+        <input type="text" id="fSearch" placeholder="Search player, team, location, or position" value="${esc(filters.q)}" oninput="setFilter('q', this.value)">
+      </div>
+      <div class="f-select">
+        <label class="field-label" for="fSeason">Season</label>
+        <select id="fSeason" onchange="setFilter('season', this.value)">${seasonOpts}</select>
+      </div>
+      ${showGrad ? `<div class="f-select">
+        <label class="field-label" for="fGrad">Grad Year</label>
+        <select id="fGrad" onchange="setFilter('grad', this.value)">${gradOpts}</select>
+      </div>` : ''}
+      ${showDivision ? `<div class="f-select">
+        <label class="field-label" for="fDivision">Age Division</label>
+        <select id="fDivision" onchange="setFilter('division', this.value)">${divOpts}</select>
+      </div>` : ''}
+      <div class="f-select">
+        <label class="field-label" for="fTeam">Team</label>
+        <select id="fTeam" onchange="setFilter('team', this.value)">${teamSel}</select>
+      </div>
+      ${hasFilters ? '<div class="filter-clear"><button class="link-muted" onclick="clearFilters()">Clear all</button></div>' : ''}
+    </div>
+  </div>
+
+  <div class="chip-row tab-row">
+    <button class="chip ${tab === 'roster' ? 'active' : ''}" onclick="setTab('roster')">Roster</button>
+    <button class="chip ${tab === 'evals' ? 'active' : ''}" onclick="setTab('evals')">Evals</button>
+    <button class="chip ${tab === 'recruiting' ? 'active' : ''}" onclick="setTab('recruiting')">Recruiting</button>
+  </div>
+
+  ${tab === 'roster' ? renderRosterTab() : renderPlaceholderTab(tab)}`;
+}
+
+/* =====================================================================
+   RENDER: INTERNAL PROFILE (first pass)
+   ===================================================================== */
+/* The internal (admin/coach) profile. The player-and-family view will be
+   nearly this same screen with different permissions, and the public
+   recruiting profile is a third, separate screen the player opts into. */
+function renderProfile(p){
+  const info = p.team ? teamInfo(p.team) : null;
+  const ph = curPhoto();
+  const commit = committedTo(p);
+
+  /* ---- header: white card, portrait photo, identity line ---- */
+  const subBits = [
+    posLabel(p),
+    'Class of ' + p.grad,
+    ageYM(p) || (ageDisplay(p) + ' years'),
+    p.hs ? esc(p.hs) : null,
+    esc(p.city) + ', ' + esc(p.state),
+    p.height ? esc(p.height) : null,
+    p.weight ? esc(p.weight) + ' lbs' : null,
+    (p.bats && p.throws) ? 'Bats ' + esc(p.bats) + ' &middot; Throws ' + esc(p.throws) : null
+  ].filter(Boolean).join(' &nbsp;&middot;&nbsp; ');
+
+  const photoInner = (ph && ph.src)
+    ? `<div class="photo-bg${photoAdjust ? ' adjusting' : ''}" id="photoFrame" style="${bgStyleStr(ph)}"
+        ${photoAdjust ? 'onpointerdown="photoDown(event)"' : ''}
+        ondragover="event.preventDefault()" ondrop="dropPlayerPhoto(event)"></div>`
+    : `<div class="photo-bg" id="photoFrame" ondragover="event.preventDefault()" ondrop="dropPlayerPhoto(event)">${esc(initials(p))}</div>`;
+
+  const photoTools = photoAdjust && ph
+    ? `<div class="photo-tools">
+        <label class="field-label" style="margin:0" for="photoZoomRange">Zoom</label>
+        <input type="range" id="photoZoomRange" min="1" max="2.5" step="0.01" value="${ph.zoom}" oninput="photoZoom(this.value)">
+        <div style="display:flex;gap:.8rem;flex-wrap:wrap">
+          <button class="link-red" onclick="togglePhotoAdjust()">Done</button>
+          <button class="link-muted" onclick="removePlayerPhoto()">Remove</button>
+        </div>
+        <p class="hint">Drag the photo to move it inside the frame.</p>
+      </div>`
+    : `<div class="photo-tools">
+        <div style="display:flex;gap:.8rem;flex-wrap:wrap">
+          <button class="link-red" onclick="document.getElementById('playerPhotoFile').click()">${ph ? 'Swap Photo' : 'Add Photo'}</button>
+          ${ph ? '<button class="link-muted" onclick="togglePhotoAdjust()">Adjust</button>' : ''}
+        </div>
+        ${ph ? '' : `<p class="hint">Drag a photo onto the frame, or drop the file in img/players/ named ${photoSlug(p)}.jpg - every photo gets cropped to this same portrait frame.</p>`}
+      </div>`;
+
+  const header = `
+  <div class="card card-pad" style="margin-top:1rem">
+    <div style="display:flex;gap:1.5rem;flex-wrap:wrap">
+      <div>
+        <div class="profile-photo">${photoInner}</div>
+        ${photoTools}
+        <input type="file" id="playerPhotoFile" accept="image/*" style="display:none" onchange="pickPlayerPhoto(this)">
+      </div>
+      <div style="flex:1;min-width:250px">
+        ${famView() && nameEdit ? `
+        <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:flex-end">
+          <div><label class="field-label" for="nFirst">First Name</label><input type="text" id="nFirst" value="${esc(p.first)}" style="max-width:170px"></div>
+          <div><label class="field-label" for="nLast">Last Name</label><input type="text" id="nLast" value="${esc(p.last)}" style="max-width:170px"></div>
+          <button class="btn btn-primary btn-sm" onclick="saveName()">Save</button>
+          <button class="link-muted" onclick="nameEdit=false;render()">Cancel</button>
+        </div>` : `
+        <div class="profile-name">${esc(fullName(p))}${p.jersey ? `<span class="jersey-num" title="Jersey numbers come from the roster and jersey orders - CBU manages them">#${esc(p.jersey)}</span>` : ''}${commit ? redHat(true) : ''}
+          ${famView() ? '<button class="link-muted" style="font-size:.74rem;vertical-align:middle;margin-left:.6rem" onclick="nameEdit=true;render()">Edit Name</button>' : ''}
+        </div>`}
+        <div class="profile-sub">${subBits}</div>
+        <div class="profile-pills">
+          ${p.team ? `<span class="pill pill-navy">${esc(p.team)}</span>` : '<span class="pill pill-red">Unassigned</span>'}
+          <span class="pill pill-blue">${esc(p.season)}${info ? ' &middot; ' + esc(info.div) : ''}</span>
+          ${commit ? `<span class="pill pill-red">Committed - ${esc(commit)}</span>` : '<span class="pill pill-gold">Uncommitted</span>'}
+          <span class="pill ${p.publicOn ? 'pill-green' : 'pill-navy'}" title="The player decides from their own login whether the public recruiting profile goes live">Public Profile: ${p.publicOn ? 'On' : 'Off'}</span>
+        </div>
+        ${famView() ? renderPublicPanel(p) : `
+        <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1.1rem">
+          <button class="btn btn-outline-dark btn-sm" onclick="startEval(${p.id})">Start Evaluation</button>
+          <button class="btn btn-outline-dark btn-sm" onclick="openChangeTeam(${p.id})">${p.team ? 'Change Team' : 'Assign To Team'}</button>
+        </div>`}
+        ${!famView() && changeTeamId === p.id ? `
+        <div style="background:var(--row-alt);border:1.5px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin-top:1rem">
+          <div style="display:flex;gap:.7rem;flex-wrap:wrap;align-items:center">
+            <select id="ctSelect" style="max-width:320px"><option value="">Choose a team...</option>${teamOptions(null, false)}</select>
+            <button class="btn btn-primary btn-sm" onclick="applyChangeTeam(${p.id})">${p.team ? 'Move Player' : 'Assign Player'}</button>
+            <button class="link-muted" onclick="changeTeamId=null;render()">Cancel</button>
+          </div>
+        </div>` : ''}
+        ${(() => {
+          /* best-metrics strip: only metrics with data, always the best
+             mark - lives in the right column so it fills the space
+             beside the portrait instead of leaving it blank */
+          const tiles = METRIC_DEFS.map(def => {
+            const b = bestOf(p, def);
+            return b ? `<div class="metric-tile"><div class="mt-val">${fmtMetric(def, b.v)}</div><div class="mt-label">${def.label}</div></div>` : '';
+          }).join('');
+          return tiles ? `<div class="metric-tiles">${tiles}</div>` : '';
+        })()}
+      </div>
+    </div>
+  </div>`;
+
+  const tabs = `
+  <div class="chip-row tab-row">
+    <button class="chip ${profileTab === 'info' ? 'active' : ''}" onclick="setProfileTab('info')">Player Overview</button>
+    <button class="chip ${profileTab === 'evals' ? 'active' : ''}" onclick="setProfileTab('evals')">Evals / Objectives</button>
+    <button class="chip ${profileTab === 'recruiting' ? 'active' : ''}" onclick="setProfileTab('recruiting')">Recruiting</button>
+    <button class="chip ${profileTab === 'metrics' ? 'active' : ''}" onclick="setProfileTab('metrics')">Metrics</button>
+    <button class="chip ${profileTab === 'stats' ? 'active' : ''}" onclick="setProfileTab('stats')">Stats</button>
+    <button class="chip ${profileTab === 'schedule' ? 'active' : ''}" onclick="setProfileTab('schedule')">Schedule</button>
+    <button class="chip ${profileTab === 'videos' ? 'active' : ''}" onclick="setProfileTab('videos')">Videos</button>
+    <button class="chip ${profileTab === 'social' ? 'active' : ''}" onclick="setProfileTab('social')">Social</button>
+  </div>`;
+
+  let body = '';
+  if (profileTab === 'info') body = renderInfoTab(p, info);
+  if (profileTab === 'evals') body = renderEvalsTab(p);
+  if (profileTab === 'recruiting') body = renderRecruitingTab(p);
+  if (profileTab === 'metrics') body = renderMetricsTab(p);
+  if (profileTab === 'schedule') body = renderScheduleTab(p);
+  if (profileTab === 'videos') body = renderVideosTab(p);
+  if (profileTab === 'social') body = renderSocialTab(p);
+  if (profileTab === 'stats') body = renderStatsTab(p);
+
+  return `
+  ${famView() ? '' : '<button class="link-muted" style="color:#aab3cc;font-size:.84rem" onclick="backToList()">&larr; All Players</button>'}
+  ${header}
+  ${tabs}
+  ${body}`;
+}
+
+/* The two big questions, asked right on the family's profile header:
+   public or not, and metrics on the public profile or not. Going public
+   gets a hard are-you-sure with the plain-words warning. */
+function renderPublicPanel(p){
+  return `
+  <div class="pub-panel">
+    <div class="pub-q">
+      <span class="pub-label">Do you want ${esc(p.first)}'s profile public?</span>
+      <button class="switch ${p.publicOn ? 'on' : ''}" onclick="togglePublic()" aria-label="Public profile on or off"></button>
+      <span class="pill ${p.publicOn ? 'pill-green' : 'pill-navy'}">${p.publicOn ? 'Public - live on the internet' : 'Private'}</span>
+    </div>
+    ${pubConfirm ? `
+    <div class="pub-warn">
+      <strong>Are you sure?</strong> Turning this on puts the profile on the internet - anyone with the link can view it, no login needed. That is the whole point: college recruiters can find ${esc(p.first)}, and sharing with family is one link. Not everything goes public - contact information never does - and you will see exactly what shows on the public page.
+      <div style="display:flex;gap:.8rem;margin-top:.7rem;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm" onclick="confirmPublic()">Yes, Make It Public</button>
+        <button class="link-muted" onclick="pubConfirm=false;render()">Keep It Private</button>
+      </div>
+    </div>` : ''}
+    <div class="pub-q" style="margin-top:.8rem">
+      <span class="pub-label">Show metrics on the public profile?</span>
+      <button class="switch ${p.publicMetrics ? 'on' : ''}" onclick="toggleMetricsPublic()" aria-label="Metrics public or not"></button>
+      <span class="hint">${p.publicMetrics ? 'Anyone viewing the public profile sees all metrics.' : 'Metrics stay off the public profile.'}</span>
+    </div>
+    <div class="pub-q" style="margin-top:.8rem">
+      <span class="pub-label">Show academics on the public profile?</span>
+      <button class="switch ${p.publicAcademics ? 'on' : ''}" onclick="toggleAcademicsPublic()" aria-label="Academics public or not"></button>
+      <span class="hint">${p.publicAcademics ? 'High school, GPAs, and test scores show publicly.' : 'Academics stay off the public profile.'}</span>
+    </div>
+    <p class="hint" style="margin-top:.7rem">The public profile exists for recruiting and easy sharing. It never shows contact info or the birthday${p.publicOn && !p.publicMetrics ? ', and metrics are currently hidden' : ''}.</p>
+  </div>`;
+}
+
+/* ---- Player Overview: locked sections, per-section Edit buttons. The
+   values come from what the player and family enter in their own system
+   at registration; the admin unlocks one section at a time to fix
+   something. ---- */
+function renderInfoTab(p, info){
+  const posOpts = sel => POSITIONS.map(x => `<option ${x === sel ? 'selected' : ''}>${x}</option>`).join('');
+  const btOpts = (opts, sel) => opts.map(x => `<option ${x === sel ? 'selected' : ''}>${x}</option>`).join('');
+  const notSet = '<span style="color:var(--muted);font-weight:400">Not set</span>';
+  const kvRow = (k, v) => `<div class="kv"><span class="k">${k}</span><span class="v">${v || notSet}</span></div>`;
+  const head = (title, key, first) =>
+    `<div class="section-head" style="${first ? 'margin-top:0;' : ''}border-radius:8px 8px 0 0;display:flex;align-items:center;justify-content:space-between;gap:.6rem">
+      <span>${title}</span>
+      ${key && editSection !== key ? `<button class="sec-edit" onclick="editSection='${key}';render()">Edit</button>` : ''}
+    </div>`;
+  const saveRow = key =>
+    `<div style="display:flex;gap:.8rem;margin-top:1rem;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-primary btn-sm" onclick="saveSection('${key}')">Save</button>
+      <button class="link-muted" onclick="editSection=null;render()">Cancel</button>
+    </div>`;
+
+  /* Baseball Info */
+  const baseball = editSection === 'baseball'
+    ? `<div class="form-grid">
+        <div><label class="field-label" for="bPos">Primary Position</label><select id="bPos">${posOpts(p.pos)}</select></div>
+        <div><label class="field-label" for="bPos2">Secondary Position</label>
+          <select id="bPos2"><option value="">None</option>${posOpts(p.pos2 || '')}</select></div>
+        <div><label class="field-label" for="bHeight">Height</label><input type="text" id="bHeight" placeholder="5'11&quot;" value="${esc(p.height)}"></div>
+        <div><label class="field-label" for="bWeight">Weight (lbs)</label><input type="text" id="bWeight" inputmode="numeric" placeholder="175" value="${esc(p.weight)}"></div>
+        <div><label class="field-label" for="bBats">Bats</label><select id="bBats">${btOpts(['R','L','S'], p.bats)}</select></div>
+        <div><label class="field-label" for="bThrows">Throws</label><select id="bThrows">${btOpts(['R','L'], p.throws)}</select></div>
+      </div>${saveRow('baseball')}`
+    : kvRow('Primary Position', esc(p.pos)) +
+      kvRow('Secondary Position', p.pos2 ? esc(p.pos2) : '') +
+      kvRow('Height', esc(p.height)) +
+      kvRow('Weight', p.weight ? esc(p.weight) + ' lbs' : '') +
+      kvRow('Bats', esc(p.bats)) +
+      kvRow('Throws', esc(p.throws));
+
+  /* Academics */
+  const academics = editSection === 'academics'
+    ? `<div class="form-grid">
+        <div class="full"><label class="field-label" for="aHs">High School</label><input type="text" id="aHs" placeholder="e.g. Jesuit High School" value="${esc(p.hs)}"></div>
+        <div><label class="field-label" for="aGpa">GPA</label><input type="text" id="aGpa" inputmode="decimal" placeholder="3.8" value="${esc(p.gpa)}"></div>
+        <div><label class="field-label" for="aGpaW">Weighted GPA</label><input type="text" id="aGpaW" inputmode="decimal" placeholder="4.2" value="${esc(p.gpaW)}"></div>
+        <div><label class="field-label" for="aSat">SAT</label><input type="text" id="aSat" inputmode="numeric" placeholder="1200" value="${esc(p.sat)}"></div>
+        <div><label class="field-label" for="aAct">ACT</label><input type="text" id="aAct" inputmode="numeric" placeholder="26" value="${esc(p.act)}"></div>
+      </div>${saveRow('academics')}`
+    : kvRow('High School', esc(p.hs)) +
+      kvRow('GPA', esc(p.gpa)) +
+      kvRow('Weighted GPA', esc(p.gpaW)) +
+      kvRow('SAT', esc(p.sat)) +
+      kvRow('ACT', esc(p.act));
+
+  /* Personal Info */
+  const personal = editSection === 'personal'
+    ? `<div class="form-grid">
+        <div><label class="field-label" for="hCity">City</label><input type="text" id="hCity" value="${esc(p.city)}"></div>
+        <div><label class="field-label" for="hState">State</label><input type="text" id="hState" value="${esc(p.state)}" style="max-width:90px"></div>
+        <div class="full">
+          <label class="field-label" for="dobM">Birthday</label>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+            <select id="dobM" style="max-width:150px"><option value="">Month</option>${MONTHS.map((m, i) => {
+              const v = ('0' + (i + 1)).slice(-2);
+              return `<option value="${v}" ${p.dob.slice(5, 7) === v ? 'selected' : ''}>${m}</option>`;
+            }).join('')}</select>
+            <select id="dobD" style="max-width:90px"><option value="">Day</option>${Array.from({length: 31}, (_, i) => {
+              const v = ('0' + (i + 1)).slice(-2);
+              return `<option value="${v}" ${p.dob.slice(8, 10) === v ? 'selected' : ''}>${i + 1}</option>`;
+            }).join('')}</select>
+            <select id="dobY" style="max-width:110px"><option value="">Year</option>${(() => {
+              const now = new Date().getFullYear();
+              let out = '';
+              for (let y = now - 6; y >= now - 24; y--) out += `<option value="${y}" ${p.dob.slice(0, 4) === String(y) ? 'selected' : ''}>${y}</option>`;
+              return out;
+            })()}</select>
+          </div>
+          <p class="hint" style="margin-top:.4rem">Sets the age shown everywhere. The public profile shows the age only, never the birthday itself.</p>
+        </div>
+      </div>${saveRow('personal')}`
+    : kvRow('Hometown', esc(p.city) + ', ' + esc(p.state)) +
+      kvRow('Birthday', p.dob ? fmtDate(p.dob) : '') +
+      kvRow('Age', p.dob ? esc(ageYM(p)) : ageDisplay(p) + ' years (estimated from class year)');
+
+  /* Contact: player + two parent/guardian slots, mirroring registration */
+  const gName = g => (g.first || g.last) ? esc((g.first + ' ' + g.last).trim()) : '';
+  const gEdit = (g, prefix, label) => `
+    <div class="full"><div class="kv-sub">${label}</div></div>
+    <div><label class="field-label" for="${prefix}First">First Name</label><input type="text" id="${prefix}First" value="${esc(g.first)}"></div>
+    <div><label class="field-label" for="${prefix}Last">Last Name</label><input type="text" id="${prefix}Last" value="${esc(g.last)}"></div>
+    <div><label class="field-label" for="${prefix}Email">Email</label><input type="email" id="${prefix}Email" value="${esc(g.email)}"></div>
+    <div><label class="field-label" for="${prefix}Phone">Phone</label><input type="tel" id="${prefix}Phone" value="${esc(g.phone)}"></div>`;
+  const gView = (g, label) => (g.first || g.last || g.email || g.phone)
+    ? `<div class="kv-sub">${label}</div>` +
+      kvRow('Name', gName(g)) +
+      kvRow('Email', esc(g.email)) +
+      kvRow('Phone', esc(g.phone))
+    : `<div class="kv-sub">${label}</div><p class="hint" style="padding:.3rem 0 .5rem">None on file.</p>`;
+  const contact = editSection === 'contact'
+    ? `<div class="form-grid">
+        <div><label class="field-label" for="cEmail">Player Email</label><input type="email" id="cEmail" value="${esc(p.email)}"></div>
+        <div><label class="field-label" for="cPhone">Player Phone</label><input type="tel" id="cPhone" value="${esc(p.phone)}"></div>
+        ${gEdit(p.g1, 'g1', 'Parent / Guardian 1')}
+        ${gEdit(p.g2, 'g2', 'Parent / Guardian 2')}
+      </div>${saveRow('contact')}`
+    : kvRow('Player Email', esc(p.email)) +
+      kvRow('Player Phone', esc(p.phone)) +
+      gView(p.g1, 'Parent / Guardian 1') +
+      gView(p.g2, 'Parent / Guardian 2') +
+      '<p class="hint" style="margin-top:.6rem">Filled in by the family when they register - this is their info, so it stays locked unless an admin deliberately edits it.</p>';
+
+  /* Jersey / Apparel */
+  const apparel = editSection === 'apparel'
+    ? `<div class="form-grid">
+        <div><label class="field-label" for="jSize">Jersey Size</label>
+          <select id="jSize"><option value="">Not set</option>${SIZE_RUN.map(s => `<option ${p.jerseySize === s ? 'selected' : ''}>${s}</option>`).join('')}</select></div>
+        <div><label class="field-label" for="sSize">Shirt Size</label>
+          <select id="sSize"><option value="">Not set</option>${SIZE_RUN.map(s => `<option ${p.shirtSize === s ? 'selected' : ''}>${s}</option>`).join('')}</select></div>
+        <div><label class="field-label" for="pSize">Pants Size</label>
+          <select id="pSize"><option value="">Not set</option>${SIZE_RUN.map(s => `<option ${p.pantsSize === s ? 'selected' : ''}>${s}</option>`).join('')}</select></div>
+      </div>${saveRow('apparel')}`
+    : kvRow('Jersey Size', esc(p.jerseySize)) +
+      kvRow('Shirt Size', esc(p.shirtSize)) +
+      kvRow('Pants Size', esc(p.pantsSize)) +
+      '<p class="hint" style="margin-top:.6rem">Most recent sizes - same run as the gear library, so registrations and jersey orders can pull from here.</p>';
+
+  return `
+  <div class="card card-pad">
+    <div class="profile-grid">
+      <div>
+        ${head('Baseball Info', 'baseball', true)}
+        <div class="section-body">${baseball}</div>
+        ${head('Academics', 'academics')}
+        <div class="section-body">${academics}</div>
+        ${head('Personal Info', 'personal')}
+        <div class="section-body">${personal}</div>
+      </div>
+      <div>
+        ${head('Contact', 'contact', true)}
+        <div class="section-body">${contact}</div>
+        ${head('Assignment', null)}
+        <div class="section-body">
+          ${kvRow('Season', esc(p.season))}
+          ${kvRow('Division', info ? esc(info.div) : '')}
+          ${kvRow('Team', p.team ? esc(p.team) : notSet)}
+          ${kvRow('Jersey #', p.jersey ? '#' + esc(p.jersey) : '')}
+          <p class="hint" style="margin-top:.6rem">${famView()
+            ? 'Team and jersey number come from CBU’s roster and jersey orders - they update here automatically.'
+            : 'Team moves happen from the header button or the player list - not by typing here.'}</p>
+        </div>
+        ${head('Jersey / Apparel Info', 'apparel')}
+        <div class="section-body">${apparel}</div>
+      </div>
+    </div>
+    <p class="hint" style="margin-top:1.2rem">These sections populate from what the player and family fill out in their own system. Everything stays locked until the Edit button on a section opens it.</p>
+  </div>`;
+}
+
+/* ---- Evals / Objectives: coach-written, each marked internal-only or
+   shared with the player and family. Never public. ---- */
+function renderEvalsTab(p){
+  if (famView()){
+    /* read-only for the family: they see what coaches share, add nothing */
+    return `
+    <div class="card card-pad">
+      <div class="section-head" style="margin-top:0;border-radius:8px 8px 0 0">Evals / Objectives</div>
+      <div class="section-body">
+        <p class="hint" style="font-size:.84rem">When ${esc(p.first)}'s coaches write an evaluation or set objectives and share them with the family, they show up right here. Some evals stay internal to the staff - that is normal. Nothing on this tab ever appears on the public site.</p>
+        <div style="background:var(--row-alt);border:1.5px dashed #c9cfdd;border-radius:10px;padding:1.6rem 1.2rem;text-align:center;margin-top:1rem">
+          <p style="color:var(--muted);font-size:.88rem">Nothing shared yet - check back after evaluations.</p>
+        </div>
+      </div>
+    </div>`;
+  }
+  return `
+  <div class="card card-pad">
+    <div class="section-head" style="margin-top:0;border-radius:8px 8px 0 0">Evals / Objectives</div>
+    <div class="section-body">
+      <p class="hint" style="font-size:.84rem">Coaches write evals and objectives for ${esc(p.first)} here. Every one gets a share switch: <strong>internal only</strong> (staff eyes) or <strong>shared with player and family</strong>, which shows it on their login. Nothing in this tab ever appears on the public site.</p>
+      <div style="background:var(--row-alt);border:1.5px dashed #c9cfdd;border-radius:10px;padding:1.6rem 1.2rem;text-align:center;margin-top:1rem">
+        <p style="color:var(--muted);font-size:.88rem">No evals or objectives yet.</p>
+        <button class="btn btn-primary btn-sm" style="margin-top:.9rem" onclick="startEval(${p.id})">Start An Evaluation</button>
+        <p class="hint" style="margin-top:.7rem">The eval form itself comes with the coaching side - this button will open it.</p>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ---- Metrics: log results, see the best mark and the history behind
+   it, filter every chart by one shared date range. ---- */
+function setMetricPreset(k){ metricPreset = k; metricFrom = ''; metricTo = ''; render(); }
+function setMetricDate(which, v){
+  if (which === 'f') metricFrom = v; else metricTo = v;
+  render();
+}
+function metricRangeBounds(){
+  if (metricFrom || metricTo) return { f: metricFrom || null, t: metricTo || null };
+  if (metricPreset === 'all') return { f: null, t: null };
+  const months = metricPreset === '6m' ? 6 : (metricPreset === '1y' ? 12 : 24);
+  const d = new Date();
+  d.setMonth(d.getMonth() - months);
+  return { f: d.toISOString().slice(0, 10), t: null };
+}
+function inMetricRange(en){
+  const r = metricRangeBounds();
+  if (r.f && en.date < r.f) return false;
+  if (r.t && en.date > r.t) return false;
+  return true;
+}
+function addMetricResult(){
+  const p = playerById(viewPlayerId);
+  if (!p) return;
+  const key = (document.getElementById('mKey') || {}).value;
+  const def = metricDef(key);
+  if (!def){ toast('Pick which metric this result is for.'); return; }
+  const raw = ((document.getElementById('mVal') || {}).value || '').trim();
+  const v = parseFloat(raw);
+  if (!raw || isNaN(v) || v <= 0){ toast('Enter the result as a number - e.g. ' + (def.unit === 'sec' ? '6.93' : '91.1') + '.'); return; }
+  const date = (document.getElementById('mDate') || {}).value || todayIso();
+  if (!p.metrics[key]) p.metrics[key] = [];
+  p.metrics[key].push({ date: date, v: parseFloat(v.toFixed(def.dec)) });
+  render();
+  toast(def.label + ' logged: ' + v.toFixed(def.dec) + ' ' + def.unit + '.');
+}
+/* One small line chart per metric: every result over time, best mark in
+   red. For times lower is better, so the line falling IS the progress. */
+function metricChart(def, list, best){
+  const W = 320, H = 116, padL = 38, padR = 10, padT = 12, padB = 20;
+  const vals = list.map(en => en.v);
+  let lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+  const span = (hi - lo) || 1;
+  lo -= span * .08; hi += span * .08;
+  const x = i => padL + i * (W - padL - padR) / Math.max(1, list.length - 1);
+  const y = v => padT + (1 - (v - lo) / (hi - lo)) * (H - padT - padB);
+  const pts = list.map((en, i) => x(i).toFixed(1) + ',' + y(en.v).toFixed(1)).join(' ');
+  const dots = list.map((en, i) => {
+    const isBest = en.date === best.date && en.v === best.v;
+    /* the invisible halo widens the hover target; <title> is the native
+       tooltip - hover any dot for its value and date */
+    return `<g><circle cx="${x(i).toFixed(1)}" cy="${y(en.v).toFixed(1)}" r="8" fill="transparent"/>` +
+      `<circle cx="${x(i).toFixed(1)}" cy="${y(en.v).toFixed(1)}" r="${isBest ? 3.6 : 2}" fill="${isBest ? 'var(--red)' : 'var(--powder-dark)'}"/>` +
+      `<title>${en.v.toFixed(def.dec)} ${def.unit} - ${fmtDate(en.date)}${isBest ? ' (best)' : ''}</title></g>`;
+  }).join('');
+  const yr = iso => iso.slice(0, 4);
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${def.label} development chart">
+    <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${H - padB}" stroke="var(--line)" stroke-width="1"/>
+    <line x1="${padL}" y1="${H - padB}" x2="${W - padR}" y2="${H - padB}" stroke="var(--line)" stroke-width="1"/>
+    <text x="${padL - 5}" y="${padT + 4}" text-anchor="end" font-size="9" fill="var(--muted)">${hi.toFixed(def.dec)}</text>
+    <text x="${padL - 5}" y="${H - padB + 3}" text-anchor="end" font-size="9" fill="var(--muted)">${lo.toFixed(def.dec)}</text>
+    <text x="${padL}" y="${H - 6}" font-size="9" fill="var(--muted)">${yr(list[0].date)}</text>
+    <text x="${W - padR}" y="${H - 6}" text-anchor="end" font-size="9" fill="var(--muted)">${yr(list[list.length - 1].date)}</text>
+    <polyline points="${pts}" fill="none" stroke="var(--powder-dark)" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+    ${dots}
+  </svg>`;
+}
+
+function renderMetricsTab(p){
+  const custom = !!(metricFrom || metricTo);
+  const rangeChip = (k, label) =>
+    `<button class="chip ${!custom && metricPreset === k ? 'active' : ''}" onclick="setMetricPreset('${k}')">${label}</button>`;
+  const filterBar = `
+    <div class="section-head" style="border-radius:8px 8px 0 0">Date Range</div>
+    <div class="section-body">
+      <div style="display:flex;gap:.55rem;flex-wrap:wrap;align-items:center">
+        ${rangeChip('all', 'All Time')}${rangeChip('6m', 'Last 6 Months')}${rangeChip('1y', 'Last Year')}${rangeChip('2y', 'Last 2 Years')}
+        <span class="hint" style="margin-left:.4rem">or</span>
+        <label class="field-label" style="margin:0" for="mrFrom">From</label>
+        <input type="date" id="mrFrom" value="${esc(metricFrom)}" style="max-width:160px" onchange="setMetricDate('f', this.value)">
+        <label class="field-label" style="margin:0" for="mrTo">To</label>
+        <input type="date" id="mrTo" value="${esc(metricTo)}" style="max-width:160px" onchange="setMetricDate('t', this.value)">
+        ${custom ? '<button class="link-muted" onclick="metricFrom=\'\';metricTo=\'\';metricPreset=\'all\';render()">Clear dates</button>' : ''}
+      </div>
+      <p class="hint" style="margin-top:.5rem">One filter for every chart below. The header tiles stay all-time bests no matter what range is picked here.</p>
+    </div>`;
+
+  const catBlocks = METRIC_CATS.map(cat => {
+    const cards = METRIC_DEFS.filter(d => d.cat === cat).map(def => {
+      const all = ((p.metrics && p.metrics[def.key]) || []).slice().sort((a, b) => a.date.localeCompare(b.date));
+      if (!all.length) return `<div class="chart-card"><div class="metric-row" style="border:none;padding:0">
+        <span class="mr-label">${def.label}</span><span class="mr-hist">No data yet.</span></div></div>`;
+      const list = all.filter(inMetricRange);
+      if (!list.length) return `<div class="chart-card"><div class="metric-row" style="border:none;padding:0">
+        <span class="mr-label">${def.label}</span><span class="mr-hist">No results in this date range (${all.length} all time).</span></div></div>`;
+      const b = bestIn(list, def);
+      const first = list[0];
+      return `<div class="chart-card">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:.6rem;flex-wrap:wrap">
+          <span class="mr-label" style="min-width:0">${def.label}</span>
+          <span class="mr-best">${fmtMetric(def, b.v)}</span>
+        </div>
+        ${metricChart(def, list, b)}
+        <div class="mr-hist">${list.length} results &middot; started ${first.v.toFixed(def.dec)} ${def.unit} (${fmtDate(first.date)}) &middot; best ${b.v.toFixed(def.dec)} ${def.unit} (${fmtDate(b.date)})</div>
+      </div>`;
+    }).join('');
+    return `<div class="section-head" style="border-radius:8px 8px 0 0">${cat}</div>
+      <div class="section-body"><div class="chart-grid">${cards}</div></div>`;
+  }).join('');
+
+  const metricOpts = METRIC_CATS.map(cat =>
+    `<optgroup label="${cat}">` +
+    METRIC_DEFS.filter(d => d.cat === cat).map(d => `<option value="${d.key}">${d.label} (${d.unit})</option>`).join('') +
+    '</optgroup>').join('');
+
+  /* families and the public see every metric and chart but never log
+     results - testing day numbers come in from CBU's side only */
+  const logSection = pubView()
+    ? `<p class="hint" style="margin-bottom:.4rem">All results come from CBU testing days.</p>`
+    : famView()
+    ? `<p class="hint" style="margin-bottom:.4rem">Results are logged by CBU at testing days - new numbers show up here automatically. Best marks sit on the profile header.</p>`
+    : `<div class="section-head red" style="margin-top:0;border-radius:8px 8px 0 0">Log A Result</div>
+    <div class="section-body">
+      <div style="display:flex;gap:.8rem;flex-wrap:wrap;align-items:flex-end">
+        <div><label class="field-label" for="mKey">Metric</label>
+          <select id="mKey" style="max-width:260px"><option value="">Choose a metric...</option>${metricOpts}</select></div>
+        <div><label class="field-label" for="mVal">Result</label>
+          <input type="text" id="mVal" inputmode="decimal" placeholder="6.93" style="max-width:110px"></div>
+        <div><label class="field-label" for="mDate">Date</label>
+          <input type="date" id="mDate" value="${todayIso()}" style="max-width:170px"></div>
+        <button class="btn btn-primary btn-sm" onclick="addMetricResult()">Add Result</button>
+      </div>
+      <p class="hint" style="margin-top:.6rem">Times in seconds to two decimals (lower is better). Velocities in mph to one decimal (higher is better). The best mark feeds the tiles on the profile header.</p>
+    </div>`;
+  return `
+  <div class="card card-pad">
+    ${logSection}
+    ${filterBar}
+    ${catBlocks}
+    <div class="section-head" style="border-radius:8px 8px 0 0">Performance - Later</div>
+    <div class="section-body">
+      <p class="hint">Jump force and vertical (inches) join here later, along with charts across every result so progress shows over time.</p>
+    </div>
+  </div>`;
+}
+
+/* ---- Schedule: the player's team schedule - same data and layout as
+   the parent-facing team-schedule.html, list and calendar views. ---- */
+const DAYS_FULL = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const DAY_LABELS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+function fmt12(t){
+  const parts = t.split(':');
+  let h = +parts[0];
+  const ap = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  return h + ':' + parts[1] + ' ' + ap;
+}
+function fmtDayFull(iso){
+  const parts = iso.split('-');
+  const d = new Date(+parts[0], +parts[1] - 1, +parts[2]);
+  return DAYS_FULL[d.getDay()] + ' · ' + MONTHS[+parts[1] - 1] + ' ' + (+parts[2]);
+}
+function venueLine(x){
+  const place = x.city ? x.city + (x.state ? ', ' + x.state : '') : (x.state || '');
+  return [x.complex, x.field, place].filter(Boolean).join(' · ');
+}
+function mapUrl(x){
+  return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent([x.address, x.city, x.state].filter(Boolean).join(', '));
+}
+function gameResult(g){
+  if (g.us == null || g.them == null) return null;
+  return (g.us > g.them ? 'W ' : g.us < g.them ? 'L ' : 'T ') + g.us + '-' + g.them;
+}
+function schedSetView(v){ schedView = v; schedSel = null; render(); }
+function schedCalShift(dir){
+  let y = +schedCalMonth.slice(0, 4), m = +schedCalMonth.slice(5) + dir;
+  if (m < 1){ m = 12; y--; }
+  if (m > 12){ m = 1; y++; }
+  schedCalMonth = y + '-' + ('0' + m).slice(-2);
+  schedSel = null;
+  render();
+}
+function schedPick(kind, index){ schedSel = { kind: kind, index: index }; render(); }
+
+function fmtRange(s, e){
+  const a = s.split('-'), b = e.split('-');
+  const mA = MONTHS[+a[1] - 1].slice(0, 3), mB = MONTHS[+b[1] - 1].slice(0, 3);
+  return a[1] === b[1]
+    ? mA + ' ' + (+a[2]) + '-' + (+b[2]) + ', ' + a[0]
+    : mA + ' ' + (+a[2]) + ' - ' + mB + ' ' + (+b[2]) + ', ' + a[0];
+}
+/* Basic tournament view: one row per event, next first, past behind a
+   toggle. Finished tournaments show the record, the next one is tagged. */
+function schedTours(){
+  const tIso = todayIso();
+  const sorted = SCHED_TOURS.slice().sort((a, b) => a.start.localeCompare(b.start));
+  const upcoming = sorted.filter(tr => tr.end >= tIso);
+  const pastCount = sorted.length - upcoming.length;
+  const shown = schedShowPast ? sorted : upcoming;
+  const next = upcoming[0] || null;
+  let html = '';
+  if (pastCount){
+    html += `<div style="margin-bottom:.6rem"><button class="link-red" onclick="schedShowPast=!schedShowPast;render()">${
+      schedShowPast ? 'Hide Previous &#9652;' : 'Show Previous (' + pastCount + ') · finished tournaments and records &#9662;'}</button></div>`;
+  }
+  html += shown.map(tr => {
+    const games = SCHED_GAMES.filter(g => g.date >= tr.start && g.date <= tr.end);
+    let w = 0, l = 0, t = 0;
+    games.forEach(g => {
+      if (g.us == null || g.them == null) return;
+      if (g.us > g.them) w++; else if (g.us < g.them) l++; else t++;
+    });
+    const finished = tr.end < tIso;
+    let side = '';
+    if (tr === next) side = '<span class="pill pill-green">Next Up</span>';
+    else if (finished && (w + l + t)) side = `<span class="pill pill-navy">${w}-${l}${t ? '-' + t : ''}</span>`;
+    return `<div class="tour-row">
+      <span class="tour-org">${esc(tr.org)}</span>
+      <div class="tour-main">
+        <div class="tour-name">${esc(tr.name)}</div>
+        <div class="tour-sub">${fmtRange(tr.start, tr.end)} · ${esc(tr.city)}, ${esc(tr.state)}${
+          !finished && !tr.released ? ' · game schedule not released yet' : (games.length ? ' · ' + games.length + ' game' + (games.length === 1 ? '' : 's') : '')}</div>
+      </div>
+      <div class="tour-side">${side}</div>
+    </div>`;
+  }).join('');
+  return html || '<p class="hint">No tournaments on the schedule yet.</p>';
+}
+function schedDetail(){
+  if (!schedSel) return '<p style="font-size:.8rem;color:var(--muted);margin-top:1rem">Tap anything on the calendar for details.</p>';
+  if (schedSel.kind === 'game'){
+    const g = SCHED_GAMES[schedSel.index];
+    return `<div class="detail-card">
+      <div class="detail-title">${g.at ? '@' : 'vs.'} ${esc(g.opp)} · ${fmtDayFull(g.date)}</div>
+      <div class="detail-line"><b>First Pitch</b>${fmt12(g.time)}</div>
+      <div class="detail-line"><b>Field</b>${esc(venueLine(g))} · <a class="link-red" href="${mapUrl(g)}" target="_blank" rel="noopener">Open In Maps</a></div>
+      ${g.jersey ? `<div class="detail-line"><b>Jersey</b>${esc(g.jersey)}</div>` : ''}
+      ${g.pitchers.length ? `<div class="detail-line"><b>Probable Pitchers</b>${g.pitchers.map(esc).join(' · ')}</div>` : ''}
+      ${gameResult(g) ? `<div class="detail-line"><b>Final</b>${esc(gameResult(g))}</div>` : ''}
+    </div>`;
+  }
+  const x = SCHED_PRACTICES[schedSel.index];
+  return `<div class="detail-card">
+    <div class="detail-title">Practice · ${fmtDayFull(x.date)}${x.canceled ? ' · Canceled' : ''}</div>
+    <div class="detail-line"><b>Time</b>${fmt12(x.time)}</div>
+    <div class="detail-line"><b>Field</b>${esc(venueLine(x))} · <a class="link-red" href="${mapUrl(x)}" target="_blank" rel="noopener">Open In Maps</a></div>
+  </div>`;
+}
+function schedCal(){
+  const y = +schedCalMonth.slice(0, 4), m = +schedCalMonth.slice(5);
+  const firstDow = new Date(y, m - 1, 1).getDay();
+  const daysIn = new Date(y, m, 0).getDate();
+  const byDate = {};
+  const add = (iso, html) => { (byDate[iso] = byDate[iso] || []).push(html); };
+  SCHED_TOURS.forEach(tr => {
+    const a = tr.start.split('-'), b = tr.end.split('-');
+    const cur = new Date(+a[0], +a[1] - 1, +a[2]), stop = new Date(+b[0], +b[1] - 1, +b[2]);
+    while (cur <= stop){
+      const iso = cur.getFullYear() + '-' + ('0' + (cur.getMonth() + 1)).slice(-2) + '-' + ('0' + cur.getDate()).slice(-2);
+      add(iso, `<div class="cal-chip tour">&#127942; ${esc(tr.name)}</div>`);
+      cur.setDate(cur.getDate() + 1);
+    }
+  });
+  SCHED_GAMES.forEach((g, i) => add(g.date, `<button class="cal-chip game" onclick="schedPick('game',${i})">${fmt12(g.time)} ${g.at ? '@' : 'vs'} ${esc(g.opp)}</button>`));
+  SCHED_PRACTICES.forEach((x, i) => add(x.date, `<button class="cal-chip practice${x.canceled ? ' canceled' : ''}" onclick="schedPick('practice',${i})">${x.canceled ? 'Canceled' : fmt12(x.time) + ' Practice'}</button>`));
+  let cells = '';
+  const tIso = todayIso();
+  for (let i = 0; i < firstDow; i++) cells += '<div class="cal-cell blank"></div>';
+  for (let day = 1; day <= daysIn; day++){
+    const iso = y + '-' + ('0' + m).slice(-2) + '-' + ('0' + day).slice(-2);
+    cells += `<div class="cal-cell${iso === tIso ? ' today' : ''}"><span class="cal-daynum">${day}</span>${(byDate[iso] || []).join('')}</div>`;
+  }
+  const trailing = (firstDow + daysIn) % 7;
+  if (trailing) for (let i = trailing; i < 7; i++) cells += '<div class="cal-cell blank"></div>';
+  return `<div style="display:flex;align-items:center;gap:.4rem;justify-content:flex-end">
+      <button class="cal-nav" onclick="schedCalShift(-1)" aria-label="Previous month">&#9664;</button>
+      <span class="cal-title">${MONTHS[m - 1]} ${y}</span>
+      <button class="cal-nav" onclick="schedCalShift(1)" aria-label="Next month">&#9654;</button>
+    </div>
+    <div class="cal-grid">${DAY_LABELS.map(d => `<div class="cal-dow">${d}</div>`).join('')}${cells}</div>
+    <div class="cal-legend">
+      <span><span class="swatch" style="background:#f6ecd2"></span>Tournament</span>
+      <span><span class="swatch" style="background:#f8e3e6"></span>Game</span>
+      <span><span class="swatch" style="background:#e8ebf4"></span>Practice</span>
+    </div>
+    ${schedDetail()}`;
+}
+function renderScheduleTab(p){
+  if (!schedCalMonth) schedCalMonth = todayIso().slice(0, 7);   /* calendar opens on today */
+  if (!p.team){
+    return `<div class="card"><div class="tab-placeholder">
+      <h3>No Team, No Schedule</h3>
+      <p>${esc(p.first)} is unassigned right now. Assign them to a team and its schedule of tournaments, games, and practices shows here automatically.</p>
+    </div></div>`;
+  }
+  if (p.team !== SCHED_TEAM){
+    return `<div class="card"><div class="tab-placeholder">
+      <h3>${esc(p.team)} Schedule</h3>
+      <p>In the real app this tab shows ${esc(p.team)}'s full schedule from Team Management. Only ${SCHED_TEAM} carries sample schedule data in this demo - Isaiah Maruszak's profile shows it in action.</p>
+    </div></div>`;
+  }
+  return `
+  <div class="card card-pad">
+    <div style="display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;margin-bottom:1rem">
+      <span class="field-label" style="margin:0">${esc(p.team)} · ${esc(p.season)}</span>
+      <div class="chip-row" style="margin-left:auto">
+        <button class="chip ${schedView === 'tours' ? 'active' : ''}" onclick="schedSetView('tours')">Tournament Schedule</button>
+        <button class="chip ${schedView === 'cal' ? 'active' : ''}" onclick="schedSetView('cal')">Calendar</button>
+      </div>
+    </div>
+    ${schedView === 'tours' ? schedTours() : schedCal()}
+    <p class="hint" style="margin-top:.9rem">Pulled straight from what coaches enter in Team Management - the calendar carries the full detail: games with jerseys and probable pitchers, plus weekly practices.</p>
+  </div>`;
+}
+
+/* ---- Stats: season-by-season hitting and pitching lines with career
+   totals. Imported per season; game-by-game may come later. ---- */
+function fmtRate(x){ return (isFinite(x) ? x : 0).toFixed(3).replace(/^0\./, '.'); }
+function renderStatsTab(p){
+  if (!p.statsH.length && !p.statsP.length){
+    return `<div class="card"><div class="tab-placeholder">
+      <h3>No Stats Yet</h3>
+      <p>Seasonal batting and pitching lines land here once they are imported for ${esc(p.first)} - season by season, maybe even game by game down the road.</p>
+    </div></div>`;
+  }
+
+  let html = '<div class="card card-pad">';
+
+  if (p.statsH.length){
+    /* career totals: counting stats sum, rate stats recomputed */
+    const c = p.statsH.reduce((a, s) => {
+      ['g','ab','r','h','d2','d3','hr','rbi','bb','so','sb','cs'].forEach(k => a[k] += s[k]);
+      return a;
+    }, { g:0, ab:0, r:0, h:0, d2:0, d3:0, hr:0, rbi:0, bb:0, so:0, sb:0, cs:0 });
+    const tb = (c.h - c.d2 - c.d3 - c.hr) + 2 * c.d2 + 3 * c.d3 + 4 * c.hr;
+    const cAvg = fmtRate(c.h / c.ab), cObp = fmtRate((c.h + c.bb) / (c.ab + c.bb));
+    const cSlg = fmtRate(tb / c.ab), cOps = fmtRate((c.h + c.bb) / (c.ab + c.bb) + tb / c.ab);
+    const hRow = s => `<tr>
+      <td class="season-cell">${esc(s.season)}</td>
+      <td>${s.ops}</td><td>${s.avg}</td><td>${s.obp}</td><td>${s.slg}</td>
+      <td>${s.g}</td><td>${s.ab}</td><td>${s.r}</td><td>${s.h}</td><td>${s.d2}</td><td>${s.d3}</td><td>${s.hr}</td>
+      <td>${s.rbi}</td><td>${s.bb}</td><td>${s.so}</td><td>${s.sb}</td><td>${s.cs}</td>
+    </tr>`;
+    html += `
+    <div class="section-head red" style="margin-top:0;border-radius:8px 8px 0 0">Hitting - Season By Season</div>
+    <div class="table-wrap" style="border:1.5px solid var(--line);border-radius:0 0 8px 8px">
+      <table class="stats-table">
+        <thead><tr><th>Season</th><th>OPS</th><th>AVG</th><th>OBP</th><th>SLG</th><th>G</th><th>AB</th><th>R</th><th>H</th><th>2B</th><th>3B</th><th>HR</th><th>RBI</th><th>BB</th><th>SO</th><th>SB</th><th>CS</th></tr></thead>
+        <tbody>
+          ${p.statsH.map(hRow).join('')}
+          <tr class="career">
+            <td class="season-cell">Career</td>
+            <td>${cOps}</td><td>${cAvg}</td><td>${cObp}</td><td>${cSlg}</td>
+            <td>${c.g}</td><td>${c.ab}</td><td>${c.r}</td><td>${c.h}</td><td>${c.d2}</td><td>${c.d3}</td><td>${c.hr}</td>
+            <td>${c.rbi}</td><td>${c.bb}</td><td>${c.so}</td><td>${c.sb}</td><td>${c.cs}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>`;
+  }
+
+  if (p.statsP.length){
+    const c = p.statsP.reduce((a, s) => {
+      ['w','l','sv','gp','h','r','er','d2','d3','hr','bb','ibb','hbp','so'].forEach(k => a[k] += s[k]);
+      a.ip += parseFloat(s.ip);
+      return a;
+    }, { w:0, l:0, sv:0, gp:0, ip:0, h:0, r:0, er:0, d2:0, d3:0, hr:0, bb:0, ibb:0, hbp:0, so:0 });
+    const cEra = (9 * c.er / c.ip).toFixed(2), cWhip = ((c.h + c.bb) / c.ip).toFixed(2);
+    const pRow = s => `<tr>
+      <td class="season-cell">${esc(s.season)}</td>
+      <td>${s.w}</td><td>${s.l}</td><td>${s.sv}</td><td>${s.gp}</td><td>${s.era}</td><td>${s.ip}</td>
+      <td>${s.h}</td><td>${s.r}</td><td>${s.er}</td><td>${s.d2}</td><td>${s.d3}</td><td>${s.hr}</td>
+      <td>${s.bb}</td><td>${s.ibb}</td><td>${s.hbp}</td><td>${s.so}</td><td>${s.avg}</td><td>${s.ops}</td><td>${s.whip}</td>
+    </tr>`;
+    html += `
+    <div class="section-head" style="border-radius:8px 8px 0 0">Pitching - Season By Season</div>
+    <div class="table-wrap" style="border:1.5px solid var(--line);border-radius:0 0 8px 8px">
+      <table class="stats-table">
+        <thead><tr><th>Season</th><th>W</th><th>L</th><th>SV</th><th>GP</th><th>ERA</th><th>IP</th><th>H</th><th>R</th><th>ER</th><th>2B</th><th>3B</th><th>HR</th><th>BB</th><th>IBB</th><th>HBP</th><th>SO</th><th>AVG</th><th>OPS</th><th>WHIP</th></tr></thead>
+        <tbody>
+          ${p.statsP.map(pRow).join('')}
+          <tr class="career">
+            <td class="season-cell">Career</td>
+            <td>${c.w}</td><td>${c.l}</td><td>${c.sv}</td><td>${c.gp}</td><td>${cEra}</td><td>${c.ip.toFixed(1)}</td>
+            <td>${c.h}</td><td>${c.r}</td><td>${c.er}</td><td>${c.d2}</td><td>${c.d3}</td><td>${c.hr}</td>
+            <td>${c.bb}</td><td>${c.ibb}</td><td>${c.hbp}</td><td>${c.so}</td><td>-</td><td>-</td><td>${cWhip}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>`;
+  }
+
+  html += `<p class="hint" style="margin-top:1rem">Stats import per season - the newest sits on top and Career totals the lot. Game-by-game lines can come later.</p>
+  </div>`;
+  return html;
+}
+
+/* ---- Videos: X-powered link library. Storing video files takes real
+   money and energy - X hosts them, we attach links. A coach one click
+   from the X account is what matters. ---- */
+function saveXUser(){
+  const p = playerById(viewPlayerId);
+  if (!p) return;
+  const el = document.getElementById('xUser');
+  p.xUser = (el ? el.value.trim() : '').replace(/^@+/, '');
+  videoXEdit = false;
+  render();
+  toast(p.xUser ? '@' + p.xUser + ' saved - video links attach under it.' : 'X account cleared.');
+}
+function toggleDraftVTag(t){
+  if (videoDraftTags.has(t)) videoDraftTags.delete(t); else videoDraftTags.add(t);
+  render();
+}
+function toggleVFilter(t){
+  if (videoFilter.has(t)) videoFilter.delete(t); else videoFilter.add(t);
+  videoDelArm = null;
+  render();
+}
+function addVideo(){
+  const p = playerById(viewPlayerId);
+  if (!p) return;
+  const url = ((document.getElementById('vUrl') || {}).value || '').trim();
+  const title = ((document.getElementById('vTitle') || {}).value || '').trim();
+  if (!/^https?:\/\//.test(url)){ toast('Paste the full link to the X post - it starts with https://'); return; }
+  if (!title){ toast('Give the video a title - e.g. "BP - oppo gap work".'); return; }
+  p.videos.unshift({ url: url, title: title, date: todayIso(), tags: [...videoDraftTags] });
+  videoDraftTags = new Set();
+  render();
+  toast('Video link added - posted with today’s date.');
+}
+function removeVideo(i){
+  const p = playerById(viewPlayerId);
+  if (!p) return;
+  const v = p.videos.splice(i, 1)[0];
+  videoDelArm = null;
+  render();
+  toast((v ? '"' + v.title + '"' : 'Link') + ' removed from the library.');
+}
+function renderVideosTab(p){
+  const ro = pubView();   /* public site: watch and filter, change nothing */
+  /* X account first - it is the backbone of the whole tab */
+  const xSection = ro
+    ? (p.xUser
+      ? `<div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:center">
+          <a class="x-handle" href="https://x.com/${esc(p.xUser)}" target="_blank" rel="noopener"><span class="x-mark">X</span>@${esc(p.xUser)}</a>
+        </div>
+        <p class="hint" style="margin-top:.5rem">Every video below is a post on this account - follow it for new ones.</p>`
+      : '<p class="hint">No X account shared.</p>')
+    : (!p.xUser || videoXEdit)
+    ? `<div style="display:flex;gap:.7rem;flex-wrap:wrap;align-items:flex-end">
+        <div><label class="field-label" for="xUser">X Username</label>
+          <input type="text" id="xUser" placeholder="@username" value="${esc(p.xUser)}" style="max-width:240px"></div>
+        <button class="btn btn-primary btn-sm" onclick="saveXUser()">Save</button>
+        ${videoXEdit ? '<button class="link-muted" onclick="videoXEdit=false;render()">Cancel</button>' : ''}
+      </div>
+      <p class="hint" style="margin-top:.6rem">Storing video files takes serious energy - X does it for free. Post the videos there, attach the links here, and a college coach is one click from everything.</p>`
+    : `<div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:center">
+        <a class="x-handle" href="https://x.com/${esc(p.xUser)}" target="_blank" rel="noopener"><span class="x-mark">X</span>@${esc(p.xUser)}</a>
+        <button class="link-muted" onclick="videoXEdit=true;render()">Edit</button>
+      </div>
+      <p class="hint" style="margin-top:.5rem">Every video below is a post on this account - coaches can follow it straight from here.</p>`;
+
+  /* add-a-link form: game-or-practice first, skill tags below it */
+  const draftChip = t => `<button class="vtag ${videoDraftTags.has(t) ? 'on' : ''}" onclick="toggleDraftVTag('${t}')">${t}</button>`;
+  const draftTypeChips = VIDEO_TYPE_TAGS.map(draftChip).join('');
+  const draftSkillChips = VIDEO_SKILL_TAGS.map(draftChip).join('');
+
+  /* library filters, same two-tier layout - every selected tag must match */
+  const filterChip = t => `<button class="vtag ${videoFilter.has(t) ? 'on' : ''}" onclick="toggleVFilter('${t}')">${t}</button>`;
+  const filterTypeChips = VIDEO_TYPE_TAGS.map(filterChip).join('');
+  const filterSkillChips = VIDEO_SKILL_TAGS.map(filterChip).join('');
+  const list = p.videos
+    .map((v, i) => ({ v, i }))
+    .filter(x => [...videoFilter].every(t => x.v.tags.indexOf(t) > -1));
+  const rows = list.length ? list.map(x => {
+    const v = x.v;
+    const acts = ro
+      ? `<a class="link-red" href="${esc(v.url)}" target="_blank" rel="noopener">Watch On X</a>`
+      : videoDelArm === x.i
+      ? `<span class="hint">Remove this link?</span>
+         <button class="link-red" onclick="removeVideo(${x.i})">Remove</button>
+         <button class="link-muted" onclick="videoDelArm=null;render()">Keep</button>`
+      : `<a class="link-red" href="${esc(v.url)}" target="_blank" rel="noopener">Watch On X</a>
+         <button class="link-muted" onclick="videoDelArm=${x.i};render()">Remove</button>`;
+    return `<div class="video-row">
+      <div class="video-main">
+        <div class="video-title">${esc(v.title)}</div>
+        <div class="video-sub">Posted ${fmtDate(v.date)}</div>
+        ${v.tags.length ? `<div class="video-tags">${v.tags.map(t => `<span class="vtag-static">${esc(t)}</span>`).join('')}</div>` : ''}
+      </div>
+      <div style="margin-left:auto;display:flex;gap:.8rem;align-items:center;flex-wrap:wrap">${acts}</div>
+    </div>`;
+  }).join('') : `<p class="hint" style="margin-top:.8rem">${p.videos.length ? 'Nothing matches those tags - clear a filter or two.' : 'No video links yet - add the first one above.'}</p>`;
+
+  const addSection = ro ? '' : `
+    <div class="section-head" style="border-radius:8px 8px 0 0">Add A Video Link</div>
+    <div class="section-body">
+      <div class="form-grid">
+        <div><label class="field-label" for="vUrl">Link To The X Post</label><input type="text" id="vUrl" placeholder="https://x.com/..."></div>
+        <div><label class="field-label" for="vTitle">Title</label><input type="text" id="vTitle" placeholder="e.g. BP - oppo gap work"></div>
+      </div>
+      <label class="field-label" style="margin-top:.9rem">Game Or Practice?</label>
+      <div style="display:flex;gap:.4rem;flex-wrap:wrap">${draftTypeChips}</div>
+      <label class="field-label" style="margin-top:.8rem">Skill Tags</label>
+      <div style="display:flex;gap:.4rem;flex-wrap:wrap">${draftSkillChips}</div>
+      <p class="hint" style="margin-top:.5rem">Tap all that apply - a video can carry more than one tag.</p>
+      <div style="margin-top:.9rem;display:flex;gap:.8rem;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm" onclick="addVideo()">Add Video Link</button>
+        <span class="hint">Posts with today's date automatically. Players will add their own from their login too.</span>
+      </div>
+    </div>`;
+
+  return `
+  <div class="card card-pad">
+    <div class="section-head red" style="margin-top:0;border-radius:8px 8px 0 0">X Account</div>
+    <div class="section-body">${xSection}</div>
+    ${addSection}
+    <div class="section-head" style="border-radius:8px 8px 0 0">Video Library (${p.videos.length})</div>
+    <div class="section-body">
+      <div style="display:flex;gap:.4rem;flex-wrap:wrap;align-items:center">
+        <span class="field-label" style="margin:0">Game Or Practice</span>
+        ${filterTypeChips}
+        ${videoFilter.size ? '<button class="link-muted" onclick="videoFilter=new Set();render()">Clear filters</button>' : ''}
+      </div>
+      <div style="display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;margin-top:.5rem">
+        <span class="field-label" style="margin:0">Skill</span>
+        ${filterSkillChips}
+      </div>
+      <p class="hint" style="margin-top:.5rem">Click as many as needed - filters stack, so Game Video + Hitting shows only game at-bats.</p>
+      <div style="margin-top:.4rem">${rows}</div>
+    </div>
+  </div>`;
+}
+
+/* ---- Social: the player's links, added by choice from their side. X is
+   the one we push hard - it powers the video library. ---- */
+function saveSocials(){
+  const p = playerById(viewPlayerId);
+  if (!p) return;
+  const val = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+  p.xUser = val('soX').replace(/^@+/, '');
+  p.socials.ig = val('soIg').replace(/^@+/, '');
+  p.socials.tt = val('soTt').replace(/^@+/, '');
+  p.socials.yt = val('soYt');
+  socialEdit = false;
+  render();
+  toast('Social links saved.');
+}
+function renderSocialTab(p){
+  const notSet = '<span style="color:var(--muted);font-weight:400">Not set</span>';
+  const row = (label, handle, href) => `<div class="kv"><span class="k">${label}</span><span class="v">${
+    handle ? `<a class="link-red" style="font-size:.86rem" href="${href}" target="_blank" rel="noopener">${esc(handle)}</a>` : notSet}</span></div>`;
+  const body = socialEdit
+    ? `<div class="form-grid">
+        <div><label class="field-label" for="soX">X (username)</label><input type="text" id="soX" placeholder="@username" value="${esc(p.xUser)}"></div>
+        <div><label class="field-label" for="soIg">Instagram (username)</label><input type="text" id="soIg" placeholder="@username" value="${esc(p.socials.ig)}"></div>
+        <div><label class="field-label" for="soTt">TikTok (username)</label><input type="text" id="soTt" placeholder="@username" value="${esc(p.socials.tt)}"></div>
+        <div><label class="field-label" for="soYt">YouTube (channel link)</label><input type="text" id="soYt" placeholder="https://youtube.com/@channel" value="${esc(p.socials.yt)}"></div>
+      </div>
+      <div style="display:flex;gap:.8rem;margin-top:1rem;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-primary btn-sm" onclick="saveSocials()">Save</button>
+        <button class="link-muted" onclick="socialEdit=false;render()">Cancel</button>
+      </div>`
+    : row('X', p.xUser ? '@' + p.xUser : '', 'https://x.com/' + esc(p.xUser)) +
+      row('Instagram', p.socials.ig ? '@' + p.socials.ig : '', 'https://instagram.com/' + esc(p.socials.ig)) +
+      row('TikTok', p.socials.tt ? '@' + p.socials.tt : '', 'https://tiktok.com/@' + esc(p.socials.tt)) +
+      row('YouTube', p.socials.yt, esc(p.socials.yt));
+  return `
+  <div class="card card-pad">
+    <div class="section-head" style="margin-top:0;border-radius:8px 8px 0 0;display:flex;align-items:center;justify-content:space-between;gap:.6rem">
+      <span>Social Media Links</span>
+      ${(socialEdit || pubView()) ? '' : `<button class="sec-edit" onclick="socialEdit=true;render()">Edit</button>`}
+    </div>
+    <div class="section-body">
+      ${body}
+      <p class="hint" style="margin-top:.8rem">${pubView()
+        ? 'The links the player chose to share.'
+        : 'All optional and added by the player and family from their side - but we push hard for the X account: it feeds the Videos tab, and it is where college coaches go looking. The X handle here and on the Videos tab are the same field.'}</p>
+    </div>
+  </div>`;
+}
+
+/* ---- Recruiting: commitment (the red hat), contact log, AI card.
+   The commitment card is shared with the family view - committing is
+   theirs to do as much as ours. ---- */
+function buildCommitBody(p){
+  const commit = committedTo(p);
+  let commitBody;
+  if (commit){
+    commitBody = `
+      <div style="display:flex;align-items:center;gap:.3rem;flex-wrap:wrap;font-size:1.05rem;font-weight:700;color:var(--ink)">
+        ${redHat(true)} Committed - ${esc(commit)}
+      </div>
+      <p class="hint" style="margin-top:.5rem">Since ${fmtDate(p.committed.date)}. Every roster and profile now shows ${esc(p.first)} in the red hat instead of the navy one.</p>
+      <div class="commit-note">
+        <div class="cn-head">Welcome to #REDHATNATION ${redHat(false)}</div>
+        <p style="margin-top:.5rem">From all of us at CBU: congratulations, ${esc(p.first)}. Nobody handed you this - the early mornings, the long tournament weekends, the work nobody saw - that is what put the red hat on your head. Committing to ${esc(commit)} is a day your family will remember forever, and the CBU family is right there celebrating with you. Now go make ${esc(commit)} glad they got you first.</p>
+      </div>
+      <div style="margin-top:.9rem">
+      ${uncommitArm
+        ? `<span class="hint">Remove the commitment? The red hat comes off everywhere. </span>
+           <button class="link-red" onclick="doUncommit()">Remove</button>
+           <button class="link-muted" onclick="uncommitArm=false;render()">Keep</button>`
+        : `<button class="link-muted" onclick="uncommitArm=true;render()">Remove commitment</button>`}
+      </div>`;
+  } else {
+    const q = commitSearch.trim().toLowerCase();
+    const matches = q ? COLLEGES.map((c, i) => ({ c, i })).filter(x => collegeLabel(x.c).toLowerCase().indexOf(q) > -1) : [];
+    commitBody = `
+      <p class="hint">Uncommitted. When ${esc(p.first)} commits, record it here - the whole system flips from uncommitted to committed, and the red hat goes on next to the name everywhere. Red Hat Nation.</p>
+      <label class="field-label" style="margin-top:.9rem" for="crSearch">Search Schools</label>
+      <input type="text" id="crSearch" placeholder="Type a college name..." value="${esc(commitSearch)}" oninput="setCommitSearch(this.value)">
+      ${q ? (matches.length
+        ? `<div class="college-search-list">` + matches.slice(0, 12).map(x =>
+            `<button class="college-row ${commitPick === x.i ? 'sel' : ''}" onclick="pickCommit(${x.i})">${esc(x.c.n)}<span class="cr-meta">${esc(x.c.d)}${x.c.c ? ', ' + esc(x.c.c) : ''}</span></button>`).join('') +
+          `</div>${matches.length > 12 ? '<p class="hint" style="margin-top:.4rem">Keep typing to narrow the list.</p>' : ''}`
+        : '<p class="hint" style="margin-top:.6rem">No schools match - check the spelling or add it to the college list later.</p>') : ''}
+      <div style="margin-top:.9rem">
+        <button class="btn btn-primary btn-sm" ${commitPick == null ? 'disabled' : ''} onclick="doCommit()">Mark As Committed</button>
+      </div>`;
+  }
+  return commitBody;
+}
+
+function renderRecruitingTab(p){
+  if (famView()) return renderFamRecruiting(p);
+  const commitBody = buildCommitBody(p);
+
+  /* contact log card */
+  const collegeOpts = COLLEGES.map(c => `<option value="${esc(collegeLabel(c))}">${esc(collegeLabel(c))}</option>`).join('');
+  const logRows = p.contacts.length
+    ? p.contacts.map(en => `
+      <div class="contact-entry">
+        <strong style="color:var(--red)">${esc(en.college)}</strong>
+        <div class="cell-sub">${fmtDate(en.date)} &middot; logged by ${esc(en.by)}</div>
+        ${en.notes ? `<div style="margin-top:.25rem;color:var(--ink);font-size:.83rem">${esc(en.notes)}</div>` : ''}
+      </div>`).join('')
+    : '<p class="hint" style="margin-top:.8rem">No college contacts logged yet.</p>';
+
+  return `
+  <div class="rec-grid">
+    <div class="card card-pad">
+      <div class="section-head red" style="margin-top:0;border-radius:8px 8px 0 0">College Commitment</div>
+      <div class="section-body">${commitBody}</div>
+    </div>
+
+    <div class="card card-pad">
+      <div class="section-head" style="margin-top:0;border-radius:8px 8px 0 0">College Contact Log</div>
+      <div class="section-body">
+        <p class="hint">You are signed in as <strong>${esc(CURRENT_USER)}</strong> - every contact you log links to your name automatically, so staff can see which colleges are talking to us and who they talk to.</p>
+        <div style="margin-top:.9rem">
+          <label class="field-label" for="clCollege">College</label>
+          <select id="clCollege"><option value="">Select a college...</option>${collegeOpts}</select>
+          <label class="field-label" style="margin-top:.8rem" for="clDate">Contact Date</label>
+          <input type="date" id="clDate" value="${todayIso()}" style="max-width:200px">
+          <label class="field-label" style="margin-top:.8rem" for="clNotes">Notes (optional)</label>
+          <input type="text" id="clNotes" placeholder="What did they want?">
+          <div style="margin-top:.9rem"><button class="btn btn-primary btn-sm" onclick="logContact()">Log Contact</button></div>
+        </div>
+        <div style="margin-top:1.1rem">${logRows}</div>
+      </div>
+    </div>
+
+    <div class="card card-pad" style="grid-column:1 / -1">
+      <div class="section-head" style="margin-top:0;border-radius:8px 8px 0 0">AI Scouting Card</div>
+      <div class="section-body">
+        <div class="ai-teaser">
+          <h4>AI Scouting Card - Coming Online With Evals + Metrics</h4>
+          <p>Our side of the story: takes everything CBU has on ${esc(p.first)} - coach evals, metrics, recruiting activity, colleges in contact - and writes a full scouting summary with averaged ratings, like the card in the previous build. Once Evals and Metrics feed real data, the card generates from here. Addison's earlier files carry the working version to port over.</p>
+          <button class="btn btn-outline btn-sm" style="margin-top:.9rem" disabled>Generate AI Card</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card card-pad" style="grid-column:1 / -1">
+      <div class="section-head" style="margin-top:0;border-radius:8px 8px 0 0">AI Player Pitch</div>
+      <div class="section-body">
+        <div class="ai-teaser">
+          <h4>AI Player Pitch - Written From ${esc(p.first)}'s Own Words</h4>
+          <p>The player's side of the story: when the Player + Family view is built, ${esc(p.first)} fills out his colleges of interest, level of interest in each, and a write-up in his own words - goals, academics, what he wants in a program. AI reads all of it and writes the report colleges actually see: a clean introduction of who he is and what he is looking for, to pair with our scouting card above.</p>
+          <button class="btn btn-outline btn-sm" style="margin-top:.9rem" disabled>Generate Player Pitch</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* Family recruiting: the commitment card (same one), their OWN contact
+   log, and the college targets form. CBU's internal contact log and the
+   AI scouting cards stay staff-side. */
+function renderFamRecruiting(p){
+  const commitBody = buildCommitBody(p);
+  const collegeOpts = COLLEGES.map(c => `<option value="${esc(collegeLabel(c))}">${esc(collegeLabel(c))}</option>`).join('');
+
+  const logRows = p.famContacts.length
+    ? p.famContacts.map(en => `
+      <div class="contact-entry">
+        <strong style="color:var(--red)">${esc(en.college)}</strong>
+        <div class="cell-sub">${fmtDate(en.date)}</div>
+        ${en.notes ? `<div style="margin-top:.25rem;color:var(--ink);font-size:.83rem">${esc(en.notes)}</div>` : ''}
+      </div>`).join('')
+    : '<p class="hint" style="margin-top:.8rem">No contacts logged yet - add the first one above.</p>';
+
+  /* college targets: the interview answers plus divisions as toggle
+     chips, conferences typed in, colleges picked from the same
+     searchable list as commitments */
+  const t = p.targets;
+  const iv = p.interview;
+  const divChips = TGT_DIVISIONS.map(d =>
+    `<button class="vtag ${t.divisions.indexOf(d) > -1 ? 'on' : ''}" onclick="toggleTgtDiv('${d}')">${d}</button>`).join('');
+  const confChips = t.conferences.map((c, i) =>
+    `<span class="tgt-chip">${esc(c)}<button onclick="removeTgtConf(${i})" aria-label="Remove ${esc(c)}">&#10005;</button></span>`).join('');
+  const collegeChips = t.colleges.map((c, i) =>
+    `<span class="tgt-chip">${esc(c)}<button onclick="removeTgtCollege(${i})" aria-label="Remove ${esc(c)}">&#10005;</button></span>`).join('');
+  const q = tgtSearch.trim().toLowerCase();
+  const matches = q ? COLLEGES.map((c, i) => ({ c, i })).filter(x => collegeLabel(x.c).toLowerCase().indexOf(q) > -1) : [];
+
+  /* the contact log grows without limit, so it lives behind a sub-tab
+     instead of pushing the targets off the screen */
+  const contactCard = `
+    <div class="card card-pad">
+      <div class="section-head" style="margin-top:0;border-radius:8px 8px 0 0">My College Contact Log</div>
+      <div class="section-body">
+        <p class="hint">Keep track of every college that reaches out to ${esc(p.first)} - a call, a camp invite, a reply to an email. Your coaches see this too, so nothing slips through.</p>
+        <div style="margin-top:.9rem;display:flex;gap:1rem 1.4rem;flex-wrap:wrap;align-items:flex-end">
+          <div style="flex:1;min-width:220px"><label class="field-label" for="flCollege">College</label>
+            <select id="flCollege" style="max-width:100%"><option value="">Select a college...</option>${collegeOpts}</select></div>
+          <div><label class="field-label" for="flDate">Contact Date</label>
+            <input type="date" id="flDate" value="${todayIso()}" style="max-width:180px"></div>
+          <div style="flex:1.4;min-width:220px"><label class="field-label" for="flNotes">Notes (optional)</label>
+            <input type="text" id="flNotes" placeholder="What did they say?" style="max-width:100%"></div>
+          <button class="btn btn-primary btn-sm" onclick="famLogContact()">Log Contact</button>
+        </div>
+        <div style="margin-top:1.1rem">${logRows}</div>
+      </div>
+    </div>`;
+
+  return `
+  <div class="card card-pad">
+    <div class="section-head red" style="margin-top:0;border-radius:8px 8px 0 0">College Commitment</div>
+    <div class="section-body">${commitBody}</div>
+  </div>
+
+  <div class="chip-row tab-row" style="margin:1.1rem 0 1rem">
+    <button class="chip ${famRecTab === 'targets' ? 'active' : ''}" onclick="famRecTab='targets';render()">College Targets</button>
+    <button class="chip ${famRecTab === 'contacts' ? 'active' : ''}" onclick="famRecTab='contacts';render()">My College Contact Log</button>
+  </div>
+
+  ${famRecTab === 'contacts' ? contactCard : `
+    <div class="card card-pad">
+      <div class="section-head" style="margin-top:0;border-radius:8px 8px 0 0">College Targets</div>
+      <div class="section-body">
+        <p class="hint">A quick interview first - the answers guide ${esc(p.first)}'s coaches and feed the AI Player Pitch - then the target lists. Everything saves as you go.</p>
+
+        <div class="kv-sub" style="margin-top:1.1rem;font-size:.7rem">Baseball Program</div>
+        <label class="q-label" for="iqProgram">What are you looking to get out of the baseball program?</label>
+        <textarea id="iqProgram" placeholder="Development, culture, winning, position coaching - whatever matters most to you." onchange="saveInterview('program', this.value)">${esc(iv.program)}</textarea>
+        <label class="q-label">From a playing-time perspective: would you sit your freshman year to be at the right school, or is playing right away the priority?</label>
+        <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+          <button class="vtag ${iv.playtime === 'na' ? 'on' : ''}" onclick="setInterview('playtime','na')">N/A</button>
+          <button class="vtag ${iv.playtime === 'wait' ? 'on' : ''}" onclick="setInterview('playtime','wait')">Willing To Sit And Earn It</button>
+          <button class="vtag ${iv.playtime === 'now' ? 'on' : ''}" onclick="setInterview('playtime','now')">I Want To Play Right Away</button>
+        </div>
+        ${iv.playtime === 'wait' ? `
+        <div class="mind-note"><span class="shield">&#128737;</span><span><strong>The dream-school mindset.</strong> I am choosing the school first. Nothing gets handed to anyone, and I know I may not play right away - I am willing to show up every day, out-work the depth chart, and earn my opportunities, because this is where I want to be. The portal is not part of my plan unless something truly changes.</span></div>` : ''}
+        ${iv.playtime === 'now' ? `
+        <div class="mind-note"><span class="shield">&#128737;</span><span><strong>The opportunity mindset.</strong> I know a starting spot is never guaranteed anywhere. What I am looking for is a real chance to compete for one from day one - the right fit, coaches who genuinely want me, and the door open at the front. The name on the jersey matters less to me than the opportunity inside the program.</span></div>` : ''}
+        <label class="q-label">Are you willing to play out of state?</label>
+        <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+          <button class="vtag ${iv.outState === 'na' ? 'on' : ''}" onclick="setInterview('outState','na')">N/A</button>
+          <button class="vtag ${iv.outState === 'yes' ? 'on' : ''}" onclick="setInterview('outState','yes')">Yes</button>
+          <button class="vtag ${iv.outState === 'no' ? 'on' : ''}" onclick="setInterview('outState','no')">No</button>
+        </div>
+        ${iv.outState === 'yes' ? `
+        <label class="q-label" for="iqOutState" style="font-weight:600;font-size:.84rem">How far are you willing to go? Is there a region you want to stay close to, or would you go to the farthest corner of the country to play?</label>
+        <textarea id="iqOutState" style="min-height:66px" placeholder="e.g. Southeast preferred to keep family close - but anywhere for the right program." onchange="saveInterview('outStateDetail', this.value)">${esc(iv.outStateDetail)}</textarea>` : ''}
+        <label class="field-label" style="margin-top:1.1rem">Target Divisions</label>
+        <div style="display:flex;gap:.4rem;flex-wrap:wrap">${divChips}</div>
+        <label class="field-label" style="margin-top:1rem">Target Conferences</label>
+        <div style="display:flex;gap:.35rem;flex-wrap:wrap;margin-bottom:.5rem">${confChips || '<span class="hint">None yet.</span>'}</div>
+        <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center">
+          <input type="text" id="tcConf" placeholder="e.g. SEC" style="max-width:200px" onkeydown="if(event.key==='Enter')addTgtConf()">
+          <button class="btn btn-outline-dark btn-sm" onclick="addTgtConf()">+ Add Conference</button>
+        </div>
+        <label class="field-label" style="margin-top:1rem">Target Colleges</label>
+        <div style="display:flex;gap:.35rem;flex-wrap:wrap;margin-bottom:.5rem">${collegeChips || '<span class="hint">None yet - search below to add.</span>'}</div>
+        <input type="text" id="tgtSearchInput" placeholder="Search the college list..." value="${esc(tgtSearch)}" oninput="setTgtSearch(this.value)" style="max-width:320px">
+        ${q ? (matches.length
+          ? `<div class="college-search-list" style="max-width:420px">` + matches.slice(0, 10).map(x =>
+              `<button class="college-row" onclick="addTgtCollege(${x.i})">${esc(x.c.n)}<span class="cr-meta">${esc(x.c.d)}${x.c.c ? ', ' + esc(x.c.c) : ''}</span></button>`).join('') + '</div>'
+          : '<p class="hint" style="margin-top:.5rem">No schools match that search.</p>') : ''}
+
+        <div class="kv-sub" style="margin-top:1.6rem;font-size:.7rem">Academics</div>
+        <label class="q-label" for="iqAcademics">Academically, what are you looking for out of a university?</label>
+        <textarea id="iqAcademics" placeholder="Majors you care about, class sizes, academic support for athletes - in your own words." onchange="saveInterview('academics', this.value)">${esc(iv.academics)}</textarea>
+        <label class="q-label">Are you looking for a high-academic university?</label>
+        <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+          <button class="vtag ${iv.highAcad === 'na' ? 'on' : ''}" onclick="setInterview('highAcad','na')">N/A</button>
+          <button class="vtag ${iv.highAcad === 'yes' ? 'on' : ''}" onclick="setInterview('highAcad','yes')">Yes</button>
+          <button class="vtag ${iv.highAcad === 'no' ? 'on' : ''}" onclick="setInterview('highAcad','no')">No</button>
+        </div>
+        ${iv.highAcad === 'yes' ? `
+        <label class="q-label" style="font-weight:600;font-size:.84rem">Where do your grades and test scores stand for high-academic admissions?</label>
+        <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+          <button class="vtag ${iv.acadStanding === 'ready' ? 'on' : ''}" onclick="setInterview('acadStanding','ready')">They Already Show It</button>
+          <button class="vtag ${iv.acadStanding === 'goal' ? 'on' : ''}" onclick="setInterview('acadStanding','goal')">They Will - That Is The Goal</button>
+        </div>
+        ${iv.acadStanding === 'ready' ? `
+        <div class="mind-note"><span class="shield">&#128737;</span><span><strong>Ready now.</strong> My GPA and test scores already show I belong at a high-academic university - the transcript backs it up, and keeping it that way is part of my plan.</span></div>` : ''}
+        ${iv.acadStanding === 'goal' ? `
+        <div class="mind-note"><span class="shield">&#128737;</span><span><strong>Building toward it.</strong> I am early in the journey - my GPA and test scores are not the full story yet, but high-academic eligibility is a stated goal. The grades and the scores will be there when it is time.</span></div>` : ''}` : ''}
+      </div>
+    </div>`}`;
+}
+
+/* =====================================================================
+   DEMO VIEW SWITCHER
+   Flips the same profile between its three audiences without logging
+   in and out. Player + Family is a real view now; public is still a
+   placeholder.
+   ===================================================================== */
+function switchViewAs(v){
+  viewAs = v;
+  if (v !== 'admin' && viewPlayerId == null){
+    /* the player and public views need a player - default to Isaiah */
+    const isa = players.find(x => x.last === 'Maruszak') || players[0];
+    viewPlayerId = isa.id;
+    ensurePhoto(isa);
+  }
+  menuOpenId = null; photoAdjust = false;
+  profileTab = 'info'; editSection = null; changeTeamId = null;
+  nameEdit = false; pubConfirm = false; tgtSearch = '';
+  pubTab = null; videoDelArm = null; socialEdit = false; videoXEdit = false;
+  if (!schedCalMonth) schedCalMonth = todayIso().slice(0, 7);
+  render();
+}
+function viewAsBar(){
+  return `
+  <!-- DEMO ONLY: view switcher, so all three profile audiences are one
+       click apart while they get designed -->
+  <div class="viewas-bar">
+    <span class="viewas-label">View As (demo)</span>
+    <button class="chip ${viewAs === 'admin' ? 'active' : ''}" onclick="switchViewAs('admin')">Admin / Coach</button>
+    <button class="chip ${viewAs === 'player' ? 'active' : ''}" onclick="switchViewAs('player')">Player + Family</button>
+    <button class="chip ${viewAs === 'public' ? 'active' : ''}" onclick="switchViewAs('public')">Public Site</button>
+  </div>`;
+}
+/* Shown on the public view while the family has the profile switched
+   off - the page exists, the content does not */
+function renderPublicPrivate(p){
+  const who = p ? esc(fullName(p)) : 'This player';
+  return `
+  <div class="card" style="margin-top:1rem"><div class="tab-placeholder">
+    <h3>This Profile Is Private</h3>
+    <p>${who}'s family has not turned the public profile on. When they flip the switch from their own login (try it in the Player + Family view), the public recruiting page shows right here - the baseball resume, never the contact info.</p>
+  </div></div>`;
+}
+
+/* THE PUBLIC PROFILE - what recruiters and anyone on the internet see
+   once the family opts in. No Player Overview, no Evals, no Recruiting.
+   Academics and Metrics tabs exist only if the family switched them on;
+   Stats, Schedule, Videos, and Social always show. Never contact info,
+   never the birthday - age in years only. */
+function renderPublicView(p){
+  const info = p.team ? teamInfo(p.team) : null;
+  const ph = curPhoto();
+  const commit = committedTo(p);
+
+  const tabsAvail = [];
+  if (p.publicAcademics) tabsAvail.push(['academics', 'Academics']);
+  if (p.publicMetrics) tabsAvail.push(['pmetrics', 'Metrics']);
+  tabsAvail.push(['stats', 'Stats'], ['schedule', 'Schedule'], ['videos', 'Videos'], ['social', 'Social']);
+  if (!tabsAvail.some(t => t[0] === pubTab)) pubTab = tabsAvail[0][0];
+
+  const subBits = [
+    posLabel(p),
+    'Class of ' + p.grad,
+    ageDisplay(p) + ' years old',
+    p.hs ? esc(p.hs) : null,
+    esc(p.city) + ', ' + esc(p.state),
+    p.height ? esc(p.height) : null,
+    p.weight ? esc(p.weight) + ' lbs' : null,
+    (p.bats && p.throws) ? 'Bats ' + esc(p.bats) + ' &middot; Throws ' + esc(p.throws) : null
+  ].filter(Boolean).join(' &nbsp;&middot;&nbsp; ');
+
+  /* best-mark tiles ride the header only if metrics are opted in */
+  const tiles = p.publicMetrics ? METRIC_DEFS.map(def => {
+    const b = bestOf(p, def);
+    return b ? `<div class="metric-tile"><div class="mt-val">${fmtMetric(def, b.v)}</div><div class="mt-label">${def.label}</div></div>` : '';
+  }).join('') : '';
+
+  let body = '';
+  if (pubTab === 'academics') body = `
+    <div class="card card-pad">
+      <div class="section-head" style="margin-top:0;border-radius:8px 8px 0 0">Academics</div>
+      <div class="section-body" style="max-width:480px">
+        <div class="kv"><span class="k">High School</span><span class="v">${esc(p.hs) || '-'}</span></div>
+        <div class="kv"><span class="k">GPA</span><span class="v">${esc(p.gpa) || '-'}</span></div>
+        <div class="kv"><span class="k">Weighted GPA</span><span class="v">${esc(p.gpaW) || '-'}</span></div>
+        <div class="kv"><span class="k">SAT</span><span class="v">${esc(p.sat) || '-'}</span></div>
+        <div class="kv"><span class="k">ACT</span><span class="v">${esc(p.act) || '-'}</span></div>
+      </div>
+    </div>`;
+  if (pubTab === 'pmetrics') body = renderMetricsTab(p);
+  if (pubTab === 'stats') body = renderStatsTab(p);
+  if (pubTab === 'schedule') body = renderScheduleTab(p);
+  if (pubTab === 'videos') body = renderVideosTab(p);
+  if (pubTab === 'social') body = renderSocialTab(p);
+
+  return `
+  <div class="card card-pad" style="margin-top:1rem">
+    <div style="display:flex;gap:1.5rem;flex-wrap:wrap">
+      <div>
+        <div class="profile-photo">${(ph && ph.src)
+          ? `<div class="photo-bg" style="${bgStyleStr(ph)}"></div>`
+          : `<div class="photo-bg">${esc(initials(p))}</div>`}</div>
+      </div>
+      <div style="flex:1;min-width:250px">
+        <div class="profile-name">${esc(fullName(p))}${p.jersey ? `<span class="jersey-num">#${esc(p.jersey)}</span>` : ''}${commit ? redHat(true) : ''}</div>
+        <div class="profile-sub">${subBits}</div>
+        <div class="profile-pills">
+          ${p.team ? `<span class="pill pill-navy">${esc(p.team)}</span>` : ''}
+          <span class="pill pill-blue">${esc(p.season)}${info ? ' &middot; ' + esc(info.div) : ''}</span>
+          ${commit ? `<span class="pill pill-red">Committed - ${esc(commit)}</span>` : '<span class="pill pill-gold">Uncommitted</span>'}
+        </div>
+        ${tiles ? `<div class="metric-tiles">${tiles}</div>` : ''}
+      </div>
+    </div>
+  </div>
+
+  <div class="chip-row tab-row">
+    ${tabsAvail.map(t => `<button class="chip ${pubTab === t[0] ? 'active' : ''}" onclick="setPubTab('${t[0]}')">${t[1]}</button>`).join('')}
+  </div>
+  ${body}
+  <p class="hint" style="color:#aab3cc;margin-top:1.2rem">Public recruiting profile, shared by the family. Contact information and the birthday are never shown.</p>`;
+}
+
+/* =====================================================================
+   ROOT RENDER
+   ===================================================================== */
+function render(){
+  const app = document.getElementById('app');
+  const p = viewPlayerId != null ? playerById(viewPlayerId) : null;
+  let body;
+  if (viewAs === 'public') body = p ? (p.publicOn ? renderPublicView(p) : renderPublicPrivate(p)) : renderList();
+  else body = p ? renderProfile(p) : renderList();
+  app.innerHTML = viewAsBar() + body;
+}
+render();
+</script>
+</body>
+</html>
