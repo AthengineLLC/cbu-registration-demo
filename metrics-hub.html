@@ -391,6 +391,31 @@ input.fe-input{flex:1;max-width:100%;font-size:1.15rem;padding:.7rem .8rem}
 .met-pick label:hover{border-color:var(--powder-dark)}
 .met-pick .mp-sub{font-size:.72rem;color:var(--muted);font-weight:400;margin-left:auto;text-align:right}
 
+/* the review panel: boxed in light red so it cannot be missed when it
+   opens on the day header (Addison kept looking further down the page) */
+.review-panel{
+  margin-top:.9rem;background:#fdf0f2;border:2px solid var(--red);border-radius:10px;
+  padding:.9rem 1rem;
+}
+.review-panel .rm-row{border-bottom-color:#f3d5da}
+
+/* warning icon on the testing-days LIST: hover explains, click lands in
+   that day's review */
+.flag-ico{
+  display:inline-block;margin-left:.45rem;cursor:pointer;vertical-align:middle;
+  background:#fdf3dc;border:1.5px solid #9a6b0f;color:#9a6b0f;border-radius:6px;
+  padding:.12rem .45rem;font-family:'Inter',Arial,sans-serif;font-size:.74rem;font-weight:700;
+}
+.flag-ico:hover{background:#fbe9c0}
+
+/* out-of-range flag under the Results bar: gold, impossible to miss */
+.review-flag{
+  display:block;width:100%;text-align:left;margin-top:.7rem;cursor:pointer;
+  background:#fdf3dc;border:1.5px solid #9a6b0f;color:#9a6b0f;border-radius:8px;
+  padding:.5rem .7rem;font-family:'Inter',Arial,sans-serif;font-size:.78rem;font-weight:600;
+}
+.review-flag:hover{background:#fbe9c0}
+
 /* remove-players roster list: scrollable, searchable in place */
 .rm-list{max-height:280px;overflow:auto;margin-top:.5rem;border:1.5px solid var(--line);border-radius:8px;padding:.2rem .7rem}
 .rm-row{display:flex;align-items:center;gap:.7rem;padding:.4rem 0;border-bottom:1px solid var(--line);font-size:.86rem;color:var(--ink)}
@@ -588,28 +613,31 @@ ALUMNI_SEED.forEach(r => players.push({
    up so the org always sees them, but they never sit inside the
    standard list and never clutter it.
    ===================================================================== */
+/* range = the PLAUSIBLE band for a mark. Values outside it save fine
+   but get FLAGGED for the out-of-range review once the day completes -
+   the record books are only as good as the worst typo in them. */
 const STANDARD_METRICS = [
-  { key:'d10', cat:'Running',  label:'10-Yard Dash',       short:'10 YD',    unit:'sec', dec:2, best:'low'  },
-  { key:'d30', cat:'Running',  label:'30-Yard Dash',       short:'30 YD',    unit:'sec', dec:2, best:'low'  },
-  { key:'d60', cat:'Running',  label:'60-Yard Dash',       short:'60 YD',    unit:'sec', dec:2, best:'low'  },
-  { key:'ofv', cat:'Defense',  label:'Outfield Velo',      short:'OF VELO',  unit:'mph', dec:1, best:'high' },
-  { key:'ifv', cat:'Defense',  label:'Infield Velo',       short:'IF VELO',  unit:'mph', dec:1, best:'high' },
-  { key:'cv',  cat:'Defense',  label:'Catcher Velo',       short:'C VELO',   unit:'mph', dec:1, best:'high' },
-  { key:'pop', cat:'Defense',  label:'Catcher Pop Time',   short:'POP',      unit:'sec', dec:2, best:'low'  },
-  { key:'fb',  cat:'Pitching', label:'Fastball Peak Velo', short:'FB VELO',  unit:'mph', dec:1, best:'high' },
-  { key:'ev',  cat:'Hitting',  label:'Exit Velo',          short:'EXIT VELO',unit:'mph', dec:1, best:'high' }
+  { key:'d10', cat:'Running',  label:'10-Yard Dash',       short:'10 YD',    unit:'sec', dec:2, best:'low',  range:[1.2, 3.2] },
+  { key:'d30', cat:'Running',  label:'30-Yard Dash',       short:'30 YD',    unit:'sec', dec:2, best:'low',  range:[3.0, 6.0] },
+  { key:'d60', cat:'Running',  label:'60-Yard Dash',       short:'60 YD',    unit:'sec', dec:2, best:'low',  range:[5.5, 12.0] },
+  { key:'ofv', cat:'Defense',  label:'Outfield Velo',      short:'OF VELO',  unit:'mph', dec:1, best:'high', range:[40, 105] },
+  { key:'ifv', cat:'Defense',  label:'Infield Velo',       short:'IF VELO',  unit:'mph', dec:1, best:'high', range:[40, 100] },
+  { key:'cv',  cat:'Defense',  label:'Catcher Velo',       short:'C VELO',   unit:'mph', dec:1, best:'high', range:[40, 100] },
+  { key:'pop', cat:'Defense',  label:'Catcher Pop Time',   short:'POP',      unit:'sec', dec:2, best:'low',  range:[1.4, 3.5] },
+  { key:'fb',  cat:'Pitching', label:'Fastball Peak Velo', short:'FB VELO',  unit:'mph', dec:1, best:'high', range:[40, 105] },
+  { key:'ev',  cat:'Hitting',  label:'Exit Velo',          short:'EXIT VELO',unit:'mph', dec:1, best:'high', range:[40, 120] }
 ];
 /* Site metrics: added by the site that owns the gear, visible org-wide.
    These two exist because CBU Tampa (HQ) has a force plate. */
 let CUSTOM_METRICS = [
-  { key:'vert', cat:'Performance', label:'Vertical Jump',  short:'VERT',     unit:'in',  dec:1, best:'high',
+  { key:'vert', cat:'Performance', label:'Vertical Jump',  short:'VERT',     unit:'in',  dec:1, best:'high', range:[5, 45],
     addedBy:'Addison Maruszak', site:'CBU Tampa (HQ) - force plate', added:'2026-02-20' },
-  { key:'pkpw', cat:'Performance', label:'CMJ Peak Power', short:'PEAK PWR', unit:'W',   dec:0, best:'high',
+  { key:'pkpw', cat:'Performance', label:'CMJ Peak Power', short:'PEAK PWR', unit:'W',   dec:0, best:'high', range:[1500, 8000],
     addedBy:'Addison Maruszak', site:'CBU Tampa (HQ) - force plate', added:'2026-02-20' },
   /* best:'none' - a DIRECTION-NEUTRAL metric. Tracked and charted, but
      no number is "better": the dashboard lists it alphabetically and
      shows changes without green or red. */
-  { key:'wt',   cat:'Performance', label:'Body Weight',    short:'WEIGHT',   unit:'lbs', dec:0, best:'none',
+  { key:'wt',   cat:'Performance', label:'Body Weight',    short:'WEIGHT',   unit:'lbs', dec:0, best:'none', range:[60, 350],
     addedBy:'Addison Maruszak', site:'CBU Tampa (HQ)', added:'2026-02-20' }
 ];
 const METRIC_CATS = ['Running','Defense','Pitching','Hitting','Performance'];
@@ -773,6 +801,20 @@ const ISA_PIN = {
   RES.tda1[alum('Rivera').id]  = { d10:1.49, d30:3.68, d60:6.48, ofv:95.0, ev:99.5 };
   RES.tda1[alum('Watkins').id] = { d10:1.62, d30:3.95, d60:6.95, fb:98.5,  ev:98.0 };
   RES.tda1[alum('Osuna').id]   = { d10:1.88, d30:4.29, d60:7.62, ifv:71.5, ev:79.5 };
+  /* A SEEDED DEMO FLAG so the out-of-range review can be walked on a
+     closed day: Trey Glaser's 10-yard dash on the Spring day was
+     fat-fingered as 16.1 - the classic decimal slip for 1.61. It sits
+     flagged on td3 (closed out) until someone confirms or fixes it. */
+  const glaser = players.find(p => p.last === 'Glaser');
+  if (glaser && RES.td3[glaser.id]) RES.td3[glaser.id].d10 = 16.1;
+  /* ...and TWO flags on the closed Fall 2025 day, so the step-through
+     review (resolve one, the next is right there) can be walked too:
+     Thompson's exit velo missing a digit, Ross's fastball with an
+     extra one. */
+  const thompson = players.find(p => p.last === 'Thompson');
+  const ross = players.find(p => p.last === 'Ross');
+  if (thompson){ if (!RES.td2[thompson.id]) RES.td2[thompson.id] = {}; RES.td2[thompson.id].ev = 9.2; }
+  if (ross){ if (!RES.td2[ross.id]) RES.td2[ross.id] = {}; RES.td2[ross.id].fb = 855; }
   days.forEach(d => { if (d.numbersMode === 'auto') autoAssign(d); });
   RES.td5 = {}; NUM.td5 = {};
 })();
@@ -787,7 +829,7 @@ const ISA_PIN = {
    the moment a connection appears. Marks are one-player-one-metric, so
    stations never collide and catch-up sync is instant.
    ===================================================================== */
-const LS_KEY = 'cbu-metrics-hub-v1';
+const LS_KEY = 'cbu-metrics-hub-v3';   /* v3: seeded demo flags on td3 + td2 */
 function persist(){
   try{
     localStorage.setItem(LS_KEY, JSON.stringify({
@@ -802,7 +844,9 @@ function persist(){
         .reduce((m, d) => { m[d.id] = d.removed; return m; }, {}),
       dayTeams: days.filter(d => !d.userMade && Array.isArray(d.teams))
         .reduce((m, d) => { m[d.id] = d.teams; return m; }, {}),
-      dayAuto, cmAuto: _cmAuto, pend: [...PEND]
+      dayDetails: days.filter(d => !d.userMade)
+        .reduce((m, d) => { m[d.id] = { name: d.name, date: d.date, loc: d.loc, metrics: d.metrics }; return m; }, {}),
+      dayAuto, cmAuto: _cmAuto, pend: [...PEND], conf: [...CONFIRMED], meta: META
     }));
   }catch(e){ /* private mode or no storage - entry still works in memory */ }
 }
@@ -831,6 +875,12 @@ function restore(){
     Object.keys(s.dayExtras || {}).forEach(id => { const d = dayById(id); if (d) d.extras = s.dayExtras[id]; });
     Object.keys(s.dayRemoved || {}).forEach(id => { const d = dayById(id); if (d) d.removed = s.dayRemoved[id]; });
     Object.keys(s.dayTeams || {}).forEach(id => { const d = dayById(id); if (d) d.teams = s.dayTeams[id]; });
+    Object.keys(s.dayDetails || {}).forEach(id => {
+      const d = dayById(id);
+      if (d){ const e = s.dayDetails[id]; d.name = e.name; d.date = e.date; d.loc = e.loc; d.metrics = e.metrics; }
+    });
+    (s.conf || []).forEach(k => CONFIRMED.add(k));
+    Object.keys(s.meta || {}).forEach(k => { META[k] = s.meta[k]; });
   }catch(e){}
 }
 
@@ -872,6 +922,67 @@ function flushSync(){
 }
 if (typeof window !== 'undefined' && window.addEventListener){
   window.addEventListener('online', () => { toast('Back online - syncing saved marks'); scheduleSync(); });
+}
+
+/* Who is signed in - every mark gets stamped with the enterer and the
+   date, like evals link to their author. The audit trail for the day a
+   number looks wrong. */
+const CURRENT_USER = 'Addison Maruszak';
+const META = {};                             /* 'day|player|metric' -> {by, at} */
+function markMeta(d, p, k){ META[d + '|' + p + '|' + k] = { by: CURRENT_USER, at: todayIso() }; }
+function metaOf(d, p, k){ return META[d + '|' + p + '|' + k] || null; }
+/* stamps for the seeded demo flags (Glaser's 16.1 ten on the Spring
+   day; Thompson's and Ross's slips on the Fall 2025 day) */
+(function(){
+  const g = players.find(p => p.last === 'Glaser');
+  if (g) META['td3|' + g.id + '|d10'] = { by: 'Addison Maruszak', at: '2026-03-14' };
+  const t = players.find(p => p.last === 'Thompson');
+  if (t) META['td2|' + t.id + '|ev'] = { by: 'Addison Maruszak', at: '2025-09-20' };
+  const r = players.find(p => p.last === 'Ross');
+  if (r) META['td2|' + r.id + '|fb'] = { by: 'Addison Maruszak', at: '2025-09-20' };
+})();
+
+/* Out-of-range flags: a value outside its metric's plausible band saves
+   fine but sits in the review queue once the day completes - until a
+   human CONFIRMS it as real or changes it. */
+const CONFIRMED = new Set();                 /* 'day|player|metric' reviewed-and-kept */
+function outOfRange(def, v){ return !!(def && def.range && (v < def.range[0] || v > def.range[1])); }
+function flaggedMarks(day){
+  const out = [];
+  const res = RES[day.id] || {};
+  dayRoster(day).forEach(p => {
+    const r = res[p.id];
+    if (!r) return;
+    day.metrics.forEach(k => {
+      const def = metricDef(k);
+      const v = r[k];
+      if (def && v != null && outOfRange(def, v) && !CONFIRMED.has(day.id + '|' + p.id + '|' + k))
+        out.push({ p, def, v });
+    });
+  });
+  return out;
+}
+function confirmMark(dayId, pid, key){
+  CONFIRMED.add(dayId + '|' + pid + '|' + key);
+  persist();
+  const left = flaggedMarks(dayById(dayId)).length;
+  toast(left ? 'Confirmed - ' + left + ' more to review' : 'Confirmed - all flags cleared on this day');
+  render();
+}
+function reviseMark(dayId, pid, key){
+  const def = metricDef(key);
+  const el = document.getElementById('rv-' + pid + '-' + key);
+  const v = parseFloat(el ? el.value : '');
+  if (isNaN(v)){ toast('Numbers only'); return; }
+  RES[dayId][pid][key] = parseFloat(v.toFixed(def.dec));
+  markMeta(dayId, pid, key);
+  CONFIRMED.add(dayId + '|' + pid + '|' + key);
+  PEND.add(dayId + '|' + pid + '|' + key);
+  scheduleSync();
+  persist();
+  const left = flaggedMarks(dayById(dayId)).length;
+  toast(left ? 'Changed and confirmed - ' + left + ' more to review' : 'Changed and confirmed - all flags cleared on this day');
+  render();
 }
 
 /* =====================================================================
@@ -949,6 +1060,12 @@ let addPplOpen = false;      /* add-players panel open on the day header */
 let addPplQ = '';            /* add-a-player search text */
 let rmOpen = false;          /* remove-players panel open on the day header */
 let rmQ = '';                /* remove-a-player search text */
+let revOpen = false;         /* out-of-range review panel */
+let edOpen = false;          /* edit-day-details panel */
+let csvOpen = false;         /* CSV import panel */
+let csvData = null;          /* parsed CSV waiting for mapping {headers, rows} */
+let csvMap = [];             /* per-column target: ignore | num | name | metric key */
+let csvReport = null;        /* result of the last import {marks, matched, misses} */
 let fpid = null;             /* field entry: selected player, null = search list */
 let fopen = null;            /* field entry: which metric is expanded */
 let fq = '';                 /* field entry: search by name */
@@ -1008,6 +1125,7 @@ function renderDays(){
   const rows = days.slice().sort((a, b) => b.date.localeCompare(a.date)).map(d => {
     const total = dayRoster(d).length, rec = recordedCount(d), st = dayStatus(d);
     const mets = d.metrics.map(k => metricDef(k)).filter(Boolean);
+    const nFlags = (d.closed || (total > 0 && rec === total)) ? flaggedMarks(d).length : 0;
     return `
       <tr style="cursor:pointer" onclick="openDay('${d.id}')">
         <td>
@@ -1023,6 +1141,8 @@ function renderDays(){
         <td><span class="cell-strong">${total}</span></td>
         <td>
           <span class="pill ${st.pill}">${st.label}</span>
+          ${nFlags ? `<button class="flag-ico" title="Possible bad data - needs confirmation (${nFlags} mark${nFlags > 1 ? 's' : ''})"
+            onclick="event.stopPropagation();openDayReview('${d.id}')">&#9888; ${nFlags}</button>` : ''}
           <div class="cell-sub">${rec} of ${total} recorded</div>
         </td>
         <td><button class="btn btn-navy btn-sm" onclick="event.stopPropagation();openDay('${d.id}')">Open</button></td>
@@ -1058,6 +1178,7 @@ function openDay(id){
   gview = (window.innerWidth && window.innerWidth <= 760) ? 'field' : 'grid';
   fpid = null; fopen = null; fq = ''; fqn = ''; gqn = ''; renumOpen = false;
   addPplOpen = false; addPplQ = ''; rmOpen = false; rmQ = '';
+  revOpen = false; edOpen = false; csvOpen = false; csvData = null; csvMap = []; csvReport = null;
   fteam = 'all'; fgroup = 'all'; gteam = 'all'; ggroup = 'all';
   render();
   window.scrollTo(0, 0);
@@ -1146,11 +1267,13 @@ function renderGrid(){
               <span class="pill pill-gold">Day Started - Numbers Locked</span>
               <button class="btn btn-outline-dark btn-sm" onclick="unstartDay('${day.id}')">Unstart</button>`
             : `<button class="btn btn-primary btn-sm" onclick="startDay('${day.id}')">Start Metric Day</button>
-               ${hasNums ? `<button class="btn btn-outline-dark btn-sm" onclick="renumOpen=!renumOpen;addPplOpen=false;rmOpen=false;render()">Renumber</button>` : ''}`}
+               ${hasNums ? `<button class="btn btn-outline-dark btn-sm" onclick="dayPanel('renum')">Renumber</button>` : ''}`}
             ${!day.closed ? `
-              <button class="btn btn-outline-dark btn-sm" onclick="addPplOpen=!addPplOpen;renumOpen=false;rmOpen=false;render()">Add Players</button>
-              <button class="btn btn-outline-dark btn-sm" onclick="rmOpen=!rmOpen;renumOpen=false;addPplOpen=false;render()">Remove Players</button>` : ''}
+              <button class="btn btn-outline-dark btn-sm" onclick="dayPanel('add')">Add Players</button>
+              <button class="btn btn-outline-dark btn-sm" onclick="dayPanel('rm')">Remove Players</button>
+              <button class="btn btn-outline-dark btn-sm" onclick="dayPanel('ed')">Edit Details</button>` : ''}
             <button class="btn btn-outline-dark btn-sm" onclick="printSheet('${day.id}')">Print Check-In Sheet</button>
+            ${!day.closed ? `<button class="btn btn-outline-dark btn-sm" onclick="dayPanel('csv')">Import From CSV</button>` : ''}
             ${day.started && !day.closed ? `<button class="btn btn-done" onclick="closeDay('${day.id}')">Close Out Day</button>` : ''}
           </div>
           ${renumOpen && !day.started ? `
@@ -1210,10 +1333,83 @@ function renderGrid(){
             </div>
           </div>`;
           })() : ''}
+          ${revOpen ? (() => {
+            const flags = flaggedMarks(day);
+            const nums2 = NUM[day.id] || {};
+            return `
+          <div class="review-panel">
+            <span class="field-label" style="color:var(--red)">Out-Of-Range Review${flags.length ? ' - ' + flags.length + ' to resolve' : ''}</span>
+            ${flags.length ? flags.map(f => {
+              const m = metaOf(day.id, f.p.id, f.def.key);
+              return `
+            <div class="rm-row" style="flex-wrap:wrap">
+              <span style="flex:1;min-width:220px">#${nums2[f.p.id] != null ? nums2[f.p.id] : '-'} ${esc(f.p.last)}, ${esc(f.p.first)} - ${esc(f.def.label)}:
+                <strong>${fmtVal(f.def, f.v)} ${f.def.unit}</strong>
+                <span style="color:var(--muted)">(usual ${f.def.range[0]}-${f.def.range[1]})</span>
+                ${m ? `<div class="cell-sub">entered by ${esc(m.by)} &middot; ${fmtDate(m.at)}</div>` : ''}
+              </span>
+              <input id="rv-${f.p.id}-${f.def.key}" class="eg-in eg-val" type="text" inputmode="decimal" value="${fmtVal(f.def, f.v)}">
+              <button class="btn btn-primary btn-sm" onclick="reviseMark('${day.id}',${f.p.id},'${f.def.key}')">Save Change</button>
+              <button class="btn btn-outline-dark btn-sm" onclick="confirmMark('${day.id}',${f.p.id},'${f.def.key}')">Confirm As Is</button>
+            </div>`;
+            }).join('') : `<p class="hint" style="margin-top:.4rem">Nothing flagged - every mark reads inside its usual range.</p>`}
+            <div style="margin-top:.8rem"><button class="btn btn-primary btn-sm" onclick="revOpen=false;render()">Finish Review</button></div>
+          </div>`;
+          })() : ''}
+          ${edOpen && !day.closed ? `
+          <div style="margin-top:.8rem;border-top:1px solid var(--line);padding-top:.8rem">
+            <span class="field-label">Edit Day Details</span>
+            <div class="form-grid" style="margin-top:.4rem">
+              <label><span class="field-label">Name</span><input id="ed-name" type="text" value="${esc(day.name)}"></label>
+              <label><span class="field-label">Date</span><input id="ed-date" type="date" value="${day.date}"></label>
+              <label class="full"><span class="field-label">Location</span><input id="ed-loc" type="text" value="${esc(day.loc)}"></label>
+            </div>
+            <span class="field-label" style="margin-top:1rem">Metrics On This Day</span>
+            <div class="met-pick">${allMetrics().map(d => `
+              <label><input type="checkbox" id="ed-m-${d.key}" ${day.metrics.indexOf(d.key) !== -1 ? 'checked' : ''}>${esc(d.label)}<span class="mp-sub">${d.unit}</span></label>`).join('')}</div>
+            <div style="margin-top:1rem;display:flex;gap:.9rem;align-items:center;flex-wrap:wrap">
+              <button class="btn btn-primary btn-sm" onclick="editDayDetails('${day.id}')">Save Changes</button>
+              <button class="link-muted" onclick="edOpen=false;render()">Cancel</button>
+              <span class="hint" style="margin:0">Teams are managed with Add / Remove Players. Removing a metric hides its column - marks are kept and come back if it is re-added.</span>
+            </div>
+          </div>` : ''}
+          ${csvOpen && !day.closed ? (() => {
+            const dayMets = day.metrics.map(k => metricDef(k)).filter(Boolean);
+            return `
+          <div style="margin-top:.8rem;border-top:1px solid var(--line);padding-top:.8rem">
+            <span class="field-label">Import Results From CSV</span>
+            <p class="hint" style="margin-top:.3rem">One row per player. Pick the file, then tag which column identifies the player (testing number or name) and which columns feed which datafields - typically an affiliate's tech export mapping onto its custom metrics.</p>
+            <input type="file" accept=".csv,text/csv" onchange="csvLoad(this)" style="margin-top:.5rem;max-width:100%">
+            ${csvData ? `
+            <div class="table-wrap" style="margin-top:.7rem">
+              <table>
+                <thead><tr><th>CSV Column</th><th>First Row</th><th>Goes To</th></tr></thead>
+                <tbody>${csvData.headers.map((h, i) => `
+                  <tr>
+                    <td class="cell-strong">${esc(h)}</td>
+                    <td>${esc((csvData.rows[0] || [])[i] || '')}</td>
+                    <td><select onchange="csvMap[${i}]=this.value" style="max-width:230px">
+                      <option value="ignore" ${csvMap[i] === 'ignore' ? 'selected' : ''}>Ignore</option>
+                      <option value="num" ${csvMap[i] === 'num' ? 'selected' : ''}>Player Testing Number</option>
+                      <option value="name" ${csvMap[i] === 'name' ? 'selected' : ''}>Player Name</option>
+                      ${dayMets.map(d => `<option value="${d.key}" ${csvMap[i] === d.key ? 'selected' : ''}>${esc(d.label)} (${d.unit})</option>`).join('')}
+                    </select></td>
+                  </tr>`).join('')}</tbody>
+              </table>
+            </div>
+            <div style="margin-top:.8rem"><button class="btn btn-primary btn-sm" onclick="csvImport('${day.id}')">Import ${csvData.rows.length} Rows</button></div>` : ''}
+            ${csvReport ? `
+            <p class="hint" style="margin-top:.7rem"><strong>${csvReport.marks}</strong> marks imported for <strong>${csvReport.matched}</strong> players.${csvReport.misses.length
+              ? ' Could not match ' + csvReport.misses.length + ' row' + (csvReport.misses.length > 1 ? 's' : '') + ': ' + esc(csvReport.misses.slice(0, 6).join(', ')) + (csvReport.misses.length > 6 ? '...' : '') + ' - fix the number or name in the file and import again.'
+              : ' Every row matched.'}</p>` : ''}
+          </div>`;
+          })() : ''}
         </div>
         <div class="day-prog">
           <p class="hint"><span id="prog-text">${rec} of ${total} players recorded</span></p>
           <div class="progress"><i id="prog-fill" style="width:${total ? Math.round(rec / total * 100) : 0}%"></i></div>
+          ${(day.closed || (total > 0 && rec === total)) && flaggedMarks(day).length ? `
+          <button class="review-flag" onclick="dayPanel('rev')">&#9888; ${flaggedMarks(day).length} mark${flaggedMarks(day).length > 1 ? 's' : ''} look out of range - review</button>` : ''}
           ${!hasNums ? `<button class="btn btn-outline-dark btn-sm" style="margin-top:.7rem" onclick="assignNow('${day.id}')">Assign Numbers By Class &amp; Team</button>` : ''}
         </div>
       </div>
@@ -1379,6 +1575,7 @@ function renderField(day){
           <button class="link-muted" onclick="feCancel()">Cancel</button>
           ${v != null ? `<button class="link-red" onclick="feClear('${day.id}',${p.id},'${def.key}')">Remove this mark</button>` : ''}
         </div>
+        ${(m => m ? `<p class="hint" style="margin-top:.5rem">Entered by ${esc(m.by)} &middot; ${fmtDate(m.at)}</p>` : '')(metaOf(day.id, p.id, def.key))}
       </div>`;
     }
     const stateCls = v == null ? '' : isPend(day.id, p.id, def.key) ? 'loc' : 'done';
@@ -1495,10 +1692,14 @@ function feSave(dayId, pid, key){
   RES[dayId][pid][key] = parseFloat(v.toFixed(def.dec));
   fopen = null;
   const p = players.find(x => x.id === pid);
+  markMeta(dayId, pid, key);                 /* stamped: who and when */
+  CONFIRMED.delete(dayId + '|' + pid + '|' + key);
   markPending(dayId, pid, key);              /* stage 1: saved on this device */
-  toast(isOnline()
-    ? 'Saved - ' + def.label + ' ' + fmtVal(def, RES[dayId][pid][key]) + ' ' + def.unit + ' for ' + p.first + ' ' + p.last
-    : 'Saved on this device - will sync when internet returns');
+  toast(outOfRange(def, RES[dayId][pid][key])
+    ? 'Heads up - ' + def.label + ' ' + fmtVal(def, RES[dayId][pid][key]) + ' reads outside the usual range (' + def.range[0] + '-' + def.range[1] + ' ' + def.unit + '). It will be flagged for review.'
+    : isOnline()
+      ? 'Saved - ' + def.label + ' ' + fmtVal(def, RES[dayId][pid][key]) + ' ' + def.unit + ' for ' + p.first + ' ' + p.last
+      : 'Saved on this device - will sync when internet returns');
   feRefresh();
 }
 function feClear(dayId, pid, key){
@@ -1546,8 +1747,12 @@ function gridSet(dayId, pid, key, el){
     else {
       RES[dayId][pid][key] = parseFloat(v.toFixed(def.dec));
       el.value = fmtVal(def, RES[dayId][pid][key]);
+      markMeta(dayId, pid, key);             /* stamped: who and when */
+      CONFIRMED.delete(dayId + '|' + pid + '|' + key);
       markPending(dayId, pid, key);          /* stage 1: saved on this device */
-      if (!isOnline()) toast('Saved on this device - will sync when internet returns');
+      if (outOfRange(def, RES[dayId][pid][key]))
+        toast('Heads up - ' + def.label + ' ' + fmtVal(def, RES[dayId][pid][key]) + ' reads outside the usual range (' + def.range[0] + '-' + def.range[1] + ' ' + def.unit + '). It will be flagged for review.');
+      else if (!isOnline()) toast('Saved on this device - will sync when internet returns');
     }
   }
   /* stage indicator on the cell: check = on this device, full green = synced */
@@ -1673,6 +1878,135 @@ function reopenDay(dayId){
     render();
   });
 }
+/* One open management panel at a time on the day header */
+function dayPanel(name){
+  const open = { renum: renumOpen, add: addPplOpen, rm: rmOpen, rev: revOpen, ed: edOpen, csv: csvOpen }[name];
+  renumOpen = addPplOpen = rmOpen = revOpen = edOpen = csvOpen = false;
+  if (!open){
+    if (name === 'renum') renumOpen = true;
+    else if (name === 'add') addPplOpen = true;
+    else if (name === 'rm') rmOpen = true;
+    else if (name === 'rev') revOpen = true;
+    else if (name === 'ed') edOpen = true;
+    else if (name === 'csv') csvOpen = true;
+  }
+  render();
+  /* the panels live on the day header - make sure they are on screen */
+  if (!open) window.scrollTo(0, 0);
+}
+/* the list-screen warning icon lands straight in the day's review */
+function openDayReview(id){
+  openDay(id);
+  revOpen = true;
+  render();
+  window.scrollTo(0, 0);
+}
+
+/* Edit Details: fix a day's name, date, location, or metric list after
+   creation. Removing a metric hides its column but KEEPS the recorded
+   marks - they reappear if the metric is added back. */
+function editDayDetails(dayId){
+  const day = dayById(dayId);
+  const g = id => { const el = document.getElementById(id); return el ? el.value : null; };
+  const name = g('ed-name'), date = g('ed-date'), loc = g('ed-loc');
+  const newMets = allMetrics().map(d => d.key).filter(k => {
+    const el = document.getElementById('ed-m-' + k);
+    return el && el.checked != null ? !!el.checked : day.metrics.indexOf(k) !== -1;
+  });
+  const removedKeys = day.metrics.filter(k => newMets.indexOf(k) === -1);
+  const hidden = removedKeys.reduce((s, k) =>
+    s + dayRoster(day).filter(p => RES[day.id] && RES[day.id][p.id] && RES[day.id][p.id][k] != null).length, 0);
+  const apply = () => {
+    if (name && name.trim()) day.name = name.trim();
+    if (date) day.date = date;
+    if (loc && loc.trim()) day.loc = loc.trim();
+    day.metrics = newMets;
+    edOpen = false;
+    persist();
+    toast('Day details updated');
+    render();
+  };
+  if (hidden) askConfirm('Removing ' + removedKeys.length + ' metric' + (removedKeys.length > 1 ? 's' : '') +
+    ' hides ' + hidden + ' recorded marks. They are kept and reappear if the metric is added back. Save changes?', apply);
+  else apply();
+}
+
+/* CSV import - affiliate tech exports (force plate, Rapsodo). Tag which
+   column feeds which datafield; a row is a player, tagged to the roster
+   by testing number or name. Unmatched rows are reported, never lost
+   silently. */
+function csvLoad(input){
+  const f = input.files && input.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = () => csvLoadText(String(r.result));
+  r.readAsText(f);
+}
+function csvLoadText(text){
+  const lines = String(text).split(/\r?\n/).filter(l => l.trim() !== '');
+  if (lines.length < 2){ toast('That CSV has no data rows'); return; }
+  const headers = lines[0].split(',').map(h => h.trim());
+  const rows = lines.slice(1).map(l => l.split(',').map(c => c.trim()));
+  const day = dayById(gridId);
+  const norm = s => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+  /* best-guess mapping from the header names - always overridable */
+  csvMap = headers.map(h => {
+    const nh = norm(h);
+    if (/^(num|number|testingnumber|no|id)$/.test(nh) || nh === '') return nh ? 'num' : 'ignore';
+    if (/name|player/.test(nh)) return 'name';
+    const hit = day.metrics.map(k => metricDef(k)).find(d => d && (nh === norm(d.label) || nh.includes(norm(d.label)) || norm(d.label).includes(nh) && nh.length > 3));
+    return hit ? hit.key : 'ignore';
+  });
+  csvData = { headers, rows };
+  csvReport = null;
+  render();
+}
+function csvImport(dayId){
+  const day = dayById(dayId);
+  const numCol = csvMap.indexOf('num'), nameCol = csvMap.indexOf('name');
+  if (numCol === -1 && nameCol === -1){ toast('Tag one column as the player number or name first'); return; }
+  if (!csvMap.some(m => m !== 'ignore' && m !== 'num' && m !== 'name')){ toast('Tag at least one column to a metric'); return; }
+  const roster = dayRoster(day);
+  const nums = NUM[day.id] || {};
+  let marks = 0, matched = 0;
+  const misses = [];
+  csvData.rows.forEach(row => {
+    let p = null;
+    if (numCol !== -1){
+      const n = parseInt(row[numCol], 10);
+      if (!isNaN(n)) p = roster.find(x => nums[x.id] === n);
+    }
+    if (!p && nameCol !== -1){
+      const q = (row[nameCol] || '').toLowerCase().replace(/[^a-z ]/g, '').trim();
+      if (q) p = roster.find(x => {
+        const a = (x.first + ' ' + x.last).toLowerCase(), b = (x.last + ' ' + x.first).toLowerCase();
+        return a === q || b === q || a.includes(q) || b.includes(q);
+      });
+    }
+    if (!p){ misses.push(row[numCol !== -1 ? numCol : nameCol] || '(blank)'); return; }
+    matched++;
+    csvMap.forEach((m, i) => {
+      if (m === 'ignore' || m === 'num' || m === 'name') return;
+      const def = metricDef(m);
+      const v = parseFloat(row[i]);
+      if (!def || isNaN(v)) return;
+      if (!RES[day.id]) RES[day.id] = {};
+      if (!RES[day.id][p.id]) RES[day.id][p.id] = {};
+      RES[day.id][p.id][m] = parseFloat(v.toFixed(def.dec));
+      markMeta(day.id, p.id, m);
+      CONFIRMED.delete(day.id + '|' + p.id + '|' + m);
+      PEND.add(day.id + '|' + p.id + '|' + m);
+      marks++;
+    });
+  });
+  scheduleSync();
+  persist();
+  csvReport = { marks, matched, misses };
+  csvData = null;
+  toast(marks + ' marks imported for ' + matched + ' players');
+  render();
+}
+
 /* Late additions after the day was made. Before start: reshuffle the
    penciled-in numbers into proper class-and-team blocks. After start:
    the newcomer takes the NEXT UNUSED NUMBER - even if their team went

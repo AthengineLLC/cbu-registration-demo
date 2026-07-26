@@ -358,35 +358,53 @@
   Scouting Card's metric-development windows read - one data stream,
   three lenses.
 
-# Decided with Addison, queued for the next pass (not built yet)
+# The data-trust layer (built)
 
-- EDIT A TESTING DAY (the wizard walk-through happened; numbering and
-  day-start came out of it and are built): an Edit button on a day
-  reopens the wizard prefilled; changing metrics adds or removes grid
-  columns without losing entered marks; team changes reshuffle
-  penciled-in numbers, locked once the day has started. Delete still
-  to be decided.
-- SOFT RANGE WARNINGS per metric: each metric carries a plausible range
-  and an out-of-range value saves only after a confirm - one tap for a
-  real outlier, a save for every fat-finger. The record books are only
-  as good as the worst typo in them.
-- EVERY MARK STAMPED with who entered it and when, like evals link to
-  the signed-in staff member - the audit trail for suspicious numbers.
-  The demo fakes the signed-in user.
-- ADD PLAYERS TO A METRIC DAY, both paths: search the existing pool
-  (was not in the picked teams - one tap adds them with the next
-  number) and create-new for walk-ups. THE IDENTITY RULE, Addison's
-  call: every player must exist as an ATHENGINE ACCOUNT - other travel
-  orgs run their own systems, so the platform account is the identity,
-  and the org running the day acts as the METRIC VERIFIER (see
-  ACCOUNT-HIERARCHY.md). A mark carries the weight of who verified it.
-- CSV / EQUIPMENT RESULTS IMPORT (force plate, Rapsodo exports): next
-  pass, modeled exactly on the Add Stats importer - map the metric
-  columns, keep every column stored.
-- PRINTABLE CHECK-IN SHEET: ALWAYS ORGANIZED BY LAST NAME - Addison's
-  rule, because numbers may be jumbled and you find a person by name,
-  then read their number off the row. Number, name, team, a blank
-  checkbox column, browser print dialog.
+- OUT-OF-RANGE REVIEW - Addison's design, replacing the earlier
+  block-at-entry idea: every metric carries a plausible range. An
+  out-of-range entry SAVES (warn, never block - a toast says it will
+  be flagged), and ONCE THE DAY COMPLETES OR CLOSES, a gold warning
+  appears under Results: "3 marks look out of range - review". Click
+  in for the queue: each flagged mark shows player, value, the usual
+  range, and who entered it, with two resolutions - CONFIRM AS IS
+  (a human vouches for the outlier; the record book keeps it) or
+  CHANGE AND CONFIRM. Re-entering a confirmed cell re-flags it. The
+  review works even on closed days - it is the supervised QA path.
+  THE LIST SCREEN CARRIES A WARNING ICON too (Addison's ask): a gold
+  badge with the flag count next to the day's status pill - hover says
+  "Possible bad data - needs confirmation", click lands straight in
+  that day's review. The REVIEW PANEL IS BOXED IN LIGHT RED with a red
+  border (Addison kept clicking review and looking further down the
+  page - now it cannot be missed, and opening any header panel scrolls
+  the page to it). Resolving steps through: fix or confirm one and the
+  toast counts down ("1 more to review"), the next row is right there,
+  and the last resolution announces "all flags cleared" - banner and
+  list icon both disappear.
+  DEMO FLAGS SHIP SEEDED so the process can be walked cold: Trey
+  Glaser's 10-yard dash on the closed Spring Testing Day reads 16.1 -
+  the classic decimal slip for 1.61 - and the closed Fall 2025 day
+  carries TWO (Thompson's exit velo missing a digit at 9.2, Ross's
+  fastball with an extra at 855), all stamped with enterer and date,
+  so both the single-flag and the step-through multi-flag flows are
+  demonstrable.
+- EVERY MARK STAMPED with who entered it and when (the signed-in user,
+  like evals) - shown in the review queue and on the field-entry
+  panel. The audit trail for the day a number looks wrong.
+- EDIT DETAILS on any open day: name, date, location, and the metric
+  list. Removing a metric hides its column but KEEPS recorded marks -
+  they reappear if it is re-added (confirm states this).
+- CSV IMPORT (Import From CSV, after Print on the day header):
+  affiliate tech exports - force plate, Rapsodo. Pick the file, tag
+  which column identifies the player (testing number or name - a row
+  is a player) and which columns feed which datafields; headers are
+  auto-guessed, always overridable. Imported marks are stamped,
+  sync-queued, and range-checked like hand entry. Unmatched rows are
+  REPORTED by name/number, never silently dropped - fix the file and
+  re-import.
+- WALK-UP ACCOUNT CREATION: OMITTED, Addison's call. Worst case the
+  player registers for the team and lands in the pool. The Athengine
+  identity / metric-verifier rule stands (see ACCOUNT-HIERARCHY.md)
+  for how the real app treats player accounts.
 
 # Out of scope for this pass
 
