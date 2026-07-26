@@ -31,11 +31,18 @@
      site has the gear (the Tampa force plate). This is the per-day pick
      Addison decided on: the library is the menu, the day is the order.
   4. Testing Numbers - two choice cards. Numbers exist because at the field
-     you find "47", not a last name. Assign Now hands out 1..N
-     alphabetically by last name (the check-in sheet order); Assign At
-     Check-In leaves the column blank and the grid sorted by last name -
-     the fallback ordering Addison called out - with a one-click
-     assign-all available later on the grid.
+     you find "47", not a last name. ASSIGN NOW numbers in
+     CLASS-AND-TEAM BLOCKS - Addison's rule from walking the wizard:
+     oldest class or age group first, team by team inside it,
+     alphabetical inside each team, so Team One runs 1-10, Team Two
+     11-20, and the next class continues from there - with a STARTING
+     NUMBER the admin chooses. Numbers are PENCILED IN: editing the
+     day's teams reshuffles them freely, but ONCE CHECK-IN STARTS THEY
+     LOCK (enforced when day editing gets built). Any single number can
+     always be typed over by hand. Assign At Check-In leaves the column
+     blank and the grid sorted by last name - the fallback ordering
+     Addison called out - with a one-click assign-all available later
+     on the grid.
   5. Review - everything on one card; Create opens the day's grid straight
      away.
 - THE BULK ENTRY GRID (opening a day) - the heart of the page, modeled on
@@ -55,6 +62,60 @@
     loses focus.
   - A progress bar counts recorded players ("recorded" = at least one
     result). Numbers are editable inline per row for the check-in flow.
+- START METRIC DAY - the number-locking switch, from Addison's live
+  walk-through. Before the day starts, numbers are penciled in: the
+  RENUMBER tool takes a new starting number and re-populates everyone
+  IN THE SAME ORDER THEY ALREADY HOLD (manual tweaks included), so
+  "start at 15 instead" is one click, never a hand-edit of every row.
+  Pressing Start Metric Day locks the numbers: from then on, changing
+  any number pops an inline are-you-sure naming the player and both
+  numbers ("change Adams from #12 to #14?") - because sometimes you
+  really do mean it. Seeded past and in-progress days are started;
+  the upcoming youth day and new wizard days are not.
+- CLOSE OUT DAY - the day's finish line, a big green button that stands
+  apart from the small management buttons on purpose (Addison asked
+  for prominence). Behind an inline confirm; closing LOCKS EVERY FIELD
+  - marks and numbers disabled in both entry modes, Add / Remove /
+  Start / Renumber all gone - and the day reads "Closed Out" on the
+  list. EDIT DAY is the only way back in, behind the warning Addison
+  specified: "You will be editing recorded data." Reopening returns
+  the day to started (numbers still locked) with Close Out offered
+  again. The full day lifecycle: penciled-in, started, closed out.
+  Seeded historical days ship closed - old days are read-only archives
+  unless deliberately reopened.
+- UNSTART (behind an inline are-you-sure): flips a started day back to
+  penciled-in. RECORDED MARKS ARE NEVER TOUCHED - saves are per-player
+  writes, so everything is right there when the day starts again.
+  Usually an unstarted day has no data; when it does, it is kept.
+- ADD PLAYERS TO AN EXISTING DAY (built from Addison's walk-through) -
+  an Add Players button on the day header, before or after start:
+  - Add A Whole Team: any pool-season team the wizard did not pick.
+  - Add A Player: search the day's season pool; players already on
+    the day are excluded and re-adding is a no-op.
+  - THE NUMBERING RULE SPLITS ON STARTED: before start, additions
+    reshuffle the penciled-in numbers into their class-and-team
+    blocks; after start, a late addition takes THE NEXT UNUSED NUMBER
+    (their team may hold 1-10, the latecomer is #99) and nobody else
+    moves. Creating brand-new walk-ups still waits on the Athengine
+    account rule.
+- REMOVE PLAYERS FROM A DAY (the other half of the loop, NON-COMPLETED
+  days only - completed history is untouchable): a Remove Players
+  button opens a panel with the attending teams as removable chips
+  (un-pick a team and all its players come off) and a scrollable,
+  searchable roster list with a Remove per row. EVERY REMOVAL
+  DOUBLE-CONFIRMS, naming the player or team and warning when recorded
+  marks will be deleted with them. A FINISH button closes the panel
+  back to the normal view. Numbers follow the same law as adding:
+  before start, the penciled-in blocks reshuffle as players come off;
+  on a started day, removals leave gaps and nobody else moves.
+- DUPLICATE NUMBERS warn but allow (built with the above): giving a
+  number another player already holds fires a heads-up toast naming
+  who has it, and keeps your entry.
+- PRINT CHECK-IN SHEET - a button on every day. Clean black-and-white
+  table: number, LAST NAME, first name, team, and a blank checked-in
+  box per row. ALWAYS ORDERED BY LAST NAME, Addison's rule - numbers
+  may be jumbled, you find a person by name and read their number off
+  the row. Prints through the browser dialog via a print-only overlay.
 - FIELD ENTRY - the phone flow, because most entry happens on phones at
   the event and sideways scrolling is a nonstarter there. Phones open a
   day straight into it; a Field Entry / Full Grid toggle on the day
@@ -299,15 +360,12 @@
 
 # Decided with Addison, queued for the next pass (not built yet)
 
-- WALK THE WIZARD TOGETHER first - Addison wants to review the create
-  flow live - then bolt EDIT onto it: an Edit button on a day reopens
-  the wizard prefilled; changing metrics adds or removes grid columns
-  without losing entered marks. Delete gets decided during that
-  walk-through.
-- DUPLICATE TESTING NUMBERS: warn but allow. Typing a number already in
-  use shows an inline warning naming who holds it ("#12 is Adams") in
-  both entry modes; keeping it anyway stays possible, but never by
-  accident.
+- EDIT A TESTING DAY (the wizard walk-through happened; numbering and
+  day-start came out of it and are built): an Edit button on a day
+  reopens the wizard prefilled; changing metrics adds or removes grid
+  columns without losing entered marks; team changes reshuffle
+  penciled-in numbers, locked once the day has started. Delete still
+  to be decided.
 - SOFT RANGE WARNINGS per metric: each metric carries a plausible range
   and an out-of-range value saves only after a confirm - one tap for a
   real outlier, a save for every fat-finger. The record books are only

@@ -122,6 +122,11 @@ body{
 .btn-navy{background:var(--navy-deep);color:#fff}
 .btn-navy:hover{background:#1b2749}
 .btn-sm{padding:.45rem .9rem;font-size:.74rem}
+/* the close-out button: the day's big green DONE - full size on purpose
+   so it stands apart from the small management buttons around it */
+.btn-done{background:var(--green);color:#fff}
+.btn-done:hover{background:#166534}
+input.eg-in[disabled]{opacity:.7;cursor:not-allowed}
 .btn[disabled]{opacity:.4;cursor:not-allowed;pointer-events:none}
 .link-red{color:var(--red);font-weight:600;font-size:.8rem;text-decoration:none;cursor:pointer;background:none;border:none;font-family:inherit;padding:0;text-align:left}
 .link-red:hover{text-decoration:underline}
@@ -386,12 +391,41 @@ input.fe-input{flex:1;max-width:100%;font-size:1.15rem;padding:.7rem .8rem}
 .met-pick label:hover{border-color:var(--powder-dark)}
 .met-pick .mp-sub{font-size:.72rem;color:var(--muted);font-weight:400;margin-left:auto;text-align:right}
 
+/* remove-players roster list: scrollable, searchable in place */
+.rm-list{max-height:280px;overflow:auto;margin-top:.5rem;border:1.5px solid var(--line);border-radius:8px;padding:.2rem .7rem}
+.rm-row{display:flex;align-items:center;gap:.7rem;padding:.4rem 0;border-bottom:1px solid var(--line);font-size:.86rem;color:var(--ink)}
+.rm-row:last-child{border-bottom:none}
+
 /* Day header card pieces */
 .day-title{font-family:'Oswald',Arial,sans-serif;text-transform:uppercase;font-size:1.6rem;font-weight:700;color:var(--navy-deep);line-height:1.1}
 .day-meta{display:flex;gap:.45rem;flex-wrap:wrap;margin-top:.6rem;align-items:center}
 .day-head-row{display:flex;gap:1.2rem;flex-wrap:wrap;align-items:flex-start;justify-content:space-between}
 .day-prog{min-width:220px;flex:0 1 260px}
 .day-prog .hint{margin-bottom:.35rem}
+
+/* confirm-bar: inline yes/no, rides above the toast */
+.confirm-bar{
+  position:fixed;bottom:84px;left:50%;transform:translateX(-50%);z-index:99;
+  background:var(--navy-deep);color:#fff;border:1px solid rgba(255,255,255,.15);
+  border-radius:10px;padding:.7rem 1rem;display:none;gap:.8rem;align-items:center;
+  max-width:92vw;font-size:.88rem;flex-wrap:wrap;
+}
+.confirm-bar.show{display:flex}
+
+/* print-sheet: invisible on screen, the only thing visible on paper */
+.print-sheet{display:none}
+@media print{
+  body{background:#fff !important;overflow:visible !important}
+  body > :not(.print-sheet){display:none !important}
+  .print-sheet{display:block !important;color:#000;font-family:Arial,sans-serif;padding:0}
+  .print-sheet h1{font-size:16pt;margin-bottom:4pt}
+  .print-sheet p{font-size:10pt;margin-bottom:10pt}
+  .print-sheet table{width:100%;border-collapse:collapse;font-size:10pt}
+  .print-sheet th,.print-sheet td{border:1px solid #000;padding:4pt 6pt;text-align:left;color:#000;background:#fff}
+  .print-sheet thead th{background:#e8e8e8;font-weight:bold}
+  .print-sheet td.ps-box{width:60pt}
+  .print-sheet tbody tr{page-break-inside:avoid}
+}
 
 /* ============ MOBILE ============ */
 @media (max-width:640px){
@@ -423,6 +457,21 @@ input.fe-input{flex:1;max-width:100%;font-size:1.15rem;padding:.7rem .8rem}
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- NEW COMPONENT: confirm-bar
+     An inline yes/no bar (never confirm() - hard rule). Used when a
+     testing number changes after the metric day has started. -->
+<div class="confirm-bar" id="confirmBar">
+  <span id="confirmMsg"></span>
+  <button class="btn btn-primary btn-sm" onclick="confirmYes()">Yes, Change It</button>
+  <button class="btn btn-outline btn-sm" onclick="confirmNo()">Cancel</button>
+</div>
+
+<!-- NEW COMPONENT: print-sheet
+     The check-in sheet. Hidden on screen; @media print hides the app
+     and shows only this - number, last name, first name, team, and a
+     blank check-in box, ALWAYS ordered by last name. -->
+<div class="print-sheet" id="printSheet"></div>
 
 <script>
 /* =====================================================================
@@ -581,22 +630,22 @@ const STD_KEYS = STANDARD_METRICS.map(d => d.key);
 let days = [
   { id:'tda1', name:'Summer 2018 Testing',      date:'2018-06-16', season:'Summer 2018',
     loc:'CBU Training Complex - Tampa', poolSeason:'CBU Alumni', teams:'all', unassigned:true,
-    metrics: STD_KEYS.slice(), numbersMode:'auto' },
+    metrics: STD_KEYS.slice(), numbersMode:'auto', started: true, closed: true },
   { id:'td1', name:'Summer 2025 Testing',       date:'2025-06-14', season:'Summer 2025',
     loc:'CBU Training Complex - Tampa', poolSeason:'Summer 2026', teams:'all', unassigned:true,
-    metrics: STD_KEYS.slice(), numbersMode:'auto' },
+    metrics: STD_KEYS.slice(), numbersMode:'auto', started: true, closed: true },
   { id:'td2', name:'Fall 2025 Testing',         date:'2025-09-20', season:'Fall 2025',
     loc:'CBU Training Complex - Tampa', poolSeason:'Summer 2026', teams:'all', unassigned:true,
-    metrics: STD_KEYS.slice(), numbersMode:'auto' },
+    metrics: STD_KEYS.slice(), numbersMode:'auto', started: true, closed: true },
   { id:'td3', name:'Spring Testing Day',        date:'2026-03-14', season:'Spring 2026',
     loc:'CBU Training Complex - Tampa', poolSeason:'Summer 2026', teams:'all', unassigned:true,
-    metrics: STD_KEYS.concat(['vert','pkpw','wt']), numbersMode:'auto' },
+    metrics: STD_KEYS.concat(['vert','pkpw','wt']), numbersMode:'auto', started: true, closed: true },
   { id:'tdy1', name:'Spring Youth Testing',     date:'2026-04-11', season:'Spring 2026 Youth',
     loc:'CBU Training Complex - Tampa', poolSeason:'Fall 2026 Youth', teams:'all', unassigned:true,
-    metrics:['d10','d30','d60','ifv','ofv','fb','ev'], numbersMode:'auto' },
+    metrics:['d10','d30','d60','ifv','ofv','fb','ev'], numbersMode:'auto', started: true, closed: true },
   { id:'td4', name:'Summer Mid-Season Testing', date:'2026-06-20', season:'Summer 2026',
     loc:'CBU Training Complex - Tampa', poolSeason:'Summer 2026', teams:'all', unassigned:true,
-    metrics: STD_KEYS.concat(['vert','pkpw','wt']), numbersMode:'auto' },
+    metrics: STD_KEYS.concat(['vert','pkpw','wt']), numbersMode:'auto', started: true },
   { id:'td5', name:'Fall Youth Kickoff Testing', date:'2026-08-15', season:'Fall 2026 Youth',
     loc:'CBU Training Complex - Tampa', poolSeason:'Fall 2026 Youth', teams:'all', unassigned:true,
     metrics:['d10','d30','d60','ifv','ofv','fb','ev','vert','wt'], numbersMode:'checkin' }
@@ -606,6 +655,8 @@ let dayAuto = 5;
 function dayById(id){ return days.find(d => d.id === id); }
 function dayRoster(day){
   return players.filter(p => {
+    if (day.removed && day.removed.indexOf(p.id) !== -1) return false; /* taken off the day */
+    if (day.extras && day.extras.indexOf(p.id) !== -1) return true;   /* late additions */
     if (p.season !== day.poolSeason) return false;
     if (day.teams === 'all') return p.team ? true : !!day.unassigned;
     if (!p.team) return !!day.unassigned;
@@ -614,14 +665,29 @@ function dayRoster(day){
 }
 
 /* Testing numbers, per day: NUM[dayId][playerId] = number.
-   Auto-assigned days hand out 1..N alphabetically by last name - the
-   same order the check-in sheet prints in. */
+   ASSIGNED IN CLASS-AND-TEAM BLOCKS - Addison's rule from walking the
+   wizard: oldest class (or age group) first, team by team inside it,
+   alphabetical by last name inside each team. So Team One runs 1-10,
+   Team Two 11-20, and the next class continues from there, starting at
+   whatever number the day chose. Numbers are PENCILED IN - editing the
+   day's teams reshuffles them freely - but LOCK once check-in starts.
+   Any single number can still be typed over on the grid or at
+   check-in. */
 const NUM = {};
 function autoAssign(day){
+  const start = day.numberStart != null ? day.numberStart : 1;
+  /* explicit keys so team blocks are stable: real teams alphabetical,
+     the unassigned pool always last inside its class */
+  const tk = p => p.team ? '0' + p.team : '1';
+  const nk = p => p.last + '|' + p.first;
   const map = {};
   dayRoster(day)
-    .slice().sort((a, b) => (a.last + a.first).localeCompare(b.last + b.first))
-    .forEach((p, i) => { map[p.id] = i + 1; });
+    .slice().sort((a, b) =>
+      a.grad - b.grad ||                                /* oldest class first */
+      (tk(a) < tk(b) ? -1 : tk(a) > tk(b) ? 1 : 0) ||   /* team blocks */
+      (nk(a) < nk(b) ? -1 : 1)
+    )
+    .forEach((p, i) => { map[p.id] = start + i; });
   NUM[day.id] = map;
 }
 
@@ -728,6 +794,14 @@ function persist(){
       RES, NUM,
       userDays: days.filter(d => d.userMade),
       userMets: CUSTOM_METRICS.filter(m => m.userMade),
+      started: days.filter(d => d.started).map(d => d.id),
+      closed: days.filter(d => d.closed).map(d => d.id),
+      dayExtras: days.filter(d => !d.userMade && d.extras && d.extras.length)
+        .reduce((m, d) => { m[d.id] = d.extras; return m; }, {}),
+      dayRemoved: days.filter(d => !d.userMade && d.removed && d.removed.length)
+        .reduce((m, d) => { m[d.id] = d.removed; return m; }, {}),
+      dayTeams: days.filter(d => !d.userMade && Array.isArray(d.teams))
+        .reduce((m, d) => { m[d.id] = d.teams; return m; }, {}),
       dayAuto, cmAuto: _cmAuto, pend: [...PEND]
     }));
   }catch(e){ /* private mode or no storage - entry still works in memory */ }
@@ -744,6 +818,19 @@ function restore(){
     if (s.dayAuto) dayAuto = Math.max(dayAuto, s.dayAuto);
     if (s.cmAuto) _cmAuto = Math.max(_cmAuto, s.cmAuto);
     (s.pend || []).forEach(k => PEND.add(k));   /* still-unsynced marks survive restarts */
+    if (Array.isArray(s.started)){
+      /* the snapshot is authoritative - an unstarted seeded day must
+         stay unstarted across reloads */
+      days.forEach(d => { d.started = false; });
+      s.started.forEach(id => { const d = dayById(id); if (d) d.started = true; });
+    }
+    if (Array.isArray(s.closed)){
+      days.forEach(d => { d.closed = false; });
+      s.closed.forEach(id => { const d = dayById(id); if (d) d.closed = true; });
+    }
+    Object.keys(s.dayExtras || {}).forEach(id => { const d = dayById(id); if (d) d.extras = s.dayExtras[id]; });
+    Object.keys(s.dayRemoved || {}).forEach(id => { const d = dayById(id); if (d) d.removed = s.dayRemoved[id]; });
+    Object.keys(s.dayTeams || {}).forEach(id => { const d = dayById(id); if (d) d.teams = s.dayTeams[id]; });
   }catch(e){}
 }
 
@@ -815,6 +902,7 @@ function recordedCount(day){
 }
 function dayStatus(day){
   const total = dayRoster(day).length, rec = recordedCount(day);
+  if (day.closed) return { label: 'Closed Out', pill: 'pill-green' };
   if (day.date > todayIso() && rec === 0) return { label: 'Upcoming', pill: 'pill-blue' };
   if (total > 0 && rec >= total) return { label: 'Complete', pill: 'pill-green' };
   if (rec > 0) return { label: 'In Progress', pill: 'pill-gold' };
@@ -856,6 +944,11 @@ let gqn = '';                /* grid search: by number */
 let gmiss = false;           /* grid: only players not recorded yet */
 let gsort = 'num';           /* grid sort: num | name */
 let gview = 'grid';          /* how a day shows: grid (desk) | field (phone) */
+let renumOpen = false;       /* renumber panel open on the day header */
+let addPplOpen = false;      /* add-players panel open on the day header */
+let addPplQ = '';            /* add-a-player search text */
+let rmOpen = false;          /* remove-players panel open on the day header */
+let rmQ = '';                /* remove-a-player search text */
 let fpid = null;             /* field entry: selected player, null = search list */
 let fopen = null;            /* field entry: which metric is expanded */
 let fq = '';                 /* field entry: search by name */
@@ -877,6 +970,7 @@ function render(){
   const app = document.getElementById('app');
   if (view === 'grid'){
     app.innerHTML = renderGrid();
+    if (rmOpen) rmFilter();
     if (gview === 'grid') applyGridFilter();
     else {
       feFilter();
@@ -962,7 +1056,8 @@ function openDay(id){
   /* phones open straight into field entry; desks get the grid.
      The toggle on the day header flips either way. */
   gview = (window.innerWidth && window.innerWidth <= 760) ? 'field' : 'grid';
-  fpid = null; fopen = null; fq = ''; fqn = ''; gqn = '';
+  fpid = null; fopen = null; fq = ''; fqn = ''; gqn = ''; renumOpen = false;
+  addPplOpen = false; addPplQ = ''; rmOpen = false; rmQ = '';
   fteam = 'all'; fgroup = 'all'; gteam = 'all'; ggroup = 'all';
   render();
   window.scrollTo(0, 0);
@@ -1010,7 +1105,7 @@ function renderGrid(){
       const v = r[def.key];
       const stateCls = v == null ? '' : isPend(day.id, p.id, def.key) ? 'eg-loc' : 'eg-has';
       return `<td class="eg-cell"><span class="eg-wrap"><span class="eg-ok ${v != null ? 'show' : ''}" id="ok${p.id}_${def.key}">&#10003;</span><input id="in${p.id}_${def.key}" class="eg-in eg-val ${stateCls}" type="text" inputmode="decimal"
-        value="${v != null ? fmtVal(def, v) : ''}" placeholder="-"
+        value="${v != null ? fmtVal(def, v) : ''}" placeholder="-" ${day.closed ? 'disabled' : ''}
         aria-label="${esc(def.label)} for ${esc(p.first + ' ' + p.last)}"
         onchange="gridSet('${day.id}',${p.id},'${def.key}',this)"></span></td>`;
     }).join('');
@@ -1018,7 +1113,7 @@ function renderGrid(){
       <tr data-num="${num != null ? num : ''}" data-name="${esc((p.first + ' ' + p.last).toLowerCase())}"
           data-team="${esc(p.team || 'Unassigned')}" data-group="${esc(groupOf(day, p))}" data-empty="${done ? '0' : '1'}">
         <td class="stick1 eg-cell"><input class="eg-in eg-num" type="text" inputmode="numeric"
-          value="${num != null ? num : ''}" placeholder="-"
+          value="${num != null ? num : ''}" placeholder="-" ${day.closed ? 'disabled' : ''}
           aria-label="Testing number for ${esc(p.first + ' ' + p.last)}"
           onchange="numSet('${day.id}',${p.id},this)"></td>
         <td class="stick2">
@@ -1043,11 +1138,83 @@ function renderGrid(){
             <span class="hint" style="margin:0">${fmtDate(day.date)} &middot; ${esc(day.loc)}</span>
           </div>
           <div class="day-meta">${mets.map(m => `<span class="pill pill-blue">${esc(m.label)}</span>`).join('')}</div>
+          <div class="day-meta" style="margin-top:.9rem">
+            ${day.closed ? `
+              <span class="pill pill-green">Closed Out - All Fields Locked</span>
+              <button class="btn btn-outline-dark btn-sm" onclick="reopenDay('${day.id}')">Edit Day</button>`
+            : day.started ? `
+              <span class="pill pill-gold">Day Started - Numbers Locked</span>
+              <button class="btn btn-outline-dark btn-sm" onclick="unstartDay('${day.id}')">Unstart</button>`
+            : `<button class="btn btn-primary btn-sm" onclick="startDay('${day.id}')">Start Metric Day</button>
+               ${hasNums ? `<button class="btn btn-outline-dark btn-sm" onclick="renumOpen=!renumOpen;addPplOpen=false;rmOpen=false;render()">Renumber</button>` : ''}`}
+            ${!day.closed ? `
+              <button class="btn btn-outline-dark btn-sm" onclick="addPplOpen=!addPplOpen;renumOpen=false;rmOpen=false;render()">Add Players</button>
+              <button class="btn btn-outline-dark btn-sm" onclick="rmOpen=!rmOpen;renumOpen=false;addPplOpen=false;render()">Remove Players</button>` : ''}
+            <button class="btn btn-outline-dark btn-sm" onclick="printSheet('${day.id}')">Print Check-In Sheet</button>
+            ${day.started && !day.closed ? `<button class="btn btn-done" onclick="closeDay('${day.id}')">Close Out Day</button>` : ''}
+          </div>
+          ${renumOpen && !day.started ? `
+          <div style="margin-top:.8rem;display:flex;gap:.8rem;align-items:flex-end;flex-wrap:wrap">
+            <label><span class="field-label">New Starting Number</span>
+              <input id="renum-in" type="text" inputmode="numeric" style="max-width:120px" value="${day.numberStart || 1}"></label>
+            <button class="btn btn-primary btn-sm" onclick="renumber('${day.id}')">Renumber</button>
+            <span class="hint" style="margin:0">Keeps everyone in the current order - only the starting point moves.</span>
+          </div>` : ''}
+          ${addPplOpen ? (() => {
+            const seasonTeams = (SEASONS.find(s => s.name === day.poolSeason) || { teams: [] }).teams.map(t => t.name);
+            const missing = day.teams === 'all' ? [] : seasonTeams.filter(t => day.teams.indexOf(t) === -1);
+            return `
+          <div style="margin-top:.8rem;border-top:1px solid var(--line);padding-top:.8rem">
+            ${missing.length ? `
+            <div style="display:flex;gap:.8rem;align-items:flex-end;flex-wrap:wrap;margin-bottom:.8rem">
+              <label><span class="field-label">Add A Whole Team</span>
+                <select id="addt-sel">${missing.map(t => `<option>${esc(t)}</option>`).join('')}</select></label>
+              <button class="btn btn-outline-dark btn-sm" onclick="addTeamToDay('${day.id}')">Add Team</button>
+            </div>` : ''}
+            <label><span class="field-label">Add A Player From The ${esc(day.poolSeason)} Pool</span>
+              <input type="text" placeholder="Search by name" value="${esc(addPplQ)}"
+                oninput="addPplQ=this.value;renderAddMatches('${day.id}')"></label>
+            <div id="addp-list" style="margin-top:.4rem"></div>
+            <p class="hint" style="margin-top:.6rem">${day.started
+              ? 'The day has started, so late additions take the NEXT UNUSED NUMBER - everyone else keeps theirs.'
+              : 'Before the day starts, additions reshuffle the penciled-in numbers into their class and team blocks.'}
+              Players must already exist in the system - creating brand-new walk-ups comes with the Athengine account rule.</p>
+          </div>`;
+          })() : ''}
+          ${rmOpen ? (() => {
+            const nums2 = NUM[day.id] || {};
+            const attTeams = [...new Set(dayRoster(day).map(p => p.team).filter(Boolean))].sort();
+            const rows = dayRoster(day).slice()
+              .sort((a, b) => (a.last + a.first) < (b.last + b.first) ? -1 : 1)
+              .map(p => `
+              <div class="rm-row" data-name="${esc((p.first + ' ' + p.last).toLowerCase())}" data-num="${nums2[p.id] != null ? nums2[p.id] : ''}">
+                <span class="fe-num" style="min-width:2.5rem;font-size:.85rem;padding:.25rem .2rem">${nums2[p.id] != null ? nums2[p.id] : '-'}</span>
+                <span style="flex:1;min-width:0">${esc(p.last)}, ${esc(p.first)} <span style="color:var(--muted)">(${esc(p.team || 'Unassigned')})</span></span>
+                <button class="link-red" onclick="removePlayerFromDay('${day.id}',${p.id})">Remove</button>
+              </div>`).join('');
+            return `
+          <div style="margin-top:.8rem;border-top:1px solid var(--line);padding-top:.8rem">
+            ${attTeams.length ? `
+            <span class="field-label">Remove A Whole Team</span>
+            <div class="day-meta" style="margin-bottom:.8rem">
+              ${attTeams.map(t => `<button class="chip" onclick="removeTeamFromDay('${day.id}','${esc(t)}')">${esc(t)} &times;</button>`).join('')}
+            </div>` : ''}
+            <label><span class="field-label">Find A Player To Remove</span>
+              <input type="text" placeholder="Number or name" value="${esc(rmQ)}" oninput="rmQ=this.value;rmFilter()"></label>
+            <div class="rm-list" id="rm-list">${rows}</div>
+            <div style="margin-top:.8rem;display:flex;gap:.9rem;align-items:center;flex-wrap:wrap">
+              <button class="btn btn-primary btn-sm" onclick="rmOpen=false;rmQ='';render()">Finish</button>
+              <span class="hint" style="margin:0">Every removal asks first. ${day.started
+                ? 'Numbers are locked - removals leave gaps and nobody else moves.'
+                : 'Penciled-in numbers reshuffle as players come off.'}</span>
+            </div>
+          </div>`;
+          })() : ''}
         </div>
         <div class="day-prog">
           <p class="hint"><span id="prog-text">${rec} of ${total} players recorded</span></p>
           <div class="progress"><i id="prog-fill" style="width:${total ? Math.round(rec / total * 100) : 0}%"></i></div>
-          ${!hasNums ? `<button class="btn btn-outline-dark btn-sm" style="margin-top:.7rem" onclick="assignNow('${day.id}')">Assign Numbers 1-${total} By Last Name</button>` : ''}
+          ${!hasNums ? `<button class="btn btn-outline-dark btn-sm" style="margin-top:.7rem" onclick="assignNow('${day.id}')">Assign Numbers By Class &amp; Team</button>` : ''}
         </div>
       </div>
       <div class="chip-row" style="margin-top:1.2rem">
@@ -1082,7 +1249,7 @@ function renderGrid(){
         </div>
       </div>
       ${!hasNums ? `<p class="hint" style="margin-top:.8rem">No testing numbers assigned yet - the grid is sorted by last name. Type numbers into the first column as players check in, or assign them all at once above.</p>`
-                 : `<p class="hint" style="margin-top:.8rem">Numbers were assigned alphabetically by last name. Type a number in the search box to jump straight to a player. Results save as you type them - a check with a white field means saved on this device, fully green means synced to CBU.</p>`}`
+                 : `<p class="hint" style="margin-top:.8rem">Numbers run in class-and-team blocks, alphabetical inside each team. Type a number in the search box to jump straight to a player. Results save as you type them - a check with a white field means saved on this device, fully green means synced to CBU.</p>`}`
       : `<p class="hint" style="margin-top:.8rem">Built for a phone at the event: search a number, tap the player, tap a metric. Saved marks turn green with the value on them. The grid is the desk view of the same data.</p>`}
     </div>
     ${gview === 'grid' ? `
@@ -1239,7 +1406,7 @@ function renderField(day){
       <div style="margin-top:.8rem;display:flex;align-items:center;gap:.7rem;flex-wrap:wrap">
         <label style="display:flex;align-items:center;gap:.45rem"><span class="field-label" style="margin:0">Testing #</span>
           <input class="eg-in eg-num" type="text" inputmode="numeric" value="${nums[p.id] != null ? nums[p.id] : ''}"
-            placeholder="-" onchange="numSet('${day.id}',${p.id},this);feRefresh()"></label>
+            placeholder="-" ${day.closed ? 'disabled' : ''} onchange="numSet('${day.id}',${p.id},this);feRefresh()"></label>
         <span class="hint" style="margin:0">${filled} of ${mets.length} recorded - a skipped station just stays blank. A check means saved on this device; fully green means it is in CBU's system.</span>
       </div>
       ${metRows}
@@ -1300,7 +1467,12 @@ function feRefresh(){
 }
 function fePick(pid){ fpid = pid; fopen = null; render(); }
 function feBack(){ fpid = null; fopen = null; render(); }
-function feOpen(key){ fopen = key; feRefresh(); }
+function feOpen(key){
+  const day = dayById(gridId);
+  if (day && day.closed){ toast('This day is closed out - press Edit Day on the day header to change anything'); return; }
+  fopen = key;
+  feRefresh();
+}
 function feCancel(){ fopen = null; feRefresh(); }
 function feNav(dir){
   const roster = feRoster(dayById(gridId));
@@ -1310,6 +1482,8 @@ function feNav(dir){
   if (next){ fpid = next.id; fopen = null; render(); }
 }
 function feSave(dayId, pid, key){
+  const dayChk = dayById(dayId);
+  if (dayChk && dayChk.closed){ toast('This day is closed out - press Edit Day to change anything'); return; }
   const def = metricDef(key);
   const el = document.getElementById('fe-in');
   const raw = el ? el.value.trim() : '';
@@ -1400,21 +1574,283 @@ function gridSet(dayId, pid, key, el){
 
 function numSet(dayId, pid, el){
   if (!NUM[dayId]) NUM[dayId] = {};
+  const day = dayById(dayId);
+  const old = NUM[dayId][pid] != null ? NUM[dayId][pid] : null;
   const raw = el.value.trim();
-  if (raw === ''){ delete NUM[dayId][pid]; return; }
-  const n = parseInt(raw, 10);
-  if (isNaN(n)){ el.value = NUM[dayId][pid] != null ? NUM[dayId][pid] : ''; toast('Testing numbers are whole numbers'); return; }
-  NUM[dayId][pid] = n; el.value = n;
+  let n = null;
+  if (raw !== ''){
+    n = parseInt(raw, 10);
+    if (isNaN(n)){ el.value = old != null ? old : ''; toast('Testing numbers are whole numbers'); return; }
+  }
+  if (n === old) return;
+  /* once the metric day has STARTED, numbers are locked - any change
+     needs an explicit inline yes (never confirm(), hard rule) */
+  if (day && day.started){
+    el.value = old != null ? old : '';
+    const p = players.find(x => x.id === pid);
+    askConfirm('This metric day has started - ' +
+      (n == null ? 'remove number #' + old + ' from ' + p.first + ' ' + p.last + '?'
+                 : 'change ' + p.first + ' ' + p.last + ' from #' + old + ' to #' + n + '?'),
+      () => { applyNum(dayId, pid, n, null); toast('Number changed'); render(); });
+    return;
+  }
+  applyNum(dayId, pid, n, el);
+}
+function applyNum(dayId, pid, n, el){
+  if (n == null) delete NUM[dayId][pid];
+  else {
+    NUM[dayId][pid] = n;
+    /* duplicate-number heads-up: warn but allow - Addison's call */
+    const other = dayRoster(dayById(dayId)).find(p => p.id !== pid && NUM[dayId][p.id] === n);
+    if (other) toast('Heads up - #' + n + ' is also ' + other.last + ', ' + other.first);
+  }
   persist();
-  const tr = el.closest('tr');
-  if (tr && tr.dataset) tr.dataset.num = String(n);
+  if (el){
+    el.value = n != null ? n : '';
+    const tr = el.closest('tr');
+    if (tr && tr.dataset) tr.dataset.num = n != null ? String(n) : '';
+  }
+}
+/* Generalized inline confirm: askConfirm(message, whatHappensOnYes) */
+let pendingConfirm = null;
+function askConfirm(message, fn){
+  pendingConfirm = fn;
+  const msg = document.getElementById('confirmMsg');
+  if (msg) msg.textContent = message;
+  const bar = document.getElementById('confirmBar');
+  if (bar && bar.classList) bar.classList.add('show');
+}
+function hideConfirm(){
+  const bar = document.getElementById('confirmBar');
+  if (bar && bar.classList) bar.classList.remove('show');
+}
+function confirmYes(){
+  const f = pendingConfirm;
+  pendingConfirm = null;
+  hideConfirm();
+  if (f) f();
+}
+function confirmNo(){ pendingConfirm = null; hideConfirm(); render(); }
+
+/* Start Metric Day: flips numbers from penciled-in to LOCKED. Before
+   it, renumbering is free; after it, every change asks. */
+function startDay(dayId){
+  const day = dayById(dayId);
+  day.started = true;
+  persist();
+  toast('Metric day started - testing numbers are locked');
+  render();
+}
+/* Unstart: back to penciled-in. Recorded marks are NEVER touched -
+   they are per-player writes, so everything reloads when the day
+   starts again. */
+function unstartDay(dayId){
+  askConfirm('Unstart this metric day? Numbers unlock and may reshuffle - any recorded marks are kept.', () => {
+    dayById(dayId).started = false;
+    persist();
+    toast('Day unstarted - numbers are penciled in again');
+    render();
+  });
+}
+/* Close Out: the day's finish line. Locks EVERY field - marks and
+   numbers - until Edit Day deliberately reopens it, behind a warning
+   that recorded data is about to become editable. */
+function closeDay(dayId){
+  askConfirm('Close out this metric day? Every field locks - marks and numbers cannot change unless the day is reopened for editing.', () => {
+    const day = dayById(dayId);
+    day.closed = true;
+    renumOpen = false; addPplOpen = false; rmOpen = false; fopen = null;
+    persist();
+    toast('Metric day closed out');
+    render();
+  });
+}
+function reopenDay(dayId){
+  askConfirm('Reopen this closed-out metric day? You will be editing recorded data.', () => {
+    dayById(dayId).closed = false;
+    persist();
+    toast('Day reopened for editing - close it out again when done');
+    render();
+  });
+}
+/* Late additions after the day was made. Before start: reshuffle the
+   penciled-in numbers into proper class-and-team blocks. After start:
+   the newcomer takes the NEXT UNUSED NUMBER - even if their team went
+   first and holds low numbers, they get #99 - nobody else moves. */
+function nextFreeNumber(day){
+  const vals = Object.values(NUM[day.id] || {});
+  return vals.length ? Math.max.apply(null, vals) + 1 : (day.numberStart || 1);
+}
+function addTeamToDay(dayId){
+  const day = dayById(dayId);
+  const sel = document.getElementById('addt-sel');
+  const team = sel ? sel.value : '';
+  if (!team || day.teams === 'all') return;
+  day.teams.push(team);
+  const added = players.filter(p => p.season === day.poolSeason && p.team === team);
+  if (day.started){
+    if (!NUM[day.id]) NUM[day.id] = {};
+    let n = nextFreeNumber(day);
+    added.slice().sort((a, b) => (a.last + a.first) < (b.last + b.first) ? -1 : 1)
+      .forEach(p => { NUM[day.id][p.id] = n++; });
+    toast(team + ' added - ' + added.length + ' players take the next unused numbers');
+  } else if (Object.keys(NUM[day.id] || {}).length){
+    autoAssign(day);
+    toast(team + ' added - penciled-in numbers reshuffled into blocks');
+  } else {
+    toast(team + ' added');
+  }
+  persist();
+  render();
+}
+function addExtra(dayId, pid){
+  const day = dayById(dayId);
+  const p = players.find(x => x.id === pid);
+  if (dayRoster(day).some(x => x.id === pid)){
+    toast(p.first + ' ' + p.last + ' is already on this day');
+    return;
+  }
+  if (!day.extras) day.extras = [];
+  day.extras.push(pid);
+  if (day.started){
+    if (!NUM[day.id]) NUM[day.id] = {};
+    const n = nextFreeNumber(day);
+    NUM[day.id][pid] = n;
+    toast(p.first + ' ' + p.last + ' added as #' + n + ' - the next unused number');
+  } else if (Object.keys(NUM[day.id] || {}).length){
+    autoAssign(day);
+    toast(p.first + ' ' + p.last + ' added - penciled-in numbers reshuffled');
+  } else {
+    toast(p.first + ' ' + p.last + ' added');
+  }
+  addPplQ = '';
+  persist();
+  render();
+}
+/* Removal - the other half of the roster loop, non-completed days only.
+   Every removal double-confirms (naming who, and warning when recorded
+   marks go with them). Same numbering law as adding: before start the
+   penciled-in blocks reshuffle; on a started day removals leave gaps
+   and nobody else moves. */
+function removePlayerFromDay(dayId, pid){
+  const day = dayById(dayId);
+  const p = players.find(x => x.id === pid);
+  const marks = RES[day.id] && RES[day.id][pid] ? Object.keys(RES[day.id][pid]).length : 0;
+  askConfirm('Remove ' + p.first + ' ' + p.last + ' from this day?' +
+    (marks ? ' Their ' + marks + ' recorded mark' + (marks > 1 ? 's' : '') + ' will be deleted.' : ''), () => {
+    if (day.extras && day.extras.indexOf(pid) !== -1){
+      day.extras = day.extras.filter(x => x !== pid);
+    } else {
+      if (!day.removed) day.removed = [];
+      day.removed.push(pid);
+    }
+    if (NUM[day.id]) delete NUM[day.id][pid];
+    if (RES[day.id]) delete RES[day.id][pid];
+    [...PEND].forEach(k => { if (k.indexOf(day.id + '|' + pid + '|') === 0) PEND.delete(k); });
+    if (!day.started && Object.keys(NUM[day.id] || {}).length) autoAssign(day);
+    persist();
+    toast(p.first + ' ' + p.last + ' removed from the day');
+    render();
+  });
+}
+function removeTeamFromDay(dayId, team){
+  const day = dayById(dayId);
+  const victims = dayRoster(day).filter(p => p.team === team);
+  const markCount = victims.reduce((s, p) =>
+    s + (RES[day.id] && RES[day.id][p.id] ? Object.keys(RES[day.id][p.id]).length : 0), 0);
+  askConfirm('Remove ' + team + ' and its ' + victims.length + ' players from this day?' +
+    (markCount ? ' ' + markCount + ' recorded marks will be deleted.' : ''), () => {
+    const seasonTeams = (SEASONS.find(s => s.name === day.poolSeason) || { teams: [] }).teams.map(t => t.name);
+    if (day.teams === 'all') day.teams = seasonTeams.slice();   /* materialize, then drop */
+    day.teams = day.teams.filter(t => t !== team);
+    victims.forEach(p => {
+      if (day.extras) day.extras = day.extras.filter(x => x !== p.id);
+      if (NUM[day.id]) delete NUM[day.id][p.id];
+      if (RES[day.id]) delete RES[day.id][p.id];
+      [...PEND].forEach(k => { if (k.indexOf(day.id + '|' + p.id + '|') === 0) PEND.delete(k); });
+    });
+    if (!day.started && Object.keys(NUM[day.id] || {}).length) autoAssign(day);
+    persist();
+    toast(team + ' removed from the day');
+    render();
+  });
+}
+function rmFilter(){
+  const q = rmQ.trim().toLowerCase();
+  document.querySelectorAll('.rm-row').forEach(r => {
+    const hit = !q || r.dataset.name.includes(q) || (r.dataset.num && r.dataset.num.indexOf(q) === 0);
+    r.style.display = hit ? '' : 'none';
+  });
+}
+
+/* live search results for the add-a-player box - written straight into
+   its own div so typing never loses focus */
+function renderAddMatches(dayId){
+  const el = document.getElementById('addp-list');
+  if (!el) return;
+  const day = dayById(dayId);
+  const q = (addPplQ || '').trim().toLowerCase();
+  if (!q){ el.innerHTML = ''; return; }
+  const on = new Set(dayRoster(day).map(p => p.id));
+  const hits = players.filter(p => p.season === day.poolSeason && !on.has(p.id) &&
+    (p.first + ' ' + p.last).toLowerCase().includes(q)).slice(0, 8);
+  el.innerHTML = hits.length
+    ? hits.map(p => `<button class="link-red" style="display:block;padding:.3rem 0;font-size:.86rem" onclick="addExtra('${day.id}',${p.id})">+ ${esc(p.last)}, ${esc(p.first)} <span style="color:var(--muted);font-weight:400">(${esc(p.team || 'Unassigned')})</span></button>`).join('')
+    : '<p class="hint">No match in the ' + esc(day.poolSeason) + ' pool - everyone else may already be on the day.</p>';
+}
+/* Renumber (before start only): new starting number, SAME ORDER the
+   players already hold - manual tweaks included - so "start at 15"
+   never means redoing every number by hand. */
+function renumber(dayId){
+  const day = dayById(dayId);
+  const inEl = document.getElementById('renum-in');
+  const start = Math.max(1, parseInt(inEl ? inEl.value : '1', 10) || 1);
+  const nums = NUM[dayId] || {};
+  const tk = p => p.team ? '0' + p.team : '1';
+  const roster = dayRoster(day).slice().sort((a, b) => {
+    const na = nums[a.id], nb = nums[b.id];
+    if (na != null && nb != null) return na - nb;      /* keep the current order */
+    if (na != null) return -1;
+    if (nb != null) return 1;
+    return a.grad - b.grad || (tk(a) < tk(b) ? -1 : tk(a) > tk(b) ? 1 : 0) ||
+      ((a.last + a.first) < (b.last + b.first) ? -1 : 1);
+  });
+  roster.forEach((p, i) => { nums[p.id] = start + i; });
+  NUM[dayId] = nums;
+  day.numberStart = start;
+  renumOpen = false;
+  persist();
+  toast('Renumbered starting at ' + start + ' - same order as before');
+  render();
+}
+
+/* The check-in sheet: ALWAYS ordered by last name (Addison's rule -
+   numbers may be jumbled; you find a person by name, then read their
+   number off the row). Prints via the print-sheet overlay. */
+function printSheet(dayId){
+  const day = dayById(dayId);
+  const nums = NUM[day.id] || {};
+  const roster = dayRoster(day).slice().sort((a, b) =>
+    (a.last + '|' + a.first) < (b.last + '|' + b.first) ? -1 : 1);
+  const rows = roster.map(p => `
+    <tr><td>${nums[p.id] != null ? nums[p.id] : ''}</td><td>${esc(p.last)}</td><td>${esc(p.first)}</td>
+    <td>${esc(p.team || 'Unassigned')}</td><td class="ps-box"></td></tr>`).join('');
+  const sheet = document.getElementById('printSheet');
+  if (sheet) sheet.innerHTML = `
+    <h1>${esc(day.name)} - Check-In Sheet</h1>
+    <p>${fmtDate(day.date)} &middot; ${esc(day.loc)} &middot; ${roster.length} players &middot; ordered by last name</p>
+    <table>
+      <thead><tr><th>#</th><th>Last Name</th><th>First Name</th><th>Team</th><th>Checked In</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  try { window.print(); } catch(e){ toast('Open the browser print dialog to print the sheet'); }
 }
 
 function assignNow(dayId){
   autoAssign(dayById(dayId));
   gsort = 'num';
   persist();
-  toast('Testing numbers assigned by last name');
+  toast('Testing numbers assigned in class-and-team blocks');
   render();
 }
 
@@ -2051,7 +2487,7 @@ function startWizard(){
     season: SEASONS[0].name,
     teams: new Set(SEASONS[0].teams.map(t => t.name)), unassigned: true,
     metrics: new Set(STD_KEYS),          /* the standard set starts checked */
-    numbers: 'auto',
+    numbers: 'auto', numberStart: '1',
     addMet: false
   };
   view = 'wizard';
@@ -2115,7 +2551,8 @@ function wizCreate(){
     name: wiz.name.trim(), date: wiz.date, loc: wiz.loc.trim() || 'CBU Training Complex - Tampa',
     season: wiz.season, poolSeason: wiz.season,
     teams: allTeams ? 'all' : [...wiz.teams], unassigned: wiz.unassigned,
-    metrics: order, numbersMode: wiz.numbers, userMade: true
+    metrics: order, numbersMode: wiz.numbers, userMade: true,
+    numberStart: Math.max(1, parseInt(wiz.numberStart, 10) || 1)
   };
   days.push(day);
   RES[day.id] = {}; NUM[day.id] = {};
@@ -2215,13 +2652,18 @@ function wizStep4(){
     <div class="choice-row">
       <button class="choice ${wiz.numbers === 'auto' ? 'sel' : ''}" onclick="wizNumbers('auto')">
         <h4>Assign Numbers Now</h4>
-        <p>Numbers 1 through ${wizPlayerCount()} handed out alphabetically by last name. The check-in sheet prints in the same order, so every kid already has a number when they walk up.</p>
+        <p>Numbered in CLASS-AND-TEAM BLOCKS: oldest group first, team by team inside it, alphabetical inside each team - Team One runs 1-10, Team Two 11-20, and the next class continues from there.</p>
       </button>
       <button class="choice ${wiz.numbers === 'checkin' ? 'sel' : ''}" onclick="wizNumbers('checkin')">
         <h4>Assign At Check-In</h4>
         <p>The grid starts with the number column blank and sorts by last name so anyone is easy to find. Type each player's number as they check in - or assign all of them later with one click.</p>
       </button>
-    </div>`;
+    </div>
+    ${wiz.numbers === 'auto' ? `
+    <label style="display:block;margin-top:1.1rem"><span class="field-label">Starting Number</span>
+      <input type="text" inputmode="numeric" style="max-width:120px" value="${esc(wiz.numberStart)}"
+        onchange="wiz.numberStart=this.value"></label>` : ''}
+    <p class="hint" style="margin-top:1rem">Numbers stay PENCILED IN until the day starts - if the day gets edited and teams change, they reshuffle cleanly. Once check-in begins they lock. Any single number can still be typed over by hand on the grid or at check-in.</p>`;
 }
 
 function wizStep5(){
@@ -2244,7 +2686,7 @@ function wizStep5(){
       <div style="display:flex;justify-content:space-between;gap:1rem;padding:.55rem 0;border-bottom:1px solid var(--line);font-size:.87rem">
         <span style="color:var(--muted);font-weight:600">Metrics</span><span class="cell-strong" style="text-align:right">${mets.map(m => esc(m.label)).join(', ')}</span></div>
       <div style="display:flex;justify-content:space-between;gap:1rem;padding:.55rem 0;font-size:.87rem">
-        <span style="color:var(--muted);font-weight:600">Numbers</span><span class="cell-strong">${wiz.numbers === 'auto' ? 'Assigned now, 1-' + wizPlayerCount() + ' by last name' : 'Assigned at check-in'}</span></div>
+        <span style="color:var(--muted);font-weight:600">Numbers</span><span class="cell-strong">${wiz.numbers === 'auto' ? 'Assigned now in class-and-team blocks, starting at ' + (parseInt(wiz.numberStart, 10) || 1) : 'Assigned at check-in'}</span></div>
     </div>
     <p class="hint" style="margin-top:1rem">Creating the day opens its entry grid straight away - results can go in live at the event or after.</p>`;
 }
