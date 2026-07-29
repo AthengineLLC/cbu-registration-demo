@@ -47,3 +47,4 @@ leave them alone. That system is preserved in `legacy/` for reference.
 ## Status
 
 These are front-end demos with mock data. Databases, payments (Stripe), email delivery, and auth are wired by the app.
+This is a test
